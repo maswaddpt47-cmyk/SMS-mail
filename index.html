@@ -65,6 +65,7 @@ label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase
 .b-mail{background:#ede9fe;color:#5b21b6;}
 .b-sms{background:#dbeafe;color:#1d4ed8;}
 .b-warn{background:#fef3c7;color:#92400e;}
+.b-preview{background:#e0f2fe;color:#0369a1;}
 .hint{font-size:11px;color:var(--text2);margin-top:5px;}
 .stitle{font-weight:700;font-size:13px;color:var(--primary);margin-bottom:11px;}
 .edit-box{border:2px solid var(--primary2);border-radius:10px;padding:12px;margin-bottom:8px;}
@@ -89,6 +90,18 @@ label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase
 #content{padding:16px 14px;max-width:700px;margin:0 auto;}
 .dark-toggle{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
 .import-area{background:var(--surface2);border:2px dashed var(--border2);border-radius:10px;padding:14px;text-align:center;color:var(--text2);font-size:13px;}
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:3000;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.25);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast-ok{background:#059669;color:#fff;}
+.toast-err{background:#dc2626;color:#fff;}
+.toast-warn{background:#d97706;color:#fff;}
+/* Search box */
+.search-box{position:relative;margin-bottom:10px;}
+.search-box input{padding-left:32px;}
+.search-box::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none;z-index:1;}
+/* Keyboard hint */
+.kbd{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:10px;font-family:'Courier New',monospace;color:var(--text2);}
 </style>
 </head>
 <body>
@@ -131,7 +144,7 @@ label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase
       </div>
       <div id="custom-tpl-selector" class="hidden" style="margin-top:10px;">
         <label>Modèle personnalisé</label>
-        <select id="select-custom-tpl" onchange="state.selectedTemplate=this.value"></select>
+        <select id="select-custom-tpl" onchange="state.selectedTemplate=this.value;schedulePreview()"></select>
       </div>
     </div>
 
@@ -142,47 +155,54 @@ label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase
         <div class="grid3">
           <div>
             <label>Civilité</label>
-            <select id="inp-civilite" onchange="state.civilite=this.value">
+            <select id="inp-civilite" onchange="state.civilite=this.value;schedulePreview()">
               <option value="">—</option>
               <option value="M.">M.</option>
               <option value="Mme">Mme</option>
             </select>
           </div>
-          <div style="grid-column:span 2;">
-            <label>Prénom / Nom (optionnel)</label>
-            <input id="inp-prenom" placeholder="ex : Mohammed, Sophie Dupont…" oninput="state.prenom=this.value">
+          <div>
+            <label>Prénom (optionnel)</label>
+            <input id="inp-prenom" placeholder="ex : Sophie" oninput="state.prenom=this.value;schedulePreview()">
+          </div>
+          <div>
+            <label>Nom (optionnel)</label>
+            <input id="inp-nom" placeholder="ex : Dupont" oninput="state.nom=this.value;schedulePreview()">
           </div>
         </div>
         <div>
           <label>Téléphone (optionnel)</label>
-          <input id="inp-tel" placeholder="ex : 06 12 34 56 78" oninput="state.telephone=this.value" type="tel">
+          <input id="inp-tel" placeholder="ex : 06 12 34 56 78" oninput="handleTelInput(this)" type="tel">
         </div>
         <div class="grid2">
-          <div><label>Date du RDV</label><input type="date" id="inp-date" oninput="state.date=this.value;checkCanGenerate();saveLastChoices()"></div>
-          <div><label>Heure du RDV</label><input type="time" id="inp-heure" oninput="state.heure=this.value;checkCanGenerate();saveLastChoices()"></div>
+          <div><label>Date du RDV</label><input type="date" id="inp-date" oninput="state.date=this.value;checkCanGenerate();saveLastChoices();schedulePreview()"></div>
+          <div><label>Heure du RDV</label><input type="time" id="inp-heure" oninput="state.heure=this.value;checkCanGenerate();saveLastChoices();schedulePreview()"></div>
         </div>
         <div>
           <label>Adresse du CMS</label>
-          <select id="sel-cms" onchange="state.selectedCMS=this.value;checkCanGenerate();saveLastChoices()">
+          <select id="sel-cms" onchange="state.selectedCMS=this.value;checkCanGenerate();saveLastChoices();schedulePreview()">
             <option value="">— Sélectionner une adresse —</option>
           </select>
         </div>
         <div>
           <label>Démarche</label>
-          <select id="sel-demarche" onchange="state.selectedDemarche=this.value;checkCanGenerate();saveLastChoices()">
+          <select id="sel-demarche" onchange="state.selectedDemarche=this.value;checkCanGenerate();saveLastChoices();schedulePreview()">
             <option value="">— Sélectionner une démarche —</option>
           </select>
         </div>
         <div>
           <label>CMS</label>
-          <select id="sel-commune" onchange="state.commune=this.value">
+          <select id="sel-commune" onchange="state.commune=this.value;schedulePreview()">
             <option value="">— Sélectionner un CMS —</option>
           </select>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:14px;">
+      <div style="display:flex;gap:8px;margin-top:14px;align-items:center;">
         <button class="btn-primary" id="btn-generate" style="flex:1;" onclick="handleGenerate()" disabled>Générer le SMS</button>
         <button class="btn-secondary" onclick="nouveauRdv()" title="Garder CMS & Démarche, réinitialiser le reste">🔄 Nouveau RDV</button>
+      </div>
+      <div style="margin-top:6px;text-align:center;">
+        <span class="kbd">Ctrl</span> + <span class="kbd">Entrée</span> pour générer &nbsp;·&nbsp; <span class="kbd">Ctrl</span>+<span class="kbd">Maj</span>+<span class="kbd">C</span> pour copier
       </div>
       <div id="missing-fields" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;justify-content:center;"></div>
     </div>
@@ -221,9 +241,14 @@ label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase
 
   <!-- ===== HISTORY TAB ===== -->
   <div id="tab-history" class="hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <div style="font-weight:700;font-size:14px;color:var(--primary);">🕐 5 derniers messages générés</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-weight:700;font-size:14px;color:var(--primary);">🕐 Historique</div>
       <button class="btn-danger" onclick="clearHistory()" style="font-size:11px;">🗑️ Vider</button>
+    </div>
+    <div class="flex-wrap" style="margin-bottom:12px;">
+      <button class="sub-tab active" id="hfilt-all" onclick="setHistoryFilter('all')">Tous</button>
+      <button class="sub-tab" id="hfilt-sms" onclick="setHistoryFilter('sms')">📱 SMS</button>
+      <button class="sub-tab" id="hfilt-mail" onclick="setHistoryFilter('mail')">📧 Mail</button>
     </div>
     <div id="history-list"></div>
   </div>
@@ -254,7 +279,7 @@ label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase
     <div class="card" style="background:var(--yellow-bg);border:1.5px solid var(--yellow-border);">
       <div style="font-weight:700;font-size:12px;color:var(--yellow-text);margin-bottom:6px;">📌 Variables disponibles</div>
       <div id="vars-chips"></div>
-      <div class="hint" style="margin-top:6px;">Insérées automatiquement. <strong>{civilite}</strong> = M. ou Mme selon sélection.</div>
+      <div class="hint" style="margin-top:6px;">Insérées automatiquement. <strong>{civilite}</strong> = M. ou Mme · <strong>{prenom_nom}</strong> = prénom + nom combinés.</div>
     </div>
     <div id="stab-builtin-content"><div id="builtin-list"></div></div>
     <div id="stab-custom-content" class="hidden">
@@ -314,7 +339,11 @@ label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase
           <button class="btn-primary" onclick="addCms()">+ Ajouter</button>
         </div>
       </div>
-      <div class="card"><div class="stitle">CMS enregistrés</div><div id="cms-list"></div></div>
+      <div class="card">
+        <div class="stitle">CMS enregistrés</div>
+        <div class="search-box"><input id="search-cms" placeholder="Rechercher…" oninput="state.cmsSearch=this.value;renderCmsList()"></div>
+        <div id="cms-list"></div>
+      </div>
     </div>
     <div id="ctab-secteurs-content" class="hidden">
       <div class="card">
@@ -335,7 +364,11 @@ label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase
           <button class="btn-primary" onclick="addDemarche()">+ Ajouter</button>
         </div>
       </div>
-      <div class="card"><div class="stitle">Démarches enregistrées</div><div id="demarches-list"></div></div>
+      <div class="card">
+        <div class="stitle">Démarches enregistrées</div>
+        <div class="search-box"><input id="search-dem" placeholder="Rechercher…" oninput="state.demSearch=this.value;renderDemarchesList()"></div>
+        <div id="demarches-list"></div>
+      </div>
     </div>
   </div>
 
@@ -349,10 +382,13 @@ label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase
       <button onclick="closeModal('export-modal')" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);">✕</button>
     </div>
     <div style="background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--green-text);line-height:1.6;">
-      📋 Copiez ce JSON et collez-le dans Claude pour restaurer vos données sur un autre appareil, ou utilisez le bouton <strong>Importer</strong> directement dans cet outil.
+      📋 Téléchargez le fichier JSON ou copiez le contenu pour restaurer vos données sur un autre appareil.
     </div>
     <textarea id="export-text" rows="10" style="font-size:11px;" readonly></textarea>
-    <button onclick="copyExport()" id="btn-copy-export" class="btn-primary" style="width:100%;">📋 Copier la sauvegarde</button>
+    <div class="flex-row">
+      <button onclick="downloadExport()" class="btn-primary" style="flex:1;">⬇️ Télécharger .json</button>
+      <button onclick="copyExport()" id="btn-copy-export" class="btn-secondary" style="flex:1;">📋 Copier</button>
+    </div>
   </div>
 </div>
 
@@ -366,7 +402,12 @@ label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase
     <div style="background:var(--warn-bg);border:1.5px solid var(--warn-border);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--warn-text);line-height:1.6;">
       ⚠️ L'import remplacera toutes vos données actuelles. Sauvegardez d'abord si nécessaire.
     </div>
-    <div><label>Collez votre JSON de sauvegarde ici</label><textarea id="import-text" rows="10" placeholder='{ "cmsList": [...], "demarches": [...], ... }'></textarea></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
+      <label style="margin:0;">Collez votre JSON ou choisissez un fichier</label>
+      <input type="file" id="import-file-input" accept=".json,application/json" style="display:none" onchange="handleImportFile(this)">
+      <button class="btn-secondary" style="white-space:nowrap;flex-shrink:0;" onclick="document.getElementById('import-file-input').click()">📂 Parcourir…</button>
+    </div>
+    <textarea id="import-text" rows="10" placeholder='{ "cmsList": [...], "demarches": [...], ... }'></textarea>
     <button onclick="handleImport()" class="btn-primary" style="width:100%;">📥 Importer et remplacer</button>
     <div id="import-error" class="hidden" style="color:var(--danger);font-size:12px;font-weight:600;text-align:center;"></div>
   </div>
@@ -437,6 +478,7 @@ const TEMPLATE_LABELS={
   mail_sans_appel_sujet:"📧 Mail — Objet Proposition sans appel",
   mail_sans_appel:"📧 Mail — Corps Proposition sans appel",
 };
+const HISTORY_MAX=20;
 
 // ============================================================
 // STATE
@@ -444,19 +486,28 @@ const TEMPLATE_LABELS={
 const state={
   channel:"sms",msgType:"proposition",
   selectedCMS:"",selectedDemarche:"",selectedTemplate:"__default__",
-  commune:"",civilite:"",prenom:"",telephone:"",date:"",heure:"",
+  commune:"",civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",
   generatedBody:"",generatedSubject:"",
   activeTab:"generate",subTab:"builtin",configTab:"cms",
   cmsList:[],demarches:[],secteurs:[],templates:{},
   customTemplates:[],customVars:[],hiddenBuiltinKeys:[],
   history:[],darkMode:false,
+  historyFilter:"all",
+  cmsSearch:"",demSearch:"",
 };
 
 // ============================================================
 // STORAGE
 // ============================================================
 function ls(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}}
-function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function lsSet(k,v){
+  try{localStorage.setItem(k,JSON.stringify(v));}
+  catch(e){
+    if(e.name==='QuotaExceededError'||e.code===22||e.code===1014){
+      toast('⚠️ Stockage local plein. Exportez vos données !','warn');
+    }
+  }
+}
 function loadData(){
   state.cmsList=ls('ess-cms',DEFAULT_CMS);
   state.demarches=ls('ess-demarches',DEFAULT_DEMARCHES);
@@ -486,21 +537,36 @@ function saveLastChoices(){
 }
 
 // ============================================================
+// TOAST
+// ============================================================
+function toast(msg,type='ok'){
+  const t=document.createElement('div');
+  t.className='toast toast-'+type;
+  t.textContent=msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},2600);
+}
+
+// ============================================================
 // FILL TEMPLATE
 // ============================================================
-function fillTemplate(tpl,{civilite,prenom,demarche,date,heure,adresse,documents,commune}){
+function fillTemplate(tpl,{civilite,prenom,nom,demarche,date,heure,adresse,documents,commune}){
   const civStr=civilite||"";
   const prenomStr=prenom||"";
-  // Build greeting name: "M. Dupont" or "Dupont" or ""
+  const nomStr=nom||"";
+  const fullName=[prenomStr,nomStr].filter(Boolean).join(" ");
   let greeting="";
-  if(civStr&&prenomStr) greeting=" "+civStr+" "+prenomStr;
-  else if(civStr) greeting=" "+civStr;
-  else if(prenomStr) greeting=" "+prenomStr;
+  if(civStr&&fullName) greeting=" "+civStr+" "+fullName;
+  else if(civStr&&!fullName) greeting=" "+civStr;
+  else if(!civStr&&fullName) greeting=" "+fullName;
   const dateFmt=date?new Date(date).toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"}):"[date]";
   const docList=(documents||[]).map(d=>"• "+d).join("\n");
   let r=tpl
     .replace(/{civilite}/g,civStr)
     .replace(/{prenom}/g,prenomStr)
+    .replace(/{nom}/g,nomStr)
+    .replace(/{prenom_nom}/g,fullName)
     .replace(/{greeting}/g,greeting)
     .replace(/Bonjour \{civilite\} \{prenom\}/g,"Bonjour"+greeting)
     .replace(/Bonjour\{civilite\} \{prenom\}/g,"Bonjour"+greeting)
@@ -515,19 +581,44 @@ function fillTemplate(tpl,{civilite,prenom,demarche,date,heure,adresse,documents
   for(const v of state.customVars){
     if(v.nom)r=r.replace(new RegExp("\\{"+v.nom+"\\}","g"),v.valeur);
   }
-  // Clean up double spaces
   r=r.replace(/Bonjour  /g,"Bonjour ");
   return r;
 }
 
 // ============================================================
+// TÉLÉPHONE
+// ============================================================
+function formatTel(val){
+  const d=val.replace(/\D/g,'').substring(0,10);
+  return d.replace(/(\d{2})(?=\d)/g,'$1 ').trim();
+}
+function handleTelInput(el){
+  const formatted=formatTel(el.value);
+  el.value=formatted;
+  state.telephone=formatted;
+}
+
+// ============================================================
+// LIVE PREVIEW
+// ============================================================
+let _previewTimer=null;
+function schedulePreview(){
+  clearTimeout(_previewTimer);
+  _previewTimer=setTimeout(()=>{
+    if(state.selectedCMS&&state.selectedDemarche&&state.date&&state.heure){
+      doGenerate(false);
+    }
+  },450);
+}
+
+// ============================================================
 // GENERATE
 // ============================================================
-function handleGenerate(){
+function doGenerate(addHistory=true){
   const cms=state.cmsList.find(c=>String(c.id)===String(state.selectedCMS));
   const dem=state.demarches.find(d=>String(d.id)===String(state.selectedDemarche));
   if(!cms||!dem)return;
-  const vars={civilite:state.civilite,prenom:state.prenom,demarche:dem.nom,date:state.date,heure:state.heure,adresse:cms.adresse,documents:dem.documents,commune:state.commune};
+  const vars={civilite:state.civilite,prenom:state.prenom,nom:state.nom,demarche:dem.nom,date:state.date,heure:state.heure,adresse:cms.adresse,documents:dem.documents,commune:state.commune};
   let body="",subject="";
   if(state.selectedTemplate!=="__default__"){
     const ct=state.customTemplates.find(t=>String(t.id)===String(state.selectedTemplate));
@@ -540,12 +631,22 @@ function handleGenerate(){
     body=fillTemplate(tpl,vars);
     if(state.channel==="mail"){const sk2=sk[state.msgType];subject=fillTemplate((state.templates[sk2]||DEFAULT_TEMPLATES[sk2]||""),vars);}
   }
+  // SMS part-count warning (only on explicit generate, not preview)
+  if(addHistory&&state.channel==='sms'){
+    const len=body.length;
+    const isUnicode=/[^\x00-\x7F€£¥]/.test(body);
+    const single=isUnicode?70:160;
+    const multi=isUnicode?67:153;
+    const parts=len<=single?1:Math.ceil(len/multi);
+    if(parts>3&&!confirm(`⚠️ Ce message fait ${parts} SMS (${len} caractères).\nContinuer quand même ?`))return;
+  }
   state.generatedBody=body;state.generatedSubject=subject;
   document.getElementById('txt-body').value=body;
   document.getElementById('inp-subject').value=subject;
   const isMail=state.channel==="mail";
   document.getElementById('result-card').classList.remove('hidden');
-  document.getElementById('result-title').textContent=isMail?"Mail généré":"SMS généré";
+  const titleEl=document.getElementById('result-title');
+  titleEl.textContent=addHistory?(isMail?"Mail généré":"SMS généré"):(isMail?"Aperçu mail":"Aperçu SMS");
   document.getElementById('subject-row').classList.toggle('hidden',!isMail);
   document.getElementById('body-label').textContent=isMail?"Corps du mail":"Texte du SMS";
   document.getElementById('btn-copy-body').textContent="📋 Copier le "+(isMail?"corps du mail":"SMS");
@@ -558,12 +659,15 @@ function handleGenerate(){
   // Badges
   const tLabel={proposition:"📨 Proposition",confirmation:"✅ Confirmation",sans_appel:"✉️ Sans appel"};
   const tClass={proposition:"b-prop",confirmation:"b-conf",sans_appel:"b-sms"};
-  document.getElementById('result-badges').innerHTML='<span class="badge '+(isMail?"b-mail":"b-sms")+'">'+(isMail?"📧 Mail":"📱 SMS")+'</span> <span class="badge '+(tClass[state.msgType]||"b-prop")+'">'+tLabel[state.msgType]+'</span>';
-  // Counter
+  const previewBadge=addHistory?"":'<span class="badge b-preview">👁 Aperçu</span> ';
+  document.getElementById('result-badges').innerHTML=previewBadge+'<span class="badge '+(isMail?"b-mail":"b-sms")+'">'+(isMail?"📧 Mail":"📱 SMS")+'</span> <span class="badge '+(tClass[state.msgType]||"b-prop")+'">'+tLabel[state.msgType]+'</span>';
   updateSmsCounter();
-  // History
-  addToHistory({channel:state.channel,msgType:state.msgType,body,subject,civilite:state.civilite,prenom:state.prenom,telephone:state.telephone,demarche:dem.nom,date:state.date,heure:state.heure,ts:new Date().toLocaleString('fr-FR')});
+  if(addHistory){
+    addToHistory({channel:state.channel,msgType:state.msgType,body,subject,civilite:state.civilite,prenom:state.prenom,nom:state.nom,telephone:state.telephone,demarche:dem.nom,date:state.date,heure:state.heure,ts:new Date().toLocaleString('fr-FR')});
+  }
 }
+
+function handleGenerate(){doGenerate(true);}
 
 function clearResult(){
   state.generatedBody="";state.generatedSubject="";
@@ -571,8 +675,9 @@ function clearResult(){
 }
 
 function nouveauRdv(){
-  state.prenom="";state.civilite="";state.telephone="";state.date="";state.heure="";
+  state.prenom="";state.nom="";state.civilite="";state.telephone="";state.date="";state.heure="";
   document.getElementById('inp-prenom').value="";
+  document.getElementById('inp-nom').value="";
   document.getElementById('inp-civilite').value="";
   document.getElementById('inp-tel').value="";
   document.getElementById('inp-date').value="";
@@ -588,7 +693,6 @@ function updateSmsCounter(){
   if(state.channel!=="sms"){el.classList.add('hidden');return;}
   const txt=state.generatedBody||"";
   const len=txt.length;
-  // Check if unicode needed
   const isUnicode=/[^\x00-\x7F€£¥]/.test(txt)||/[\u0100-\uFFFF]/.test(txt);
   const single=isUnicode?70:160;
   const multi=isUnicode?67:153;
@@ -605,26 +709,35 @@ function updateSmsCounter(){
 // ============================================================
 function addToHistory(item){
   state.history.unshift(item);
-  if(state.history.length>5)state.history.pop();
+  if(state.history.length>HISTORY_MAX)state.history.pop();
   lsSet('ess-history',state.history);
 }
 function clearHistory(){state.history=[];lsSet('ess-history',[]);renderHistory();}
+function setHistoryFilter(f){
+  state.historyFilter=f;
+  ['all','sms','mail'].forEach(x=>{const el=document.getElementById('hfilt-'+x);if(el)el.classList.toggle('active',x===f);});
+  renderHistory();
+}
 function renderHistory(){
   const el=document.getElementById('history-list');
-  if(!state.history.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:30px 0;font-size:13px;">Aucun message dans l\'historique.</div>';return;}
+  const filtered=state.historyFilter==='all'?state.history:state.history.filter(h=>h.channel===state.historyFilter);
+  if(!filtered.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:30px 0;font-size:13px;">Aucun message dans l\'historique.</div>';return;}
   const tLabel={proposition:"📨 Proposition",confirmation:"✅ Confirmation",sans_appel:"✉️ Sans appel"};
-  el.innerHTML=state.history.map((h,i)=>`
-    <div class="history-item" onclick="openHistoryItem(${i})">
+  el.innerHTML=filtered.map((h,i)=>{
+    const realIdx=state.history.indexOf(h);
+    const fullName=[h.civilite,h.prenom,h.nom].filter(Boolean).join(" ");
+    return `<div class="history-item" onclick="openHistoryItem(${realIdx})">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
         <span class="badge ${h.channel==="sms"?"b-sms":"b-mail"}">${h.channel==="sms"?"📱 SMS":"📧 Mail"}</span>
         <span class="badge ${h.msgType==="proposition"?"b-prop":h.msgType==="sans_appel"?"b-sms":"b-conf"}">${tLabel[h.msgType]||h.msgType}</span>
         <span style="font-size:11px;color:var(--text2);margin-left:auto;">${h.ts}</span>
       </div>
       <div style="font-size:13px;font-weight:600;">${esc(h.demarche)}</div>
-      ${h.prenom?'<div style="font-size:12px;color:var(--text2);">${esc((h.civilite?h.civilite+" ":"")+h.prenom)}</div>':""}
-      ${h.telephone?'<div style="font-size:12px;color:var(--text2);">📱 ${esc(h.telephone)}</div>':""}
+      ${fullName?'<div style="font-size:12px;color:var(--text2);">'+esc(fullName)+'</div>':""}
+      ${h.telephone?'<div style="font-size:12px;color:var(--text2);">📱 '+esc(h.telephone)+'</div>':""}
       <div style="font-size:11px;color:var(--text2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(h.body.substring(0,80))}…</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function openHistoryItem(i){
   const h=state.history[i];
@@ -657,8 +770,18 @@ async function handleCopy(which){
   if(ok){
     const btn=document.getElementById(which==="body"?"btn-copy-body":"btn-copy-subject");
     const orig=btn.textContent;btn.textContent="✓ Copié !";setTimeout(()=>{btn.textContent=orig;},2000);
+    toast("✓ Copié !");
   }
 }
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown',e=>{
+  const ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl&&e.key==='Enter'){e.preventDefault();if(!document.getElementById('btn-generate').disabled)handleGenerate();}
+  if(ctrl&&e.shiftKey&&e.key==='C'){e.preventDefault();if(state.generatedBody)handleCopy('body');}
+});
 
 // ============================================================
 // CHANNEL / TYPE
@@ -669,12 +792,12 @@ function setChannel(ch){
   document.getElementById('btn-mail').classList.toggle('active',ch==="mail");
   document.getElementById('btn-generate').textContent="Générer le "+(ch==="sms"?"SMS":"mail");
   document.getElementById('sms-counter').classList.add('hidden');
-  updateCustomTplSelector();
+  updateCustomTplSelector();schedulePreview();
 }
 function setMsgType(t){
   state.msgType=t;state.selectedTemplate="__default__";
   ["proposition","confirmation","sans_appel"].forEach(x=>document.getElementById('btn-'+x).classList.toggle('active',x===t));
-  updateCustomTplSelector();
+  updateCustomTplSelector();schedulePreview();
 }
 function updateCustomTplSelector(){
   const compat=state.customTemplates.filter(t=>t.canal===state.channel&&t.type===state.msgType);
@@ -684,7 +807,7 @@ function updateCustomTplSelector(){
   const sel=document.getElementById('select-custom-tpl');
   sel.innerHTML='<option value="__default__">— Modèle par défaut —</option>'+compat.map(t=>'<option value="'+t.id+'">'+esc(t.nom)+'</option>').join('');
   sel.value=state.selectedTemplate;
-  sel.onchange=()=>{state.selectedTemplate=sel.value;};
+  sel.onchange=()=>{state.selectedTemplate=sel.value;schedulePreview();};
 }
 function checkCanGenerate(){
   const can=!!(state.selectedCMS&&state.selectedDemarche&&state.date&&state.heure);
@@ -743,7 +866,7 @@ function showConfigTab(name){
 }
 
 // ============================================================
-// RENDER
+// RENDER UTILS
 // ============================================================
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
@@ -763,7 +886,7 @@ function renderSelects(){
 }
 
 function renderVarsChips(){
-  const base=["{civilite}","{prenom}","{demarche}","{date}","{heure}","{adresse}","{documents}","{commune}"];
+  const base=["{civilite}","{prenom}","{nom}","{prenom_nom}","{demarche}","{date}","{heure}","{adresse}","{documents}","{commune}"];
   let h=base.map(v=>'<span class="var-chip">'+v+'</span>').join('');
   h+=state.customVars.map(v=>'<span class="var-chip" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green-border);" title="→ '+esc(v.valeur)+'">{'+esc(v.nom)+'}</span>').join('');
   document.getElementById('vars-chips').innerHTML=h;
@@ -795,6 +918,7 @@ function renderTemplates(){
         +'<div style="font-weight:700;font-size:12px;color:var(--primary);">'+TEMPLATE_LABELS[key]+'</div>'
         +'<div style="display:flex;gap:5px;">'
         +'<button class="btn-ghost" onclick="resetBuiltin(\''+key+'\')">↺ Défaut</button>'
+        +'<button class="btn-ghost" title="Dupliquer vers Mes modèles" onclick="duplicateBuiltin(\''+key+'\')">📋</button>'
         +'<button class="btn-secondary" onclick="startEditBuiltin(\''+key+'\')">✏️</button>'
         +'<button class="btn-danger" style="padding:3px 9px;" onclick="deleteBuiltin(\''+key+'\')">🗑️</button>'
         +'</div></div>'
@@ -822,6 +946,7 @@ function renderCustomTplList(){
     +'<div style="flex:1;"><span style="font-weight:700;font-size:13px;">'+esc(t.nom)+'</span>'
     +' <span class="badge '+(t.canal==="sms"?"b-sms":"b-mail")+'" style="margin-left:5px;">'+(t.canal==="sms"?"📱":"📧")+' '+(t.canal==="sms"?"SMS":"Mail")+'</span>'
     +' <span class="badge '+(tC[t.type]||"b-prop")+'" style="margin-left:3px;">'+(tL[t.type]||t.type)+'</span></div>'
+    +'<button class="btn-ghost" title="Dupliquer" onclick="duplicateCustomTpl('+t.id+')">📋</button>'
     +'<button class="btn-secondary" onclick="startEditCustomTpl('+t.id+')">✏️</button>'
     +'<button class="btn-danger" onclick="deleteCustomTpl('+t.id+')">🗑️</button></div>'
     +(t.canal==="mail"&&t.sujet?'<div style="font-size:11px;color:var(--text2);margin-top:3px;">📌 Objet : '+esc(t.sujet)+'</div>':"")
@@ -841,13 +966,13 @@ function renderVarsList(){
     +'<button class="btn-danger" onclick="deleteVar('+v.id+')">🗑️</button></div>').join('');
 }
 
+// ============================================================
+// RENDER CONFIG
+// ============================================================
 function renderConfig(){
   renderSelects();
-  document.getElementById('cms-list').innerHTML=!state.cmsList.length?'<div style="text-align:center;color:var(--text2);padding:20px 0;">Aucun CMS</div>':
-    state.cmsList.map(c=>'<div class="item-row" id="cms-'+c.id+'">'
-      +'<div style="flex:1;"><div style="font-weight:600;font-size:13px;">'+esc(c.nom)+'</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">📍 '+esc(c.adresse)+'</div></div>'
-      +'<button class="btn-secondary" onclick="startEditCms('+c.id+')">✏️</button>'
-      +'<button class="btn-danger" onclick="deleteCms('+c.id+')">🗑️</button></div>').join('');
+  renderCmsList();
+  // Secteurs
   document.getElementById('secteurs-list').innerHTML=!state.secteurs.length?'<div style="text-align:center;color:var(--text2);padding:20px 0;">Aucun CMS</div>':
     state.secteurs.map((s,i)=>'<div class="item-row" style="margin-bottom:7px;">'
       +'<div style="flex:1;font-weight:600;font-size:13px;">📍 '+esc(s)+'</div>'
@@ -855,16 +980,40 @@ function renderConfig(){
       +'<button class="btn-ghost" style="font-size:16px;" onclick="moveSecteur('+i+',1)" title="Descendre">↓</button>'
       +'<button class="btn-secondary" onclick="startEditSecteur('+i+')">✏️</button>'
       +'<button class="btn-danger" onclick="deleteSecteur('+i+')">🗑️</button></div>').join('');
-  document.getElementById('demarches-list').innerHTML=!state.demarches.length?'<div style="text-align:center;color:var(--text2);padding:20px 0;">Aucune démarche</div>':
-    state.demarches.map((d,i)=>'<div class="item-row" style="flex-direction:column;align-items:stretch;margin-bottom:7px;">'
-      +'<div style="display:flex;align-items:center;gap:7px;">'
-      +'<div style="flex:1;font-weight:600;font-size:13px;">'+esc(d.nom)+'</div>'
-      +'<button class="btn-ghost" style="font-size:14px;" onclick="moveDemarche('+i+',-1)" title="Monter">↑</button>'
-      +'<button class="btn-ghost" style="font-size:14px;" onclick="moveDemarche('+i+',1)" title="Descendre">↓</button>'
-      +'<button class="btn-secondary" onclick="startEditDem('+d.id+')">✏️</button>'
-      +'<button class="btn-danger" onclick="deleteDem('+d.id+')">🗑️</button></div>'
-      +'<div style="margin-top:5px;">'+((d.documents||[]).map(doc=>'<div style="font-size:11px;color:var(--text2);margin-top:1px;">• '+esc(doc)+'</div>').join(''))+'</div>'
-      +'</div>').join('');
+  renderDemarchesList();
+}
+
+function renderCmsList(){
+  const q=(state.cmsSearch||"").toLowerCase();
+  const filtered=q?state.cmsList.filter(c=>c.nom.toLowerCase().includes(q)||c.adresse.toLowerCase().includes(q)):state.cmsList;
+  document.getElementById('cms-list').innerHTML=!filtered.length?'<div style="text-align:center;color:var(--text2);padding:20px 0;">Aucun résultat</div>':
+    filtered.map((c,fi)=>{
+      const i=state.cmsList.indexOf(c);
+      return '<div class="item-row" id="cms-'+c.id+'">'
+        +'<div style="flex:1;"><div style="font-weight:600;font-size:13px;">'+esc(c.nom)+'</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">📍 '+esc(c.adresse)+'</div></div>'
+        +(q?'':'<button class="btn-ghost" style="font-size:16px;" onclick="moveCms('+i+',-1)" title="Monter">↑</button>'
+            +'<button class="btn-ghost" style="font-size:16px;" onclick="moveCms('+i+',1)" title="Descendre">↓</button>')
+        +'<button class="btn-secondary" onclick="startEditCms('+c.id+')">✏️</button>'
+        +'<button class="btn-danger" onclick="deleteCms('+c.id+')">🗑️</button></div>';
+    }).join('');
+}
+
+function renderDemarchesList(){
+  const q=(state.demSearch||"").toLowerCase();
+  const filtered=q?state.demarches.filter(d=>d.nom.toLowerCase().includes(q)):state.demarches;
+  document.getElementById('demarches-list').innerHTML=!filtered.length?'<div style="text-align:center;color:var(--text2);padding:20px 0;">Aucun résultat</div>':
+    filtered.map((d)=>{
+      const i=state.demarches.indexOf(d);
+      return '<div class="item-row" style="flex-direction:column;align-items:stretch;margin-bottom:7px;">'
+        +'<div style="display:flex;align-items:center;gap:7px;">'
+        +'<div style="flex:1;font-weight:600;font-size:13px;">'+esc(d.nom)+'</div>'
+        +(q?'':'<button class="btn-ghost" style="font-size:14px;" onclick="moveDemarche('+i+',-1)" title="Monter">↑</button>'
+             +'<button class="btn-ghost" style="font-size:14px;" onclick="moveDemarche('+i+',1)" title="Descendre">↓</button>')
+        +'<button class="btn-secondary" onclick="startEditDem('+d.id+')">✏️</button>'
+        +'<button class="btn-danger" onclick="deleteDem('+d.id+')">🗑️</button></div>'
+        +'<div style="margin-top:5px;">'+((d.documents||[]).map(doc=>'<div style="font-size:11px;color:var(--text2);margin-top:1px;">• '+esc(doc)+'</div>').join(''))+'</div>'
+        +'</div>';
+    }).join('');
 }
 
 // ============================================================
@@ -878,6 +1027,11 @@ function addCms(){
   document.getElementById('new-cms-nom').value="";document.getElementById('new-cms-adresse').value="";
 }
 function deleteCms(id){state.cmsList=state.cmsList.filter(c=>c.id!==id);saveData();renderConfig();}
+function moveCms(i,dir){
+  const j=i+dir;if(j<0||j>=state.cmsList.length)return;
+  [state.cmsList[i],state.cmsList[j]]=[state.cmsList[j],state.cmsList[i]];
+  saveData();renderConfig();renderSelects();
+}
 function startEditCms(id){
   const c=state.cmsList.find(x=>x.id===id);
   document.getElementById('cms-'+id).innerHTML='<div style="flex:1;display:grid;gap:7px;">'
@@ -959,6 +1113,21 @@ function startEditBuiltin(k){document.getElementById('view-'+k).classList.add('h
 function cancelEditBuiltin(k){document.getElementById('view-'+k).classList.remove('hidden');document.getElementById('edit-'+k).classList.add('hidden');}
 function saveBuiltin(k){state.templates[k]=document.getElementById('ta-'+k).value;saveData();renderTemplates();}
 function resetBuiltin(k){state.templates[k]=DEFAULT_TEMPLATES[k];saveData();renderTemplates();}
+function duplicateBuiltin(k){
+  const isSubj=k.includes("sujet");
+  if(isSubj){toast("Les objets mail ne peuvent pas être dupliqués seuls","warn");return;}
+  const canal=k.startsWith("sms")?"sms":"mail";
+  const typeMap={proposition:"proposition",confirmation:"confirmation",sans_appel:"sans_appel"};
+  const type=Object.keys(typeMap).find(t=>k.includes(t))||"proposition";
+  const body=state.templates[k]||DEFAULT_TEMPLATES[k]||"";
+  const sujetKey=canal==="mail"?(k.replace(/^mail_/,"mail_")+"").replace(/(proposition|confirmation|sans_appel)$/,"$1_sujet").replace("mail_","mail_"):"";
+  // build correct subject key
+  const sk={proposition:"mail_proposition_sujet",confirmation:"mail_confirmation_sujet",sans_appel:"mail_sans_appel_sujet"};
+  const sujet=canal==="mail"?( state.templates[sk[type]]||DEFAULT_TEMPLATES[sk[type]]||"" ):"";
+  state.customTemplates.push({id:Date.now(),nom:TEMPLATE_LABELS[k]+' (copie)',canal,type,sujet,body});
+  saveData();renderTemplates();renderSelects();
+  toast("Dupliqué vers Mes modèles");
+}
 function deleteBuiltin(k){state.hiddenBuiltinKeys.push(k);saveData();renderTemplates();updateTplActionBtns();}
 function restoreBuiltin(k){state.hiddenBuiltinKeys=state.hiddenBuiltinKeys.filter(x=>x!==k);saveData();renderTemplates();updateTplActionBtns();}
 function deleteAllBuiltin(){state.hiddenBuiltinKeys=Object.keys(TEMPLATE_LABELS);saveData();hideConfirm();renderTemplates();updateTplActionBtns();}
@@ -977,11 +1146,19 @@ function addCustomTemplate(){
   state.customTemplates.push({id:Date.now(),nom,canal,type,sujet,body});
   saveData();renderTemplates();renderSelects();
   document.getElementById('new-tpl-nom').value="";document.getElementById('new-tpl-body').value="";document.getElementById('new-tpl-sujet').value="";
+  toast("Modèle créé");
 }
 function deleteCustomTpl(id){
   state.customTemplates=state.customTemplates.filter(t=>t.id!==id);
   if(String(state.selectedTemplate)===String(id))state.selectedTemplate="__default__";
   saveData();renderTemplates();renderSelects();
+}
+function duplicateCustomTpl(id){
+  const t=state.customTemplates.find(x=>x.id===id);
+  if(!t)return;
+  state.customTemplates.push({...t,id:Date.now(),nom:t.nom+' (copie)'});
+  saveData();renderTemplates();renderSelects();
+  toast("Modèle dupliqué");
 }
 function deleteAllCustomTemplates(){state.customTemplates=[];state.selectedTemplate="__default__";saveData();hideConfirm();renderTemplates();renderSelects();}
 function startEditCustomTpl(id){
@@ -1008,7 +1185,7 @@ function saveEditCustomTpl(id){
   const sujet=sujetEl?sujetEl.value.trim():"";
   const body=document.getElementById('etpl-body-'+id).value.trim();
   state.customTemplates=state.customTemplates.map(t=>t.id===id?{...t,nom,canal,type,sujet,body}:t);
-  saveData();renderTemplates();renderSelects();
+  saveData();renderTemplates();renderSelects();toast("Modèle enregistré");
 }
 
 // ============================================================
@@ -1056,9 +1233,31 @@ function handleExportData(){
   document.getElementById('export-text').value=JSON.stringify(data,null,2);
   openModal('export-modal');
 }
+function downloadExport(){
+  const data={cmsList:state.cmsList,demarches:state.demarches,secteurs:state.secteurs,customTemplates:state.customTemplates,customVars:state.customVars,templates:state.templates};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const d=new Date().toISOString().slice(0,10);
+  a.download='ess-cms-sauvegarde-'+d+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("Fichier téléchargé");
+}
 async function copyExport(){
   const ok=await doCopy(document.getElementById('export-text').value);
-  if(ok){const btn=document.getElementById('btn-copy-export');btn.textContent="✓ Copié !";setTimeout(()=>{btn.textContent="📋 Copier la sauvegarde";},2000);}
+  if(ok){const btn=document.getElementById('btn-copy-export');btn.textContent="✓ Copié !";setTimeout(()=>{btn.textContent="📋 Copier";},2000);toast("Sauvegarde copiée");}
+}
+function handleImportFile(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    document.getElementById('import-text').value=e.target.result;
+    input.value="";
+  };
+  reader.onerror=()=>toast("Erreur de lecture du fichier","err");
+  reader.readAsText(file);
 }
 function handleImport(){
   const raw=document.getElementById('import-text').value.trim();
@@ -1075,7 +1274,7 @@ function handleImport(){
     closeModal('import-modal');
     document.getElementById('import-text').value="";
     errEl.classList.add('hidden');
-    alert('✅ Import réussi ! Toutes vos données ont été restaurées.');
+    toast("✅ Import réussi !");
   }catch(e){
     errEl.textContent="❌ JSON invalide. Vérifiez que vous avez copié la sauvegarde complète.";
     errEl.classList.remove('hidden');
