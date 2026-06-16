@@ -827,6 +827,16 @@ async function handleCopy(which){
   const text=which==="body"?state.generatedBody:state.generatedSubject;
   const ok=await doCopy(text);
   if(ok){
+    // Sauvegarde en historique si pas déjà enregistré (cas aperçu automatique sans clic sur Générer)
+    if(which==="body"&&state.generatedBody&&(!state.history.length||state.history[0].body!==state.generatedBody)){
+      const cms=state.cmsList.find(c=>String(c.id)===String(state.selectedCMS));
+      const dem=state.selectedDemarche==="__autre__"
+        ?{nom:state.demarcheAutre||"Autre"}
+        :state.demarches.find(d=>String(d.id)===String(state.selectedDemarche));
+      if(cms&&dem){
+        addToHistory({channel:state.channel,msgType:state.msgType,body:state.generatedBody,subject:state.generatedSubject,civilite:state.civilite,prenom:state.prenom,nom:state.nom,telephone:state.telephone,demarche:dem.nom,date:state.date,heure:state.heure,ts:new Date().toLocaleString('fr-FR')});
+      }
+    }
     const btn=document.getElementById(which==="body"?"btn-copy-body":"btn-copy-subject");
     const orig=btn.textContent;btn.textContent="✓ Copié !";setTimeout(()=>{btn.textContent=orig;},2000);
     toast("✓ Copié !");
