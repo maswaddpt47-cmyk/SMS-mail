@@ -8,16 +8,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:#f0f4f9; --surface:#ffffff; --surface2:#f5f8ff; --border:#e2e8f0;
-  --border2:#c7d7f5; --text:#111827; --text2:#64748b; --text3:#374151;
-  --primary:#1a3a6b; --primary2:#3b6cb7; --primary-bg:#eef3ff;
+  --bg:#e8edf5; --surface:#ffffff; --surface2:#f0f5ff; --border:#d0d9e8;
+  --border2:#b0c4e8; --text:#111827; --text2:#5a6a82; --text3:#374151;
+  --primary:#1a3a6b; --primary2:#3b6cb7; --primary-bg:#e8f0ff;
+  --accent:#e85d26; --accent-bg:#fff2ed;
   --danger:#dc2626; --danger-bg:#fef2f2; --success:#059669;
   --warn-bg:#fffbeb; --warn-border:#fcd34d; --warn-text:#92400e;
   --green-bg:#f0fdf4; --green-border:#86efac; --green-text:#166534;
   --yellow-bg:#fffbeb; --yellow-border:#fde68a; --yellow-text:#92400e;
-  --shadow:0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
-  --shadow-md:0 4px 6px rgba(0,0,0,.07), 0 10px 30px rgba(0,0,0,.08);
-  --radius:14px; --radius-sm:10px; --radius-xs:8px;
+  --shadow:0 2px 6px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.07);
+  --shadow-md:0 4px 6px rgba(0,0,0,.1), 0 12px 32px rgba(0,0,0,.1);
+  --radius:16px; --radius-sm:11px; --radius-xs:8px;
 }
 [data-theme="dark"] {
   --bg:#0d1117; --surface:#161b27; --surface2:#0f1520; --border:#253047;
@@ -31,7 +32,7 @@
   --shadow-md:0 4px 6px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.4);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .25s,color .25s;-webkit-font-smoothing:antialiased;}
+body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .25s,color .25s;-webkit-font-smoothing:antialiased;background-image:radial-gradient(circle at 1px 1px, rgba(59,108,183,.08) 1px, transparent 0);background-size:24px 24px;}
 
 /* TABS */
 .tab-btn{background:none;border:none;padding:12px 16px;cursor:pointer;font-size:13px;font-weight:600;border-bottom:3px solid transparent;color:var(--text2);transition:all .2s;font-family:inherit;white-space:nowrap;letter-spacing:.01em;}
@@ -69,7 +70,7 @@ input:hover:not(:focus),select:hover:not(:focus){border-color:var(--border2);}
 label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;}
 
 /* CARDS */
-.card{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px;border:1px solid rgba(0,0,0,.04);}
+.card{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px;border:1px solid rgba(255,255,255,.9);}
 [data-theme="dark"] .card{border-color:var(--border);}
 
 /* OUTPUT */
@@ -199,8 +200,8 @@ label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase
       <div style="display:grid;gap:10px;">
         <div class="grid3">
           <div>
-            <label>Civilité</label>
-            <select id="inp-civilite" onchange="state.civilite=this.value;schedulePreview()">
+            <label>Civilité *</label>
+            <select id="inp-civilite" onchange="state.civilite=this.value;checkCanGenerate();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);">
               <option value="">—</option>
               <option value="M.">M.</option>
               <option value="Mme">Mme</option>
@@ -211,8 +212,8 @@ label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase
             <input id="inp-prenom" placeholder="ex : Sophie" oninput="state.prenom=this.value;schedulePreview()">
           </div>
           <div>
-            <label>Nom (optionnel)</label>
-            <input id="inp-nom" placeholder="ex : Dupont" oninput="state.nom=this.value;schedulePreview()">
+            <label>Nom *</label>
+            <input id="inp-nom" placeholder="ex : Dupont" oninput="state.nom=this.value;checkCanGenerate();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);">
           </div>
         </div>
         <div>
@@ -220,31 +221,35 @@ label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase
           <input id="inp-tel" placeholder="ex : 06 12 34 56 78" oninput="handleTelInput(this)" type="tel">
         </div>
         <div class="grid2">
-          <div><label>Date du RDV</label><input type="date" id="inp-date" oninput="state.date=this.value;checkCanGenerate();saveLastChoices();schedulePreview()"></div>
-          <div><label>Heure du RDV</label><input type="time" id="inp-heure" oninput="state.heure=this.value;checkCanGenerate();saveLastChoices();schedulePreview()"></div>
+          <div><label>Date du RDV *</label><input type="date" id="inp-date" oninput="state.date=this.value;checkCanGenerate();saveLastChoices();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);"></div>
+          <div><label>Heure du RDV *</label><input type="time" id="inp-heure" oninput="state.heure=this.value;checkCanGenerate();saveLastChoices();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);"></div>
         </div>
         <div>
-          <label>Adresse du CMS</label>
-          <select id="sel-cms" onchange="state.selectedCMS=this.value;checkCanGenerate();saveLastChoices();schedulePreview()">
+          <label>CMS *</label>
+          <select id="sel-commune" onchange="state.commune=this.value;checkCanGenerate();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);">
+            <option value="">— Sélectionner un CMS —</option>
+          </select>
+        </div>
+        <div>
+          <label>Adresse du CMS *</label>
+          <select id="sel-cms" onchange="state.selectedCMS=this.value;checkCanGenerate();saveLastChoices();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);">
             <option value="">— Sélectionner une adresse —</option>
           </select>
         </div>
         <div>
-          <label>Démarche</label>
-          <select id="sel-demarche" onchange="state.selectedDemarche=this.value;checkCanGenerate();saveLastChoices();schedulePreview()">
+          <label>Démarche *</label>
+          <select id="sel-demarche" onchange="handleDemarcheChange(this.value)" style="background:var(--primary-bg);border-color:var(--border2);">
             <option value="">— Sélectionner une démarche —</option>
           </select>
         </div>
-        <div>
-          <label>CMS</label>
-          <select id="sel-commune" onchange="state.commune=this.value;schedulePreview()">
-            <option value="">— Sélectionner un CMS —</option>
-          </select>
+        <div id="demarche-autre-row" class="hidden">
+          <label>Préciser la démarche *</label>
+          <input id="inp-demarche-autre" placeholder="ex : Aide exceptionnelle…" oninput="state.demarcheAutre=this.value;checkCanGenerate();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);">
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;align-items:center;">
-        <button class="btn-primary" id="btn-generate" style="flex:1;" onclick="handleGenerate()" disabled>Générer le SMS</button>
-        <button class="btn-secondary" onclick="nouveauRdv()" title="Garder CMS & Démarche, réinitialiser le reste">🔄 Nouveau RDV</button>
+      <button class="btn-primary" id="btn-generate" style="flex:1;background:linear-gradient(135deg,#c44a18,#e85d26);box-shadow:0 2px 10px rgba(232,93,38,.35);" onclick="handleGenerate()" disabled>Générer le SMS</button>
+        <button class="btn-secondary" onclick="nouveauRdv()" title="Réinitialiser tous les champs">🔄 Réinitialiser</button>
       </div>
       <div style="margin-top:6px;text-align:center;">
         <span class="kbd">Ctrl</span> + <span class="kbd">Entrée</span> pour générer &nbsp;·&nbsp; <span class="kbd">Ctrl</span>+<span class="kbd">Maj</span>+<span class="kbd">C</span> pour copier
@@ -532,6 +537,7 @@ const state={
   channel:"sms",msgType:"proposition",
   selectedCMS:"",selectedDemarche:"",selectedTemplate:"__default__",
   commune:"",civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",
+  demarcheAutre:"",
   generatedBody:"",generatedSubject:"",
   activeTab:"generate",subTab:"builtin",configTab:"cms",
   cmsList:[],demarches:[],secteurs:[],templates:{},
@@ -661,7 +667,9 @@ function schedulePreview(){
 // ============================================================
 function doGenerate(addHistory=true){
   const cms=state.cmsList.find(c=>String(c.id)===String(state.selectedCMS));
-  const dem=state.demarches.find(d=>String(d.id)===String(state.selectedDemarche));
+  const dem=state.selectedDemarche==="__autre__"
+    ?{nom:state.demarcheAutre||"Autre",documents:[]}
+    :state.demarches.find(d=>String(d.id)===String(state.selectedDemarche));
   if(!cms||!dem)return;
   const vars={civilite:state.civilite,prenom:state.prenom,nom:state.nom,demarche:dem.nom,date:state.date,heure:state.heure,adresse:cms.adresse,documents:dem.documents,commune:state.commune};
   let body="",subject="";
@@ -720,16 +728,22 @@ function clearResult(){
 }
 
 function nouveauRdv(){
-  state.prenom="";state.nom="";state.civilite="";state.telephone="";state.date="";state.heure="";
+  state.prenom="";state.nom="";state.civilite="";state.telephone="";
+  state.date="";state.heure="";state.demarcheAutre="";
+  state.selectedCMS="";state.selectedDemarche="";state.commune="";
   document.getElementById('inp-prenom').value="";
   document.getElementById('inp-nom').value="";
   document.getElementById('inp-civilite').value="";
   document.getElementById('inp-tel').value="";
   document.getElementById('inp-date').value="";
   document.getElementById('inp-heure').value="";
+  document.getElementById('inp-demarche-autre').value="";
+  document.getElementById('demarche-autre-row').classList.add('hidden');
+  document.getElementById('sel-cms').value="";
+  document.getElementById('sel-demarche').value="";
+  document.getElementById('sel-commune').value="";
   document.getElementById('result-card').classList.add('hidden');
   checkCanGenerate();
-  document.getElementById('inp-date').focus();
 }
 
 // SMS COUNTER
@@ -854,16 +868,34 @@ function updateCustomTplSelector(){
   sel.value=state.selectedTemplate;
   sel.onchange=()=>{state.selectedTemplate=sel.value;schedulePreview();};
 }
+function handleDemarcheChange(val){
+  state.selectedDemarche=val;
+  const autreRow=document.getElementById('demarche-autre-row');
+  if(val==="__autre__"){
+    autreRow.classList.remove('hidden');
+  } else {
+    autreRow.classList.add('hidden');
+    state.demarcheAutre="";
+    document.getElementById('inp-demarche-autre').value="";
+  }
+  saveLastChoices();checkCanGenerate();schedulePreview();
+}
+
 function checkCanGenerate(){
-  const can=!!(state.selectedCMS&&state.selectedDemarche&&state.date&&state.heure);
+  const isAutre=state.selectedDemarche==="__autre__";
+  const can=!!(state.civilite&&state.nom&&state.selectedCMS&&state.selectedDemarche&&state.date&&state.heure&&state.commune&&(!isAutre||state.demarcheAutre));
   document.getElementById('btn-generate').disabled=!can;
   const mf=document.getElementById('missing-fields');
   if(can){mf.innerHTML="";return;}
   let t="";
+  if(!state.civilite)t+='<span class="missing-tag">⚠ Civilité manquante</span> ';
+  if(!state.nom)t+='<span class="missing-tag">⚠ Nom manquant</span> ';
   if(!state.date)t+='<span class="missing-tag">⚠ Date manquante</span> ';
   if(!state.heure)t+='<span class="missing-tag">⚠ Heure manquante</span> ';
-  if(!state.selectedCMS)t+='<span class="missing-tag">⚠ CMS manquant</span> ';
+  if(!state.commune)t+='<span class="missing-tag">⚠ CMS manquant</span> ';
+  if(!state.selectedCMS)t+='<span class="missing-tag">⚠ Adresse manquante</span> ';
   if(!state.selectedDemarche)t+='<span class="missing-tag">⚠ Démarche manquante</span>';
+  if(isAutre&&!state.demarcheAutre)t+='<span class="missing-tag">⚠ Préciser la démarche</span>';
   mf.innerHTML=t;
 }
 
@@ -919,7 +951,7 @@ function renderSelects(){
   const sc=document.getElementById('sel-cms');
   sc.innerHTML='<option value="">— Sélectionner une adresse —</option>'+state.cmsList.map(c=>'<option value="'+c.id+'"'+(String(c.id)===String(state.selectedCMS)?" selected":"")+'>'+esc(c.nom)+'</option>').join('');
   const sd=document.getElementById('sel-demarche');
-  sd.innerHTML='<option value="">— Sélectionner une démarche —</option>'+state.demarches.map(d=>'<option value="'+d.id+'"'+(String(d.id)===String(state.selectedDemarche)?" selected":"")+'>'+esc(d.nom)+'</option>').join('');
+  sd.innerHTML='<option value="">— Sélectionner une démarche —</option>'+state.demarches.map(d=>'<option value="'+d.id+'"'+(String(d.id)===String(state.selectedDemarche)?" selected":"")+'>'+esc(d.nom)+'</option>').join('')+'<option value="__autre__"'+(state.selectedDemarche==="__autre__"?" selected":"")+'>✏️ Autre…</option>';
   const scom=document.getElementById('sel-commune');
   scom.innerHTML='<option value="">— Sélectionner un CMS —</option>'+state.secteurs.map(s=>'<option value="'+esc(s)+'"'+(s===state.commune?" selected":"")+'>'+esc(s)+'</option>').join('');
   document.getElementById('count-cms').textContent=state.cmsList.length;
