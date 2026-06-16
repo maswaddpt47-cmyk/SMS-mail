@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Générateur SMS & Mail — ESS CMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#e8edf5; --surface:#ffffff; --surface2:#f0f5ff; --border:#d0d9e8;
+  --border2:#b0c4e8; --text:#111827; --text2:#5a6a82; --text3:#374151;
+  --primary:#1a3a6b; --primary2:#3b6cb7; --primary-bg:#e8f0ff;
+  --accent:#e85d26; --accent-bg:#fff2ed;
+  --danger:#dc2626; --danger-bg:#fef2f2; --success:#059669;
+  --warn-bg:#fffbeb; --warn-border:#fcd34d; --warn-text:#92400e;
+  --green-bg:#f0fdf4; --green-border:#86efac; --green-text:#166534;
+  --yellow-bg:#fffbeb; --yellow-border:#fde68a; --yellow-text:#92400e;
+  --shadow:0 2px 6px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.07);
+  --shadow-md:0 4px 6px rgba(0,0,0,.1), 0 12px 32px rgba(0,0,0,.1);
+  --radius:16px; --radius-sm:11px; --radius-xs:8px;
+}
+[data-theme="dark"] {
+  --bg:#0d1117; --surface:#161b27; --surface2:#0f1520; --border:#253047;
+  --border2:#2d4070; --text:#e2e8f0; --text2:#94a3b8; --text3:#cbd5e1;
+  --primary:#5b8fd4; --primary2:#7aaee8; --primary-bg:#1a2d4a;
+  --danger:#f87171; --danger-bg:#3b1515; --success:#34d399;
+  --warn-bg:#2d1f0a; --warn-border:#78350f; --warn-text:#fbbf24;
+  --green-bg:#0a2012; --green-border:#166534; --green-text:#6ee7b7;
+  --yellow-bg:#1f1a08; --yellow-border:#78350f; --yellow-text:#fcd34d;
+  --shadow:0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.3);
+  --shadow-md:0 4px 6px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .25s,color .25s;-webkit-font-smoothing:antialiased;background-image:radial-gradient(circle at 1px 1px, rgba(59,108,183,.08) 1px, transparent 0);background-size:24px 24px;}
+
+/* TABS */
+.tab-btn{background:none;border:none;padding:12px 16px;cursor:pointer;font-size:13px;font-weight:600;border-bottom:3px solid transparent;color:var(--text2);transition:all .2s;font-family:inherit;white-space:nowrap;letter-spacing:.01em;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);}
+.sub-tab{background:none;border:1.5px solid var(--border);padding:5px 14px;cursor:pointer;font-size:12px;font-weight:600;border-radius:20px;color:var(--text2);transition:all .2s;font-family:inherit;}
+.sub-tab:hover{border-color:var(--primary2);color:var(--primary);}
+.sub-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+/* CHANNEL & TYPE BUTTONS */
+.channel-btn{flex:1;padding:12px 10px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:var(--text2);transition:all .2s;text-align:center;letter-spacing:.01em;}
+.channel-btn:hover{border-color:var(--border2);color:var(--text);}
+.channel-btn.active{border-color:var(--primary);background:var(--primary-bg);color:var(--primary);box-shadow:0 0 0 4px rgba(59,108,183,.1);}
+.type-btn{flex:1;padding:9px 6px;border:2px solid var(--border);border-radius:var(--radius-xs);background:var(--surface);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;color:var(--text2);transition:all .2s;line-height:1.4;}
+.type-btn:hover{border-color:var(--border2);}
+.type-btn.active{border-color:var(--primary);background:var(--primary-bg);color:var(--primary);}
+
+/* BUTTONS */
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border:none;border-radius:var(--radius-sm);padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 2px 8px rgba(26,58,107,.3);letter-spacing:.02em;}
+.btn-primary:hover{box-shadow:0 4px 16px rgba(26,58,107,.4);transform:translateY(-1px);}
+.btn-primary:active{transform:translateY(0);}
+.btn-primary:disabled{background:linear-gradient(135deg,#9ca3af,#b0b8c4);box-shadow:none;cursor:not-allowed;transform:none;}
+.btn-secondary{background:var(--surface);color:var(--primary);border:2px solid var(--border2);border-radius:var(--radius-xs);padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;}
+.btn-secondary:hover{background:var(--primary-bg);border-color:var(--primary);}
+.btn-danger{background:var(--surface);color:var(--danger);border:2px solid var(--danger-bg);border-radius:var(--radius-xs);padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;}
+.btn-danger:hover{background:var(--danger-bg);border-color:var(--danger);}
+.btn-ghost{background:none;border:none;padding:5px 9px;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit;border-radius:6px;transition:all .15s;}
+.btn-ghost:hover{background:var(--border);color:var(--text);}
+
+/* INPUTS */
+input,select{font-family:'Inter','Segoe UI',sans-serif;font-size:13px;border:1.5px solid var(--border);border-radius:var(--radius-xs);padding:9px 12px;width:100%;outline:none;transition:border .2s,box-shadow .2s;color:var(--text);background:var(--surface);}
+textarea{font-family:'Courier New',monospace;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-xs);padding:10px 12px;width:100%;outline:none;transition:border .2s,box-shadow .2s;color:var(--text);background:var(--surface);resize:vertical;line-height:1.65;}
+input:focus,select:focus,textarea:focus{border-color:var(--primary2);box-shadow:0 0 0 3px rgba(59,108,183,.12);}
+input:hover:not(:focus),select:hover:not(:focus){border-color:var(--border2);}
+label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;}
+
+/* CARDS */
+.card{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px;border:1px solid rgba(255,255,255,.9);}
+[data-theme="dark"] .card{border-color:var(--border);}
+
+/* OUTPUT */
+.output-area{background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);padding:14px;font-family:'Courier New',monospace;font-size:12px;line-height:1.75;white-space:pre-wrap;color:var(--text);width:100%;outline:none;transition:border .2s,box-shadow .2s;}
+.output-area:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,108,183,.1);}
+
+/* COPY BUTTONS */
+.copy-btn{display:flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:var(--radius-xs);padding:10px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;letter-spacing:.02em;}
+.copy-green{background:var(--success);color:#fff;box-shadow:0 2px 8px rgba(5,150,105,.3);}
+.copy-green:hover{filter:brightness(1.1);box-shadow:0 4px 14px rgba(5,150,105,.4);transform:translateY(-1px);}
+.copy-blue{background:var(--primary2);color:#fff;box-shadow:0 2px 8px rgba(59,108,183,.3);}
+.copy-blue:hover{filter:brightness(1.1);box-shadow:0 4px 14px rgba(59,108,183,.4);transform:translateY(-1px);}
+
+/* ROWS & CHIPS */
+.item-row{display:flex;align-items:flex-start;gap:8px;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--surface);transition:all .2s;}
+.item-row:hover{border-color:var(--border2);box-shadow:var(--shadow);}
+.var-chip{display:inline-block;background:var(--primary-bg);color:var(--primary);border:1px solid var(--border2);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;margin:2px;font-family:'Courier New',monospace;letter-spacing:.02em;}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.03em;}
+.b-prop{background:#fef3c7;color:#92400e;}
+.b-conf{background:#d1fae5;color:#065f46;}
+.b-mail{background:#ede9fe;color:#5b21b6;}
+.b-sms{background:#dbeafe;color:#1d4ed8;}
+.b-warn{background:#fef3c7;color:#92400e;}
+.b-preview{background:#e0f2fe;color:#0369a1;}
+
+/* MISC */
+.hint{font-size:11px;color:var(--text2);margin-top:6px;line-height:1.5;}
+.stitle{font-weight:700;font-size:13px;color:var(--primary);margin-bottom:12px;letter-spacing:.01em;}
+.edit-box{border:2px solid var(--primary2);border-radius:var(--radius-sm);padding:13px;margin-bottom:8px;background:var(--primary-bg);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.flex-row{display:flex;gap:8px;}
+.flex-wrap{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.hidden{display:none!important;}
+.warn-banner{background:var(--warn-bg);border:2px solid var(--warn-border);border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal-box{background:var(--surface);border-radius:20px;padding:24px;max-width:580px;width:100%;box-shadow:0 25px 80px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:14px;max-height:90vh;overflow-y:auto;border:1px solid var(--border);}
+
+/* MISC COMPONENTS */
+.dashed-row{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--bg);border:1.5px dashed var(--border);border-radius:var(--radius-sm);margin-bottom:8px;}
+.sms-counter{font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;display:inline-block;letter-spacing:.03em;}
+.counter-ok{background:var(--green-bg);color:var(--green-text);}
+.counter-warn{background:#fef3c7;color:#92400e;}
+.counter-over{background:var(--danger-bg);color:var(--danger);}
+.phone-badge{background:var(--primary-bg);color:var(--primary);border:1.5px solid var(--border2);border-radius:var(--radius-xs);padding:7px 13px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
+.history-item{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;cursor:pointer;transition:all .2s;}
+.history-item:hover{border-color:var(--primary2);box-shadow:var(--shadow);transform:translateX(2px);}
+.missing-tag{font-size:10px;background:var(--danger-bg);color:var(--danger);border-radius:6px;padding:2px 8px;font-weight:700;}
+
+/* LAYOUT */
+#tabs-bar{background:var(--surface);border-bottom:1.5px solid var(--border);padding:0 16px;display:flex;overflow-x:auto;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+#content{padding:18px 16px;max-width:700px;margin:0 auto;}
+
+/* HEADER BUTTONS */
+.dark-toggle{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.25);border-radius:var(--radius-xs);color:#fff;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;backdrop-filter:blur(4px);}
+.dark-toggle:hover{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5);}
+
+/* IMPORT AREA */
+.import-area{background:var(--surface2);border:2px dashed var(--border2);border-radius:var(--radius-sm);padding:16px;text-align:center;color:var(--text2);font-size:13px;transition:all .2s;}
+.import-area:hover{border-color:var(--primary2);background:var(--primary-bg);}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);padding:11px 22px;border-radius:12px;font-size:13px;font-weight:600;z-index:3000;opacity:0;transition:opacity .25s,transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;box-shadow:0 8px 30px rgba(0,0,0,.3);letter-spacing:.01em;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast-ok{background:#059669;color:#fff;}
+.toast-err{background:#dc2626;color:#fff;}
+.toast-warn{background:#d97706;color:#fff;}
+
+/* SEARCH BOX */
+.search-box{position:relative;margin-bottom:10px;}
+.search-box input{padding-left:34px;}
+.search-box::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none;z-index:1;}
+
+/* KEYBOARD HINT */
+.kbd{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:2px 6px;font-size:10px;font-family:'Courier New',monospace;color:var(--text2);box-shadow:0 1px 0 var(--border);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header" style="background:linear-gradient(135deg,#1a3a6b 0%,#2d5fa8 60%,#3b6cb7 100%);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(26,58,107,.35);">
+  <div style="background:rgba(255,255,255,.18);backdrop-filter:blur(8px);border-radius:12px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid rgba(255,255,255,.25);">💬</div>
+  <div style="flex:1;min-width:0;">
+    <div style="font-weight:700;font-size:14px;letter-spacing:.01em;">Générateur SMS & Mail — ESS CMS</div>
+    <div style="font-size:11px;opacity:.65;margin-top:1px;" id="save-status">Données chargées</div>
+  </div>
+  <button class="dark-toggle" onclick="toggleDark()" id="btn-dark">🌙 Sombre</button>
+  <button class="dark-toggle" onclick="openModal('import-modal')">📥 Importer</button>
+  <button class="dark-toggle" onclick="handleExportData()">💾 Sauvegarder</button>
+</div>
+
+<!-- TABS -->
+<div id="tabs-bar">
+  <button class="tab-btn active" onclick="showTab('generate',this)">✉️ Générer</button>
+  <button class="tab-btn" onclick="showTab('history',this)">🕐 Historique</button>
+  <button class="tab-btn" onclick="showTab('templates',this)">📝 Modèles</button>
+  <button class="tab-btn" onclick="showTab('config',this)">⚙️ Configuration</button>
+</div>
+
+<div id="content">
+
+  <!-- ===== GENERATE TAB ===== -->
+  <div id="tab-generate">
+    <!-- Canal + Type -->
+    <div class="card">
+      <label>Canal d'envoi</label>
+      <div class="flex-row" style="margin-top:4px;">
+        <button class="channel-btn active" id="btn-sms" onclick="setChannel('sms')">📱 SMS</button>
+        <button class="channel-btn" id="btn-mail" onclick="setChannel('mail')">📧 Mail</button>
+      </div>
+      <div class="flex-row" style="margin-top:8px;" id="type-btns">
+        <button class="type-btn active" id="btn-proposition" onclick="setMsgType('proposition')">📨 Proposition<br><span style="font-size:10px;font-weight:400;">Non joint</span></button>
+        <button class="type-btn" id="btn-confirmation" onclick="setMsgType('confirmation')">✅ Confirmation<br><span style="font-size:10px;font-weight:400;">Joint</span></button>
+        <button class="type-btn" id="btn-sans_appel" onclick="setMsgType('sans_appel')">✉️ Sans appel<br><span style="font-size:10px;font-weight:400;">Direct</span></button>
+      </div>
+      <div id="custom-tpl-selector" class="hidden" style="margin-top:10px;">
+        <label>Modèle personnalisé</label>
+        <select id="select-custom-tpl" onchange="state.selectedTemplate=this.value;schedulePreview()"></select>
+      </div>
+    </div>
+
+    <!-- Infos RDV -->
+    <div class="card">
+      <div class="stitle">📋 Informations du rendez-vous</div>
+      <div style="display:grid;gap:10px;">
+        <div class="grid3">
+          <div>
+            <label>Civilité *</label>
+            <select id="inp-civilite" onchange="state.civilite=this.value;checkCanGenerate();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);">
+              <option value="">—</option>
+              <option value="M.">M.</option>
+              <option value="Mme">Mme</option>
+            </select>
+          </div>
+          <div>
+            <label>Prénom (optionnel)</label>
+            <input id="inp-prenom" placeholder="ex : Sophie" oninput="state.prenom=this.value;schedulePreview()">
+          </div>
+          <div>
+            <label>Nom *</label>
+            <input id="inp-nom" placeholder="ex : Dupont" oninput="state.nom=this.value;checkCanGenerate();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);">
+          </div>
+        </div>
+        <div>
+          <label>Téléphone (optionnel)</label>
+          <input id="inp-tel" placeholder="ex : 06 12 34 56 78" oninput="handleTelInput(this)" type="tel">
+        </div>
+        <div class="grid2">
+          <div><label>Date du RDV *</label><input type="date" id="inp-date" oninput="state.date=this.value;checkCanGenerate();saveLastChoices();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);"></div>
+          <div><label>Heure du RDV *</label><input type="time" id="inp-heure" oninput="state.heure=this.value;checkCanGenerate();saveLastChoices();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);"></div>
+        </div>
+        <div>
+          <label>CMS *</label>
+          <select id="sel-commune" onchange="state.commune=this.value;checkCanGenerate();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);">
+            <option value="">— Sélectionner un CMS —</option>
+          </select>
+        </div>
+        <div>
+          <label>Adresse du CMS *</label>
+          <select id="sel-cms" onchange="state.selectedCMS=this.value;checkCanGenerate();saveLastChoices();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);">
+            <option value="">— Sélectionner une adresse —</option>
+          </select>
+        </div>
+        <div>
+          <label>Démarche *</label>
+          <select id="sel-demarche" onchange="handleDemarcheChange(this.value)" style="background:var(--primary-bg);border-color:var(--border2);">
+            <option value="">— Sélectionner une démarche —</option>
+          </select>
+        </div>
+        <div id="demarche-autre-row" class="hidden">
+          <label>Préciser la démarche *</label>
+          <input id="inp-demarche-autre" placeholder="ex : Aide exceptionnelle…" oninput="state.demarcheAutre=this.value;checkCanGenerate();schedulePreview()" style="background:var(--primary-bg);border-color:var(--border2);">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;align-items:center;">
+      <button class="btn-primary" id="btn-generate" style="flex:1;background:linear-gradient(135deg,#c44a18,#e85d26);box-shadow:0 2px 10px rgba(232,93,38,.35);" onclick="handleGenerate()" disabled>Générer le SMS</button>
+        <button class="btn-secondary" onclick="nouveauRdv()" title="Réinitialiser tous les champs">🔄 Réinitialiser</button>
+      </div>
+      <div style="margin-top:6px;text-align:center;">
+        <span class="kbd">Ctrl</span> + <span class="kbd">Entrée</span> pour générer &nbsp;·&nbsp; <span class="kbd">Ctrl</span>+<span class="kbd">Maj</span>+<span class="kbd">C</span> pour copier
+      </div>
+      <div id="missing-fields" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;justify-content:center;"></div>
+    </div>
+
+    <!-- Résultat -->
+    <div class="card hidden" id="result-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="stitle" style="margin:0;" id="result-title">SMS généré</div>
+        <div id="result-badges"></div>
+      </div>
+      <!-- Téléphone -->
+      <div id="tel-display" class="hidden" style="margin-bottom:12px;"></div>
+      <!-- Objet mail -->
+      <div id="subject-row" class="hidden" style="margin-bottom:12px;">
+        <label>Objet du mail</label>
+        <div class="flex-row" style="align-items:center;">
+          <input id="inp-subject" style="flex:1;background:var(--surface2);border:2px solid var(--border2);font-weight:600;" oninput="state.generatedSubject=this.value">
+          <button class="copy-btn copy-blue" id="btn-copy-subject" onclick="handleCopy('subject')" style="white-space:nowrap;flex-shrink:0;">📋 Copier</button>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <label id="body-label" style="margin:0;">Texte du SMS</label>
+          <span id="sms-counter" class="sms-counter counter-ok hidden"></span>
+        </div>
+        <textarea class="output-area" id="txt-body" rows="12" oninput="state.generatedBody=this.value;updateSmsCounter()"></textarea>
+        <div class="hint">✏️ Modifiez directement avant de copier.</div>
+      </div>
+      <div class="flex-row" style="margin-top:10px;">
+        <button class="copy-btn copy-green" id="btn-copy-body" onclick="handleCopy('body')" style="flex:1;">📋 Copier le SMS</button>
+        <button class="btn-secondary" onclick="clearResult()">Effacer</button>
+      </div>
+      <div class="hint" id="copy-hint" style="text-align:center;margin-top:7px;">Collez dans Google Messages avec Ctrl+V</div>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY TAB ===== -->
+  <div id="tab-history" class="hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-weight:700;font-size:14px;color:var(--primary);">🕐 Historique</div>
+      <button class="btn-danger" onclick="clearHistory()" style="font-size:11px;">🗑️ Vider</button>
+    </div>
+    <div class="flex-wrap" style="margin-bottom:12px;">
+      <button class="sub-tab active" id="hfilt-all" onclick="setHistoryFilter('all')">Tous</button>
+      <button class="sub-tab" id="hfilt-sms" onclick="setHistoryFilter('sms')">📱 SMS</button>
+      <button class="sub-tab" id="hfilt-mail" onclick="setHistoryFilter('mail')">📧 Mail</button>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- ===== TEMPLATES TAB ===== -->
+  <div id="tab-templates" class="hidden">
+    <div class="flex-wrap" style="margin-bottom:8px;">
+      <button class="sub-tab active" id="stab-builtin" onclick="showSubTab('builtin')">🔧 Par défaut</button>
+      <button class="sub-tab" id="stab-custom" onclick="showSubTab('custom')">✨ Mes modèles (<span id="count-custom">0</span>)</button>
+      <button class="sub-tab" id="stab-vars" onclick="showSubTab('vars')">🔖 Variables (<span id="count-vars">0</span>)</button>
+    </div>
+    <div class="flex-wrap" style="justify-content:flex-end;margin-bottom:8px;" id="tpl-action-btns"></div>
+    <div id="confirm-reset-builtin" class="warn-banner hidden">
+      <div style="flex:1;font-size:12px;font-weight:600;color:var(--warn-text);">⚠️ Supprimer tous les modèles par défaut ?</div>
+      <button class="btn-danger" onclick="deleteAllBuiltin()">Confirmer</button>
+      <button class="btn-secondary" onclick="hideConfirm()">Annuler</button>
+    </div>
+    <div id="confirm-reset-custom" class="warn-banner hidden">
+      <div style="flex:1;font-size:12px;font-weight:600;color:var(--warn-text);">⚠️ Supprimer tous les modèles personnalisés ?</div>
+      <button class="btn-danger" onclick="deleteAllCustomTemplates()">Confirmer</button>
+      <button class="btn-secondary" onclick="hideConfirm()">Annuler</button>
+    </div>
+    <div id="confirm-reset-vars" class="warn-banner hidden">
+      <div style="flex:1;font-size:12px;font-weight:600;color:var(--warn-text);">⚠️ Supprimer toutes les variables ?</div>
+      <button class="btn-danger" onclick="deleteAllVars()">Confirmer</button>
+      <button class="btn-secondary" onclick="hideConfirm()">Annuler</button>
+    </div>
+    <div class="card" style="background:var(--yellow-bg);border:1.5px solid var(--yellow-border);">
+      <div style="font-weight:700;font-size:12px;color:var(--yellow-text);margin-bottom:6px;">📌 Variables disponibles</div>
+      <div id="vars-chips"></div>
+      <div class="hint" style="margin-top:6px;">Insérées automatiquement. <strong>{civilite}</strong> = M. ou Mme · <strong>{prenom_nom}</strong> = prénom + nom combinés.</div>
+    </div>
+    <div id="stab-builtin-content"><div id="builtin-list"></div></div>
+    <div id="stab-custom-content" class="hidden">
+      <div class="card">
+        <div class="stitle">➕ Créer un modèle</div>
+        <div style="display:grid;gap:9px;">
+          <div><label>Nom</label><input id="new-tpl-nom" placeholder="ex : Relance urgente…"></div>
+          <div class="grid2">
+            <div><label>Canal</label>
+              <select id="new-tpl-canal" onchange="document.getElementById('new-tpl-sujet-row').style.display=this.value==='mail'?'block':'none'">
+                <option value="sms">📱 SMS</option><option value="mail">📧 Mail</option>
+              </select>
+            </div>
+            <div><label>Type</label>
+              <select id="new-tpl-type">
+                <option value="proposition">📨 Proposition</option>
+                <option value="confirmation">✅ Confirmation</option>
+                <option value="sans_appel">✉️ Sans appel</option>
+              </select>
+            </div>
+          </div>
+          <div id="new-tpl-sujet-row" style="display:none;"><label>Objet mail</label><input id="new-tpl-sujet" placeholder="Objet du mail…"></div>
+          <div><label>Corps</label><textarea id="new-tpl-body" rows="9" placeholder="Bonjour {civilite} {prenom},&#10;&#10;...&#10;&#10;{documents}"></textarea></div>
+          <button class="btn-primary" onclick="addCustomTemplate()">+ Créer</button>
+        </div>
+      </div>
+      <div class="card"><div class="stitle">Mes modèles</div><div id="custom-tpl-list"></div></div>
+    </div>
+    <div id="stab-vars-content" class="hidden">
+      <div class="card">
+        <div class="stitle">➕ Nouvelle variable</div>
+        <div style="display:grid;gap:9px;">
+          <div class="grid2">
+            <div><label>Nom</label><input id="new-var-nom" placeholder="conseiller"></div>
+            <div><label>Valeur</label><input id="new-var-valeur" placeholder="Michel Aswad"></div>
+          </div>
+          <button class="btn-primary" onclick="addCustomVar()">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="card"><div class="stitle">Variables enregistrées</div><div id="vars-list"></div></div>
+    </div>
+  </div>
+
+  <!-- ===== CONFIG TAB ===== -->
+  <div id="tab-config" class="hidden">
+    <div class="flex-wrap" style="margin-bottom:12px;">
+      <button class="sub-tab active" id="ctab-cms" onclick="showConfigTab('cms')">🏢 Adresses CMS (<span id="count-cms">0</span>)</button>
+      <button class="sub-tab" id="ctab-secteurs" onclick="showConfigTab('secteurs')">📍 CMS (<span id="count-secteurs">0</span>)</button>
+      <button class="sub-tab" id="ctab-demarches" onclick="showConfigTab('demarches')">📂 Démarches (<span id="count-demarches">0</span>)</button>
+    </div>
+    <div id="ctab-cms-content">
+      <div class="card">
+        <div class="stitle">Ajouter un CMS</div>
+        <div style="display:grid;gap:9px;">
+          <div><label>Nom</label><input id="new-cms-nom" placeholder="CMS Centre-Ville"></div>
+          <div><label>Adresse complète</label><input id="new-cms-adresse" placeholder="12 rue de la République, 75001"></div>
+          <button class="btn-primary" onclick="addCms()">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="stitle">CMS enregistrés</div>
+        <div class="search-box"><input id="search-cms" placeholder="Rechercher…" oninput="state.cmsSearch=this.value;renderCmsList()"></div>
+        <div id="cms-list"></div>
+      </div>
+    </div>
+    <div id="ctab-secteurs-content" class="hidden">
+      <div class="card">
+        <div class="stitle">Ajouter un CMS</div>
+        <div style="display:grid;gap:9px;">
+          <div><label>Nom</label><input id="new-secteur" placeholder="ex : Tonneins…" onkeydown="if(event.key==='Enter')addSecteur()"></div>
+          <button class="btn-primary" onclick="addSecteur()">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="card"><div class="stitle">CMS enregistrés</div><div id="secteurs-list"></div></div>
+    </div>
+    <div id="ctab-demarches-content" class="hidden">
+      <div class="card">
+        <div class="stitle">Ajouter une démarche</div>
+        <div style="display:grid;gap:9px;">
+          <div><label>Nom</label><input id="new-dem-nom" placeholder="ex : RSA — Instruction"></div>
+          <div><label>Documents (un par ligne)</label><textarea id="new-dem-docs" rows="5" placeholder="Pièce d'identité&#10;Justificatif de domicile&#10;RIB…"></textarea></div>
+          <button class="btn-primary" onclick="addDemarche()">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="stitle">Démarches enregistrées</div>
+        <div class="search-box"><input id="search-dem" placeholder="Rechercher…" oninput="state.demSearch=this.value;renderDemarchesList()"></div>
+        <div id="demarches-list"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay hidden" id="export-modal">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-weight:700;font-size:14px;color:var(--primary);">💾 Sauvegarde</div>
+      <button onclick="closeModal('export-modal')" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);">✕</button>
+    </div>
+    <div style="background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--green-text);line-height:1.6;">
+      📋 Téléchargez le fichier JSON ou copiez le contenu pour restaurer vos données sur un autre appareil.
+    </div>
+    <textarea id="export-text" rows="10" style="font-size:11px;" readonly></textarea>
+    <div class="flex-row">
+      <button onclick="downloadExport()" class="btn-primary" style="flex:1;">⬇️ Télécharger .json</button>
+      <button onclick="copyExport()" id="btn-copy-export" class="btn-secondary" style="flex:1;">📋 Copier</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay hidden" id="import-modal">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-weight:700;font-size:14px;color:var(--primary);">📥 Importer une sauvegarde</div>
+      <button onclick="closeModal('import-modal')" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);">✕</button>
+    </div>
+    <div style="background:var(--warn-bg);border:1.5px solid var(--warn-border);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--warn-text);line-height:1.6;">
+      ⚠️ L'import remplacera toutes vos données actuelles. Sauvegardez d'abord si nécessaire.
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
+      <label style="margin:0;">Collez votre JSON ou choisissez un fichier</label>
+      <input type="file" id="import-file-input" accept=".json,application/json" style="display:none" onchange="handleImportFile(this)">
+      <button class="btn-secondary" style="white-space:nowrap;flex-shrink:0;" onclick="document.getElementById('import-file-input').click()">📂 Parcourir…</button>
+    </div>
+    <textarea id="import-text" rows="10" placeholder='{ "cmsList": [...], "demarches": [...], ... }'></textarea>
+    <button onclick="handleImport()" class="btn-primary" style="width:100%;">📥 Importer et remplacer</button>
+    <div id="import-error" class="hidden" style="color:var(--danger);font-size:12px;font-weight:600;text-align:center;"></div>
+  </div>
+</div>
+
+<!-- HISTORY DETAIL MODAL -->
+<div class="modal-overlay hidden" id="history-modal">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-weight:700;font-size:14px;color:var(--primary);" id="history-modal-title">Message</div>
+      <button onclick="closeModal('history-modal')" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);">✕</button>
+    </div>
+    <div id="history-modal-subject" class="hidden">
+      <label>Objet</label>
+      <input id="history-modal-subject-val" readonly style="background:var(--surface2);">
+    </div>
+    <div><label>Message</label><textarea id="history-modal-body" rows="14" readonly class="output-area"></textarea></div>
+    <button onclick="copyHistoryItem()" class="copy-btn copy-green" style="width:100%;">📋 Copier</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const DEFAULT_CMS=[
+  {id:1,nom:"Fumel",adresse:"Centre Médico-Social de Fumel - 2 Place Voltaire, 47500 FUMEL"},
+  {id:2,nom:"Marmande",adresse:"Centre Médico-Social de Marmande - 8 Square de Verdun, 47200 MARMANDE"},
+  {id:3,nom:"Saint Pardoux-d'Isaac",adresse:"Centre Médico-Social de Saint Pardoux-d'Isaac - 25 avenue de Paris, 47800 ST-PARDOUX-ISAAC"},
+  {id:4,nom:"Villeneuve-Sur-Lot",adresse:"Centre Médico-Social de Villeneuve-Sur-Lot - 1 Place d'Aquitaine, 47300 VILLENEUVE-SUR-LOT"},
+  {id:5,nom:"Agen Montanou",adresse:"Centre Médico-Social Agen Montanou - Rue Blaise de Monluc, Place de quartier, 47000 AGEN"},
+];
+const DEFAULT_DEMARCHES=[
+  {id:1,nom:"Demande de logement social",documents:["Votre pièce d'identité, celles des codemandeurs et des enfants","Carte Vitale","Le livret de famille","2 derniers avis d'imposition","Attestation de paiement CAF, MSA ou CARSAT pour vous ainsi que pour les codemandeurs (Allocation, retraite, …)","Si vous travaillez : le contrat de travail + les 3 derniers bulletins de salaire ( + ceux des codemandeurs)","Votre contrat de location + quittances de loyer","Dans le cas où vous êtes hébergé, une attestation d'hébergement ainsi qu'une copie de la carte d'identité et le justificatif de domicile de l'hébergeur","Si logement insalubre : un arrêté d'insalubrité ou diagnostic","OU : décisions de justice (Dans les cas de divorce ou de violences)","Un accès à votre compte mail."]},
+  {id:2,nom:"Demande de la Carte Solidaire",documents:["Une photo d'identité récente et conforme. Si la photo ne respecte pas certains critères, elle sera rejetée et la carte ne sera pas délivrée","Une photocopie recto-verso d'une pièce d'identité","Un justificatif de domicile de moins de 3 mois","Une photocopie complète du dernier avis d'imposition ou de l'avis de situation déclarative à l'impôt sur le revenu","Un accès à votre compte mail.","*** Pour les enfants :","Rajouter le livret de famille et une pièce d'identité."]},
+  {id:3,nom:"Demande de la CSS",documents:["Carte Vitale ;","Dernier avis d'imposition ;","Numéro d'allocataire CAF ou MSA (si bénéficiaire) ;","Un accès à votre compte mail."]},
+  {id:4,nom:"Demande de Chèque Énergie",documents:["Le numéro fiscal ;","Une attestation de contrat d'électricité au nom et prénom du demandeur mentionnant le numéro de point de livraison du logement, datant de moins de trois mois à la date de votre demande et tenant lieu de justificatif de domicile ;","Un accès à votre mail."]},
+  {id:5,nom:"Demande de Visa (VISALE)",documents:["*** Pour le demandeur et le co-demandeur :","Vos pièces justificatives d'état civil ;","Vos pièces justificatives de situation professionnelle (un contrat de travail, une convention de stage, une attestation d'inscription dans un établissement supérieur…) ;","Les documents justifiant de vos ressources (les bulletins de salaire) ;","Un accès à votre compte mail."]},
+  {id:6,nom:"Demande de retraite",documents:["Copie de votre acte de naissance avec mention marginale datant de moins de 3 mois ;","Relevé d'identité bancaire (RIB ou RICE) à votre nom sous format IBAN ;","Deux derniers avis d'impôt sur le revenu ;","Copie intégrale de votre dernier livret de famille ;","Enfant : si absence du livret de famille, copie intégrale de l'acte de naissance des enfants ;","Notification d'attribution d'une pension d'invalidité ou notification de la Cotorep ou notification de la MDPH ou notification d'attribution d'une carte d'invalidité (si vous êtes concerné) ;","Décomptes d'indemnités journalières (maladie) sur les 12 derniers mois (si vous êtes concerné) ;","Attestation Pôle Emploi sur les 12 derniers mois (si vous êtes concerné) ;","Un accès à votre compte mail."]},
+  {id:7,nom:"Utilisation outils numériques",documents:[]},
+  {id:8,nom:"Demande de DCEM",documents:["Documents communs à toutes les situations :","Justificatif de régularité du séjour du demandeur (si vous êtes ressortissant d'un pays tiers) : carte de séjour en cours de validité","Passeport (ou sinon : carte d'identité nationale, carte d'identité consulaire, etc.) du demandeur et de l'enfant","Livret de famille ou extrait d'acte de naissance comportant la filiation établie de l'enfant","Documents attestant que le demandeur exerce l'autorité parentale sur le mineur :","o  Parents mariés : extrait d'acte de mariage","o  Parents divorcés : jugement de divorce","o  Parents non mariés : acte de naissance de l'enfant mentionnant la reconnaissance du mineur avant l'âge d'1 an, ou déclaration conjointe d'exercice en commun de l'autorité parentale faite auprès du greffier du tribunal judiciaire ou copie de la décision de justice statuant sur l'autorité parentale (si l'enfant a été reconnu après l'âge d'1 an)","o  Si l'autorité parentale est exercée par un tiers : copie de la décision de justice portant délégation de l'autorité parentale ou de la décision du conseil de famille","Certificat de scolarité ou de crèche ou tout autre document pour les enfants de bas âge pouvant prouver la résidence habituelle en France","Timbres fiscaux d'un montant de 50 € à donner au moment de la remise du DCEM (gratuité pour les enfants de parent européen ou de bénéficiaire de l'accord sur le retrait du Royaume-Uni de l'Union européenne)","e-photo de l'enfant."]},
+  {id:9,nom:"Dossier MDPH",documents:["Certificat médical Cerfa N° 15695* ;","Photocopie d'une pièce d'identité en cours de validité ;","Photocopie d'un justificatif de domicile de moins de 6 mois."]},
+];
+const DEFAULT_SECTEURS=["Fumel","Marmande","Saint-Pardoux-d'Isaac","Villeneuve-Sur-Lot","Agen Montanou"];
+const DEFAULT_CUSTOM_TEMPLATES=[
+  {id:1776330317000,nom:"Réorientation France Services Fumel",canal:"sms",type:"sans_appel",sujet:"",body:"Bonjour {civilite} {prenom},\n\nÀ la suite d'une demande d'accompagnement transmise par le CMS de Fumel, je vous invite à vous rapprocher de France Services Fumel (CCAS), situé au 1 place du Château, 47500 Fumel, au 05 53 49 59 80, pour toute question relative à vos impôts.\n\nN'étant pas habilité à intervenir sur ce type de demande, je vous remercie de votre compréhension.\n\nRestant à votre disposition par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne."},
+  {id:1776865515594,nom:"Réorientation France Services - MDM - Marmande",canal:"sms",type:"sans_appel",sujet:"",body:"Bonjour {civilite} {prenom},\n\nÀ la suite d'une demande d'accompagnement transmise par le CMS de Marmande, je vous invite à vous rapprocher de France Services (Maison des Marmandais), situé au 106 avenue du Commandant Christian Baylac, 47200 Marmande, au 05 53 64 04 26, pour toute question relative à vos impôts.\n\nN'étant pas habilité à intervenir sur ce type de demande, je vous remercie de votre compréhension.\n\nRestant à votre disposition par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne."},
+];
+const DEFAULT_TEMPLATES={
+  sms_proposition:"Bonjour {civilite} {prenom},\n\nPour faire suite à mon message téléphonique de ce jour, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"{demarche}\" le {date} à {heure} au :\n\n📍 {adresse}\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n{documents}\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+  sms_confirmation:"Bonjour {civilite} {prenom},\n\nPour faire suite à notre conversation téléphonique de ce jour, je vous confirme notre rendez-vous pour un accompagnement numérique, concernant votre \"{demarche}\" le {date} à {heure} au :\n\n📍 {adresse}\n\nEn cas d'empêchement, merci de me prévenir par SMS dans les meilleurs délais.\n\nPensez à apporter :\n{documents}\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+  sms_sans_appel:"Bonjour {civilite} {prenom},\n\nPour faire suite à la demande du Centre Médico-Social de {commune}, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"{demarche}\" le {date} à {heure} au :\n\n📍 {adresse}\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n{documents}\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+  mail_proposition_sujet:"Proposition de rendez-vous — {demarche} — {date}",
+  mail_proposition:"Bonjour {civilite} {prenom},\n\nJe me permets de vous contacter suite à ma tentative de vous joindre par téléphone.\n\nDans le cadre de votre démarche \"{demarche}\", je vous propose un rendez-vous le {date} à {heure}.\n\n📍 Adresse : {adresse}\n\nMerci de bien vouloir me confirmer RAPIDEMENT par retour mail si ce créneau vous convient en répondant à ce mail ou en me contactant par téléphone.\n\nLe cas échéant, merci de prévoir les documents suivants :\n{documents}\n\nDans l'attente de votre retour, je reste à votre disposition.\n\nCordialement,",
+  mail_confirmation_sujet:"Confirmation de rendez-vous — {demarche} — {date}",
+  mail_confirmation:"Bonjour {civilite} {prenom},\n\nSuite à notre échange téléphonique, je vous confirme votre rendez-vous dans le cadre de votre démarche \"{demarche}\".\n\n📅 Date : {date}\n🕐 Heure : {heure}\n📍 Adresse : {adresse}\n\nMerci de vous munir des documents suivants :\n{documents}\n\nEn cas d'empêchement, merci de me prévenir par retour mail dans les meilleurs délais.\n\nÀ bientôt,",
+  mail_sans_appel_sujet:"Proposition de rendez-vous — {demarche} — {date}",
+  mail_sans_appel:"Bonjour {civilite} {prenom},\n\nPour faire suite à la demande du CMS de {commune}, je me permets de vous contacter par écrit dans le cadre de votre démarche \"{demarche}\".\n\nJe vous propose un rendez-vous le {date} à {heure} au :\n\n📍 {adresse}\n\nMerci de bien vouloir me confirmer par retour mail si ce créneau vous convient en répondant à ce mail.\n\nLe cas échéant, merci de prévoir les documents suivants :\n{documents}\n\nDans l'attente de votre retour, je reste à votre disposition.\n\nCordialement,",
+};
+const TEMPLATE_LABELS={
+  sms_proposition:"📱 SMS — Proposition (non joint)",
+  sms_confirmation:"📱 SMS — Confirmation (joint)",
+  sms_sans_appel:"📱 SMS — Proposition sans appel",
+  mail_proposition_sujet:"📧 Mail — Objet Proposition",
+  mail_proposition:"📧 Mail — Corps Proposition",
+  mail_confirmation_sujet:"📧 Mail — Objet Confirmation",
+  mail_confirmation:"📧 Mail — Corps Confirmation",
+  mail_sans_appel_sujet:"📧 Mail — Objet Proposition sans appel",
+  mail_sans_appel:"📧 Mail — Corps Proposition sans appel",
+};
+const HISTORY_MAX=20;
+
+// ============================================================
+// STATE
+// ============================================================
+const state={
+  channel:"sms",msgType:"proposition",
+  selectedCMS:"",selectedDemarche:"",selectedTemplate:"__default__",
+  commune:"",civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",
+  demarcheAutre:"",
+  generatedBody:"",generatedSubject:"",
+  activeTab:"generate",subTab:"builtin",configTab:"cms",
+  cmsList:[],demarches:[],secteurs:[],templates:{},
+  customTemplates:[],customVars:[],hiddenBuiltinKeys:[],
+  history:[],darkMode:false,
+  historyFilter:"all",
+  cmsSearch:"",demSearch:"",
+};
+
+// ============================================================
+// STORAGE
+// ============================================================
+function ls(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}}
+function lsSet(k,v){
+  try{localStorage.setItem(k,JSON.stringify(v));}
+  catch(e){
+    if(e.name==='QuotaExceededError'||e.code===22||e.code===1014){
+      toast('⚠️ Stockage local plein. Exportez vos données !','warn');
+    }
+  }
+}
+function loadData(){
+  state.cmsList=ls('ess-cms',DEFAULT_CMS);
+  state.demarches=ls('ess-demarches',DEFAULT_DEMARCHES);
+  state.secteurs=ls('ess-secteurs',DEFAULT_SECTEURS);
+  state.templates=ls('ess-templates',DEFAULT_TEMPLATES);
+  state.customTemplates=ls('ess-custom-tpl',DEFAULT_CUSTOM_TEMPLATES);
+  state.customVars=ls('ess-vars',[]);
+  state.hiddenBuiltinKeys=ls('ess-hidden',[]);
+  state.history=ls('ess-history',[]);
+  state.darkMode=ls('ess-dark',false);
+  const last=ls('ess-last',{});
+  if(last.selectedCMS)state.selectedCMS=last.selectedCMS;
+  if(last.selectedDemarche)state.selectedDemarche=last.selectedDemarche;
+  if(last.commune)state.commune=last.commune;
+}
+function saveData(){
+  lsSet('ess-cms',state.cmsList);lsSet('ess-demarches',state.demarches);
+  lsSet('ess-secteurs',state.secteurs);lsSet('ess-templates',state.templates);
+  lsSet('ess-custom-tpl',state.customTemplates);lsSet('ess-vars',state.customVars);
+  lsSet('ess-hidden',state.hiddenBuiltinKeys);
+  const now=new Date().toLocaleString('fr-FR');
+  lsSet('ess-lastSave',now);
+  document.getElementById('save-status').textContent='Sauvegardé le '+now;
+}
+function saveLastChoices(){
+  lsSet('ess-last',{selectedCMS:state.selectedCMS,selectedDemarche:state.selectedDemarche,commune:state.commune});
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg,type='ok'){
+  const t=document.createElement('div');
+  t.className='toast toast-'+type;
+  t.textContent=msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},2600);
+}
+
+// ============================================================
+// FILL TEMPLATE
+// ============================================================
+function fillTemplate(tpl,{civilite,prenom,nom,demarche,date,heure,adresse,documents,commune}){
+  const civStr=civilite||"";
+  const prenomStr=prenom||"";
+  const nomStr=nom||"";
+  const fullName=[prenomStr,nomStr].filter(Boolean).join(" ");
+  let greeting="";
+  if(civStr&&fullName) greeting=" "+civStr+" "+fullName;
+  else if(civStr&&!fullName) greeting=" "+civStr;
+  else if(!civStr&&fullName) greeting=" "+fullName;
+  const dateFmt=date?new Date(date).toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"}):"[date]";
+  const docList=(documents||[]).map(d=>"• "+d).join("\n");
+  let r=tpl
+    .replace(/{civilite}/g,civStr)
+    .replace(/{prenom}/g,prenomStr)
+    .replace(/{nom}/g,nomStr)
+    .replace(/{prenom_nom}/g,fullName)
+    .replace(/{greeting}/g,greeting)
+    .replace(/Bonjour \{civilite\} \{prenom\}/g,"Bonjour"+greeting)
+    .replace(/Bonjour\{civilite\} \{prenom\}/g,"Bonjour"+greeting)
+    .replace(/Bonjour \{prenom\}/g,"Bonjour"+greeting)
+    .replace(/Bonjour\{prenom\}/g,"Bonjour"+greeting)
+    .replace(/{demarche}/g,demarche||"[démarche]")
+    .replace(/{date}/g,dateFmt)
+    .replace(/{heure}/g,heure||"[heure]")
+    .replace(/{adresse}/g,adresse||"[adresse]")
+    .replace(/{documents}/g,docList)
+    .replace(/{commune}/g,commune||"[commune]");
+  for(const v of state.customVars){
+    if(v.nom)r=r.replace(new RegExp("\\{"+v.nom+"\\}","g"),v.valeur);
+  }
+  r=r.replace(/Bonjour  /g,"Bonjour ");
+  return r;
+}
+
+// ============================================================
+// TÉLÉPHONE
+// ============================================================
+function formatTel(val){
+  const d=val.replace(/\D/g,'').substring(0,10);
+  return d.replace(/(\d{2})(?=\d)/g,'$1 ').trim();
+}
+function handleTelInput(el){
+  const formatted=formatTel(el.value);
+  el.value=formatted;
+  state.telephone=formatted;
+}
+
+// ============================================================
+// LIVE PREVIEW
+// ============================================================
+let _previewTimer=null;
+function schedulePreview(){
+  clearTimeout(_previewTimer);
+  _previewTimer=setTimeout(()=>{
+    if(state.selectedCMS&&state.selectedDemarche&&state.date&&state.heure){
+      doGenerate(false);
+    }
+  },450);
+}
+
+// ============================================================
+// GENERATE
+// ============================================================
+function doGenerate(addHistory=true){
+  const cms=state.cmsList.find(c=>String(c.id)===String(state.selectedCMS));
+  const dem=state.selectedDemarche==="__autre__"
+    ?{nom:state.demarcheAutre||"Autre",documents:[]}
+    :state.demarches.find(d=>String(d.id)===String(state.selectedDemarche));
+  if(!cms||!dem)return;
+  const vars={civilite:state.civilite,prenom:state.prenom,nom:state.nom,demarche:dem.nom,date:state.date,heure:state.heure,adresse:cms.adresse,documents:dem.documents,commune:state.commune};
+  let body="",subject="";
+  if(state.selectedTemplate!=="__default__"){
+    const ct=state.customTemplates.find(t=>String(t.id)===String(state.selectedTemplate));
+    if(ct){body=fillTemplate(ct.body,vars);subject=ct.canal==="mail"?fillTemplate(ct.sujet||"",vars):"";}
+  } else {
+    const bk={sms:{proposition:"sms_proposition",confirmation:"sms_confirmation",sans_appel:"sms_sans_appel"},mail:{proposition:"mail_proposition",confirmation:"mail_confirmation",sans_appel:"mail_sans_appel"}};
+    const sk={proposition:"mail_proposition_sujet",confirmation:"mail_confirmation_sujet",sans_appel:"mail_sans_appel_sujet"};
+    const bodyKey=bk[state.channel]?.[state.msgType];
+    const tpl=bodyKey?(state.templates[bodyKey]||DEFAULT_TEMPLATES[bodyKey]||""):"";
+    body=fillTemplate(tpl,vars);
+    if(state.channel==="mail"){const sk2=sk[state.msgType];subject=fillTemplate((state.templates[sk2]||DEFAULT_TEMPLATES[sk2]||""),vars);}
+  }
+  // SMS part-count warning (only on explicit generate, not preview)
+  if(addHistory&&state.channel==='sms'){
+    const len=body.length;
+    const isUnicode=/[^\x00-\x7F€£¥]/.test(body);
+    const single=isUnicode?70:160;
+    const multi=isUnicode?67:153;
+    const parts=len<=single?1:Math.ceil(len/multi);
+    if(parts>3&&!confirm(`⚠️ Ce message fait ${parts} SMS (${len} caractères).\nContinuer quand même ?`))return;
+  }
+  state.generatedBody=body;state.generatedSubject=subject;
+  document.getElementById('txt-body').value=body;
+  document.getElementById('inp-subject').value=subject;
+  const isMail=state.channel==="mail";
+  document.getElementById('result-card').classList.remove('hidden');
+  const titleEl=document.getElementById('result-title');
+  titleEl.textContent=addHistory?(isMail?"Mail généré":"SMS généré"):(isMail?"Aperçu mail":"Aperçu SMS");
+  document.getElementById('subject-row').classList.toggle('hidden',!isMail);
+  document.getElementById('body-label').textContent=isMail?"Corps du mail":"Texte du SMS";
+  document.getElementById('btn-copy-body').textContent="📋 Copier le "+(isMail?"corps du mail":"SMS");
+  document.getElementById('copy-hint').textContent=isMail?"Collez dans votre client mail avec Ctrl+V":"Collez dans Google Messages avec Ctrl+V";
+  document.getElementById('txt-body').rows=isMail?14:12;
+  // Téléphone
+  const telEl=document.getElementById('tel-display');
+  if(state.telephone){telEl.innerHTML='<div class="phone-badge">📱 '+esc(state.telephone)+'</div>';telEl.classList.remove('hidden');}
+  else telEl.classList.add('hidden');
+  // Badges
+  const tLabel={proposition:"📨 Proposition",confirmation:"✅ Confirmation",sans_appel:"✉️ Sans appel"};
+  const tClass={proposition:"b-prop",confirmation:"b-conf",sans_appel:"b-sms"};
+  const previewBadge=addHistory?"":'<span class="badge b-preview">👁 Aperçu</span> ';
+  document.getElementById('result-badges').innerHTML=previewBadge+'<span class="badge '+(isMail?"b-mail":"b-sms")+'">'+(isMail?"📧 Mail":"📱 SMS")+'</span> <span class="badge '+(tClass[state.msgType]||"b-prop")+'">'+tLabel[state.msgType]+'</span>';
+  updateSmsCounter();
+  if(addHistory){
+    addToHistory({channel:state.channel,msgType:state.msgType,body,subject,civilite:state.civilite,prenom:state.prenom,nom:state.nom,telephone:state.telephone,demarche:dem.nom,date:state.date,heure:state.heure,ts:new Date().toLocaleString('fr-FR')});
+  }
+}
+
+function handleGenerate(){doGenerate(true);}
+
+function clearResult(){
+  state.generatedBody="";state.generatedSubject="";
+  document.getElementById('result-card').classList.add('hidden');
+}
+
+function nouveauRdv(){
+  state.prenom="";state.nom="";state.civilite="";state.telephone="";
+  state.date="";state.heure="";state.demarcheAutre="";
+  state.selectedCMS="";state.selectedDemarche="";state.commune="";
+  document.getElementById('inp-prenom').value="";
+  document.getElementById('inp-nom').value="";
+  document.getElementById('inp-civilite').value="";
+  document.getElementById('inp-tel').value="";
+  document.getElementById('inp-date').value="";
+  document.getElementById('inp-heure').value="";
+  document.getElementById('inp-demarche-autre').value="";
+  document.getElementById('demarche-autre-row').classList.add('hidden');
+  document.getElementById('sel-cms').value="";
+  document.getElementById('sel-demarche').value="";
+  document.getElementById('sel-commune').value="";
+  document.getElementById('result-card').classList.add('hidden');
+  checkCanGenerate();
+}
+
+// SMS COUNTER
+function updateSmsCounter(){
+  const el=document.getElementById('sms-counter');
+  if(state.channel!=="sms"){el.classList.add('hidden');return;}
+  const txt=state.generatedBody||"";
+  const len=txt.length;
+  const isUnicode=/[^\x00-\x7F€£¥]/.test(txt)||/[\u0100-\uFFFF]/.test(txt);
+  const single=isUnicode?70:160;
+  const multi=isUnicode?67:153;
+  const parts=len<=single?1:Math.ceil(len/multi);
+  const remaining=parts===1?(single-len):(parts*multi-len);
+  const label=len+" car. · "+parts+" SMS"+(remaining<20?" (encore "+remaining+" car.)":"");
+  el.textContent=label;
+  el.className="sms-counter "+(parts===1?"counter-ok":parts===2?"counter-warn":"counter-over");
+  el.classList.remove('hidden');
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function addToHistory(item){
+  state.history.unshift(item);
+  if(state.history.length>HISTORY_MAX)state.history.pop();
+  lsSet('ess-history',state.history);
+}
+function clearHistory(){state.history=[];lsSet('ess-history',[]);renderHistory();}
+function setHistoryFilter(f){
+  state.historyFilter=f;
+  ['all','sms','mail'].forEach(x=>{const el=document.getElementById('hfilt-'+x);if(el)el.classList.toggle('active',x===f);});
+  renderHistory();
+}
+function renderHistory(){
+  const el=document.getElementById('history-list');
+  const filtered=state.historyFilter==='all'?state.history:state.history.filter(h=>h.channel===state.historyFilter);
+  if(!filtered.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:30px 0;font-size:13px;">Aucun message dans l\'historique.</div>';return;}
+  const tLabel={proposition:"📨 Proposition",confirmation:"✅ Confirmation",sans_appel:"✉️ Sans appel"};
+  el.innerHTML=filtered.map((h,i)=>{
+    const realIdx=state.history.indexOf(h);
+    const fullName=[h.civilite,h.prenom,h.nom].filter(Boolean).join(" ");
+    return `<div class="history-item" onclick="openHistoryItem(${realIdx})">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span class="badge ${h.channel==="sms"?"b-sms":"b-mail"}">${h.channel==="sms"?"📱 SMS":"📧 Mail"}</span>
+        <span class="badge ${h.msgType==="proposition"?"b-prop":h.msgType==="sans_appel"?"b-sms":"b-conf"}">${tLabel[h.msgType]||h.msgType}</span>
+        <span style="font-size:11px;color:var(--text2);margin-left:auto;">${h.ts}</span>
+      </div>
+      <div style="font-size:13px;font-weight:600;">${esc(h.demarche)}</div>
+      ${fullName?'<div style="font-size:12px;color:var(--text2);">'+esc(fullName)+'</div>':""}
+      ${h.telephone?'<div style="font-size:12px;color:var(--text2);">📱 '+esc(h.telephone)+'</div>':""}
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(h.body.substring(0,80))}…</div>
+    </div>`;
+  }).join('');
+}
+function openHistoryItem(i){
+  const h=state.history[i];
+  document.getElementById('history-modal-title').textContent=h.channel==="sms"?"📱 SMS — "+h.demarche:"📧 Mail — "+h.demarche;
+  const subEl=document.getElementById('history-modal-subject');
+  if(h.subject){subEl.classList.remove('hidden');document.getElementById('history-modal-subject-val').value=h.subject;}
+  else subEl.classList.add('hidden');
+  document.getElementById('history-modal-body').value=h.body;
+  window._historyItem=h;
+  openModal('history-modal');
+}
+async function copyHistoryItem(){
+  const h=window._historyItem;
+  await doCopy(h.body);
+  const btn=document.querySelector('#history-modal .copy-btn');
+  btn.textContent="✓ Copié !";setTimeout(()=>{btn.textContent="📋 Copier";},2000);
+}
+
+// ============================================================
+// COPY
+// ============================================================
+async function doCopy(text){
+  if(!text)return false;
+  if(navigator.clipboard&&window.isSecureContext){try{await navigator.clipboard.writeText(text);return true;}catch{}}
+  try{const ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;top:0;left:0;opacity:0;";document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");document.body.removeChild(ta);return true;}catch{return false;}
+}
+async function handleCopy(which){
+  const text=which==="body"?state.generatedBody:state.generatedSubject;
+  const ok=await doCopy(text);
+  if(ok){
+    // Sauvegarde en historique si pas déjà enregistré (cas aperçu automatique sans clic sur Générer)
+    if(which==="body"&&state.generatedBody&&(!state.history.length||state.history[0].body!==state.generatedBody)){
+      const cms=state.cmsList.find(c=>String(c.id)===String(state.selectedCMS));
+      const dem=state.selectedDemarche==="__autre__"
+        ?{nom:state.demarcheAutre||"Autre"}
+        :state.demarches.find(d=>String(d.id)===String(state.selectedDemarche));
+      if(cms&&dem){
+        addToHistory({channel:state.channel,msgType:state.msgType,body:state.generatedBody,subject:state.generatedSubject,civilite:state.civilite,prenom:state.prenom,nom:state.nom,telephone:state.telephone,demarche:dem.nom,date:state.date,heure:state.heure,ts:new Date().toLocaleString('fr-FR')});
+      }
+    }
+    const btn=document.getElementById(which==="body"?"btn-copy-body":"btn-copy-subject");
+    const orig=btn.textContent;btn.textContent="✓ Copié !";setTimeout(()=>{btn.textContent=orig;},2000);
+    toast("✓ Copié !");
+  }
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown',e=>{
+  const ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl&&e.key==='Enter'){e.preventDefault();if(!document.getElementById('btn-generate').disabled)handleGenerate();}
+  if(ctrl&&e.shiftKey&&e.key==='C'){e.preventDefault();if(state.generatedBody)handleCopy('body');}
+});
+
+// ============================================================
+// CHANNEL / TYPE
+// ============================================================
+function setChannel(ch){
+  state.channel=ch;state.selectedTemplate="__default__";
+  document.getElementById('btn-sms').classList.toggle('active',ch==="sms");
+  document.getElementById('btn-mail').classList.toggle('active',ch==="mail");
+  document.getElementById('btn-generate').textContent="Générer le "+(ch==="sms"?"SMS":"mail");
+  document.getElementById('sms-counter').classList.add('hidden');
+  updateCustomTplSelector();schedulePreview();
+}
+function setMsgType(t){
+  state.msgType=t;state.selectedTemplate="__default__";
+  ["proposition","confirmation","sans_appel"].forEach(x=>document.getElementById('btn-'+x).classList.toggle('active',x===t));
+  updateCustomTplSelector();schedulePreview();
+}
+function updateCustomTplSelector(){
+  const compat=state.customTemplates.filter(t=>t.canal===state.channel&&t.type===state.msgType);
+  const row=document.getElementById('custom-tpl-selector');
+  if(!compat.length){row.classList.add('hidden');return;}
+  row.classList.remove('hidden');
+  const sel=document.getElementById('select-custom-tpl');
+  sel.innerHTML='<option value="__default__">— Modèle par défaut —</option>'+compat.map(t=>'<option value="'+t.id+'">'+esc(t.nom)+'</option>').join('');
+  sel.value=state.selectedTemplate;
+  sel.onchange=()=>{state.selectedTemplate=sel.value;schedulePreview();};
+}
+function handleDemarcheChange(val){
+  state.selectedDemarche=val;
+  const autreRow=document.getElementById('demarche-autre-row');
+  if(val==="__autre__"){
+    autreRow.classList.remove('hidden');
+  } else {
+    autreRow.classList.add('hidden');
+    state.demarcheAutre="";
+    document.getElementById('inp-demarche-autre').value="";
+  }
+  saveLastChoices();checkCanGenerate();schedulePreview();
+}
+
+function checkCanGenerate(){
+  const isAutre=state.selectedDemarche==="__autre__";
+  const can=!!(state.civilite&&state.nom&&state.selectedCMS&&state.selectedDemarche&&state.date&&state.heure&&state.commune&&(!isAutre||state.demarcheAutre));
+  document.getElementById('btn-generate').disabled=!can;
+  const mf=document.getElementById('missing-fields');
+  if(can){mf.innerHTML="";return;}
+  let t="";
+  if(!state.civilite)t+='<span class="missing-tag">⚠ Civilité manquante</span> ';
+  if(!state.nom)t+='<span class="missing-tag">⚠ Nom manquant</span> ';
+  if(!state.date)t+='<span class="missing-tag">⚠ Date manquante</span> ';
+  if(!state.heure)t+='<span class="missing-tag">⚠ Heure manquante</span> ';
+  if(!state.commune)t+='<span class="missing-tag">⚠ CMS manquant</span> ';
+  if(!state.selectedCMS)t+='<span class="missing-tag">⚠ Adresse manquante</span> ';
+  if(!state.selectedDemarche)t+='<span class="missing-tag">⚠ Démarche manquante</span>';
+  if(isAutre&&!state.demarcheAutre)t+='<span class="missing-tag">⚠ Préciser la démarche</span>';
+  mf.innerHTML=t;
+}
+
+// ============================================================
+// DARK MODE
+// ============================================================
+function toggleDark(){
+  state.darkMode=!state.darkMode;
+  document.documentElement.setAttribute('data-theme',state.darkMode?"dark":"light");
+  document.getElementById('btn-dark').textContent=state.darkMode?"☀️ Clair":"🌙 Sombre";
+  lsSet('ess-dark',state.darkMode);
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(name,btn){
+  ["generate","history","templates","config"].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==name));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.activeTab=name;
+  if(name==="templates")renderTemplates();
+  if(name==="config")renderConfig();
+  if(name==="history")renderHistory();
+}
+function showSubTab(name){
+  ["builtin","custom","vars"].forEach(t=>{
+    document.getElementById('stab-'+t+'-content').classList.toggle('hidden',t!==name);
+    document.getElementById('stab-'+t).classList.toggle('active',t===name);
+  });
+  state.subTab=name;updateTplActionBtns();
+}
+function showConfigTab(name){
+  ["cms","secteurs","demarches"].forEach(t=>{
+    document.getElementById('ctab-'+t+'-content').classList.toggle('hidden',t!==name);
+    document.getElementById('ctab-'+t).classList.toggle('active',t===name);
+  });
+  state.configTab=name;
+}
+
+// ============================================================
+// RENDER UTILS
+// ============================================================
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+function renderSelects(){
+  const sc=document.getElementById('sel-cms');
+  sc.innerHTML='<option value="">— Sélectionner une adresse —</option>'+state.cmsList.map(c=>'<option value="'+c.id+'"'+(String(c.id)===String(state.selectedCMS)?" selected":"")+'>'+esc(c.nom)+'</option>').join('');
+  const sd=document.getElementById('sel-demarche');
+  sd.innerHTML='<option value="">— Sélectionner une démarche —</option>'+state.demarches.map(d=>'<option value="'+d.id+'"'+(String(d.id)===String(state.selectedDemarche)?" selected":"")+'>'+esc(d.nom)+'</option>').join('')+'<option value="__autre__"'+(state.selectedDemarche==="__autre__"?" selected":"")+'>✏️ Autre…</option>';
+  const scom=document.getElementById('sel-commune');
+  scom.innerHTML='<option value="">— Sélectionner un CMS —</option>'+state.secteurs.map(s=>'<option value="'+esc(s)+'"'+(s===state.commune?" selected":"")+'>'+esc(s)+'</option>').join('');
+  document.getElementById('count-cms').textContent=state.cmsList.length;
+  document.getElementById('count-secteurs').textContent=state.secteurs.length;
+  document.getElementById('count-demarches').textContent=state.demarches.length;
+  document.getElementById('count-custom').textContent=state.customTemplates.length;
+  document.getElementById('count-vars').textContent=state.customVars.length;
+  updateCustomTplSelector();
+}
+
+function renderVarsChips(){
+  const base=["{civilite}","{prenom}","{nom}","{prenom_nom}","{demarche}","{date}","{heure}","{adresse}","{documents}","{commune}"];
+  let h=base.map(v=>'<span class="var-chip">'+v+'</span>').join('');
+  h+=state.customVars.map(v=>'<span class="var-chip" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green-border);" title="→ '+esc(v.valeur)+'">{'+esc(v.nom)+'}</span>').join('');
+  document.getElementById('vars-chips').innerHTML=h;
+}
+
+function updateTplActionBtns(){
+  let h="";
+  if(state.subTab==="builtin"){
+    if(state.hiddenBuiltinKeys.length>0)h+='<button class="btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="restoreAllBuiltin()">↺ Restaurer tous</button>';
+    h+='<button class="btn-danger" style="font-size:11px;padding:4px 10px;" onclick="showConfirm(\'builtin\')">🗑️ Tout supprimer</button>';
+  }
+  if(state.subTab==="custom"&&state.customTemplates.length>0)h+='<button class="btn-danger" style="font-size:11px;padding:4px 10px;" onclick="showConfirm(\'custom\')">🗑️ Tout supprimer</button>';
+  if(state.subTab==="vars"&&state.customVars.length>0)h+='<button class="btn-danger" style="font-size:11px;padding:4px 10px;" onclick="showConfirm(\'vars\')">🗑️ Tout supprimer</button>';
+  document.getElementById('tpl-action-btns').innerHTML=h;
+}
+
+function renderTemplates(){
+  renderVarsChips();updateTplActionBtns();
+  let h="";let allHidden=true;
+  for(const key of Object.keys(TEMPLATE_LABELS)){
+    if(state.hiddenBuiltinKeys.includes(key)){
+      h+='<div class="dashed-row"><span style="flex:1;font-size:12px;color:var(--text2);text-decoration:line-through;">'+TEMPLATE_LABELS[key]+'</span><button class="btn-secondary" style="font-size:11px;padding:3px 9px;" onclick="restoreBuiltin(\''+key+'\')">↺ Restaurer</button></div>';
+    } else {
+      allHidden=false;
+      const tpl=esc(state.templates[key]||DEFAULT_TEMPLATES[key]||"");
+      const isSubj=key.includes("sujet");
+      h+='<div class="card" id="card-'+key+'">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">'
+        +'<div style="font-weight:700;font-size:12px;color:var(--primary);">'+TEMPLATE_LABELS[key]+'</div>'
+        +'<div style="display:flex;gap:5px;">'
+        +'<button class="btn-ghost" onclick="resetBuiltin(\''+key+'\')">↺ Défaut</button>'
+        +'<button class="btn-ghost" title="Dupliquer vers Mes modèles" onclick="duplicateBuiltin(\''+key+'\')">📋</button>'
+        +'<button class="btn-secondary" onclick="startEditBuiltin(\''+key+'\')">✏️</button>'
+        +'<button class="btn-danger" style="padding:3px 9px;" onclick="deleteBuiltin(\''+key+'\')">🗑️</button>'
+        +'</div></div>'
+        +'<div id="view-'+key+'" style="background:var(--surface2);border:1.5px solid var(--border2);border-radius:8px;padding:9px 11px;font-family:\'Courier New\',monospace;font-size:11px;line-height:1.6;white-space:pre-wrap;color:var(--text3);max-height:'+(isSubj?"none":"130px")+';overflow-y:auto;">'+tpl+'</div>'
+        +'<div id="edit-'+key+'" class="hidden">'
+        +'<textarea id="ta-'+key+'" rows="'+(isSubj?2:12)+'" style="margin-top:8px;">'+tpl+'</textarea>'
+        +'<div style="display:flex;gap:7px;margin-top:8px;">'
+        +'<button class="btn-primary" onclick="saveBuiltin(\''+key+'\')">Enregistrer</button>'
+        +'<button class="btn-secondary" onclick="cancelEditBuiltin(\''+key+'\')">Annuler</button>'
+        +'</div></div></div>';
+    }
+  }
+  if(allHidden)h+='<div style="text-align:center;color:var(--text2);padding:20px 0;font-size:12px;">Tous supprimés. Cliquez sur ↺ Restaurer pour les récupérer.</div>';
+  document.getElementById('builtin-list').innerHTML=h;
+  renderCustomTplList();renderVarsList();
+}
+
+function renderCustomTplList(){
+  const el=document.getElementById('custom-tpl-list');
+  if(!state.customTemplates.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:20px 0;font-size:12px;">Aucun modèle personnalisé.</div>';return;}
+  const tL={proposition:"📨 Prop.",confirmation:"✅ Conf.",sans_appel:"✉️ Sans appel"};
+  const tC={proposition:"b-prop",confirmation:"b-conf",sans_appel:"b-sms"};
+  el.innerHTML=state.customTemplates.map(t=>'<div class="item-row" style="flex-direction:column;align-items:stretch;margin-bottom:8px;" id="ctpl-'+t.id+'">'
+    +'<div style="display:flex;align-items:center;gap:7px;">'
+    +'<div style="flex:1;"><span style="font-weight:700;font-size:13px;">'+esc(t.nom)+'</span>'
+    +' <span class="badge '+(t.canal==="sms"?"b-sms":"b-mail")+'" style="margin-left:5px;">'+(t.canal==="sms"?"📱":"📧")+' '+(t.canal==="sms"?"SMS":"Mail")+'</span>'
+    +' <span class="badge '+(tC[t.type]||"b-prop")+'" style="margin-left:3px;">'+(tL[t.type]||t.type)+'</span></div>'
+    +'<button class="btn-ghost" title="Dupliquer" onclick="duplicateCustomTpl('+t.id+')">📋</button>'
+    +'<button class="btn-secondary" onclick="startEditCustomTpl('+t.id+')">✏️</button>'
+    +'<button class="btn-danger" onclick="deleteCustomTpl('+t.id+')">🗑️</button></div>'
+    +(t.canal==="mail"&&t.sujet?'<div style="font-size:11px;color:var(--text2);margin-top:3px;">📌 Objet : '+esc(t.sujet)+'</div>':"")
+    +'<div style="margin-top:5px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:7px 9px;font-family:\'Courier New\',monospace;font-size:10px;line-height:1.5;white-space:pre-wrap;color:var(--text3);max-height:80px;overflow-y:auto;">'+esc(t.body)+'</div>'
+    +'</div>').join('');
+}
+
+function renderVarsList(){
+  const el=document.getElementById('vars-list');
+  if(!state.customVars.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:20px 0;font-size:12px;">Aucune variable.</div>';return;}
+  el.innerHTML=state.customVars.map(v=>'<div class="item-row" style="margin-bottom:7px;">'
+    +'<div style="flex:1;display:flex;align-items:center;gap:9px;flex-wrap:wrap;">'
+    +'<span class="var-chip" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green-border);font-size:12px;">{'+esc(v.nom)+'}</span>'
+    +'<span style="color:var(--text2);font-size:12px;">→</span>'
+    +'<span style="font-weight:600;font-size:13px;">'+esc(v.valeur)+'</span></div>'
+    +'<button class="btn-secondary" onclick="startEditVar('+v.id+')">✏️</button>'
+    +'<button class="btn-danger" onclick="deleteVar('+v.id+')">🗑️</button></div>').join('');
+}
+
+// ============================================================
+// RENDER CONFIG
+// ============================================================
+function renderConfig(){
+  renderSelects();
+  renderCmsList();
+  // Secteurs
+  document.getElementById('secteurs-list').innerHTML=!state.secteurs.length?'<div style="text-align:center;color:var(--text2);padding:20px 0;">Aucun CMS</div>':
+    state.secteurs.map((s,i)=>'<div class="item-row" style="margin-bottom:7px;">'
+      +'<div style="flex:1;font-weight:600;font-size:13px;">📍 '+esc(s)+'</div>'
+      +'<button class="btn-ghost" style="font-size:16px;" onclick="moveSecteur('+i+',-1)" title="Monter">↑</button>'
+      +'<button class="btn-ghost" style="font-size:16px;" onclick="moveSecteur('+i+',1)" title="Descendre">↓</button>'
+      +'<button class="btn-secondary" onclick="startEditSecteur('+i+')">✏️</button>'
+      +'<button class="btn-danger" onclick="deleteSecteur('+i+')">🗑️</button></div>').join('');
+  renderDemarchesList();
+}
+
+function renderCmsList(){
+  const q=(state.cmsSearch||"").toLowerCase();
+  const filtered=q?state.cmsList.filter(c=>c.nom.toLowerCase().includes(q)||c.adresse.toLowerCase().includes(q)):state.cmsList;
+  document.getElementById('cms-list').innerHTML=!filtered.length?'<div style="text-align:center;color:var(--text2);padding:20px 0;">Aucun résultat</div>':
+    filtered.map((c,fi)=>{
+      const i=state.cmsList.indexOf(c);
+      return '<div class="item-row" id="cms-'+c.id+'">'
+        +'<div style="flex:1;"><div style="font-weight:600;font-size:13px;">'+esc(c.nom)+'</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">📍 '+esc(c.adresse)+'</div></div>'
+        +(q?'':'<button class="btn-ghost" style="font-size:16px;" onclick="moveCms('+i+',-1)" title="Monter">↑</button>'
+            +'<button class="btn-ghost" style="font-size:16px;" onclick="moveCms('+i+',1)" title="Descendre">↓</button>')
+        +'<button class="btn-secondary" onclick="startEditCms('+c.id+')">✏️</button>'
+        +'<button class="btn-danger" onclick="deleteCms('+c.id+')">🗑️</button></div>';
+    }).join('');
+}
+
+function renderDemarchesList(){
+  const q=(state.demSearch||"").toLowerCase();
+  const filtered=q?state.demarches.filter(d=>d.nom.toLowerCase().includes(q)):state.demarches;
+  document.getElementById('demarches-list').innerHTML=!filtered.length?'<div style="text-align:center;color:var(--text2);padding:20px 0;">Aucun résultat</div>':
+    filtered.map((d)=>{
+      const i=state.demarches.indexOf(d);
+      return '<div class="item-row" style="flex-direction:column;align-items:stretch;margin-bottom:7px;">'
+        +'<div style="display:flex;align-items:center;gap:7px;">'
+        +'<div style="flex:1;font-weight:600;font-size:13px;">'+esc(d.nom)+'</div>'
+        +(q?'':'<button class="btn-ghost" style="font-size:14px;" onclick="moveDemarche('+i+',-1)" title="Monter">↑</button>'
+             +'<button class="btn-ghost" style="font-size:14px;" onclick="moveDemarche('+i+',1)" title="Descendre">↓</button>')
+        +'<button class="btn-secondary" onclick="startEditDem('+d.id+')">✏️</button>'
+        +'<button class="btn-danger" onclick="deleteDem('+d.id+')">🗑️</button></div>'
+        +'<div style="margin-top:5px;">'+((d.documents||[]).map(doc=>'<div style="font-size:11px;color:var(--text2);margin-top:1px;">• '+esc(doc)+'</div>').join(''))+'</div>'
+        +'</div>';
+    }).join('');
+}
+
+// ============================================================
+// CMS CRUD
+// ============================================================
+function addCms(){
+  const nom=document.getElementById('new-cms-nom').value.trim();
+  const adr=document.getElementById('new-cms-adresse').value.trim();
+  if(!nom||!adr)return;
+  state.cmsList.push({id:Date.now(),nom,adresse:adr});saveData();renderConfig();
+  document.getElementById('new-cms-nom').value="";document.getElementById('new-cms-adresse').value="";
+}
+function deleteCms(id){state.cmsList=state.cmsList.filter(c=>c.id!==id);saveData();renderConfig();}
+function moveCms(i,dir){
+  const j=i+dir;if(j<0||j>=state.cmsList.length)return;
+  [state.cmsList[i],state.cmsList[j]]=[state.cmsList[j],state.cmsList[i]];
+  saveData();renderConfig();renderSelects();
+}
+function startEditCms(id){
+  const c=state.cmsList.find(x=>x.id===id);
+  document.getElementById('cms-'+id).innerHTML='<div style="flex:1;display:grid;gap:7px;">'
+    +'<input value="'+esc(c.nom)+'" id="ecms-nom-'+id+'">'
+    +'<input value="'+esc(c.adresse)+'" id="ecms-adr-'+id+'">'
+    +'<div style="display:flex;gap:7px;">'
+    +'<button class="btn-primary" onclick="saveEditCms('+id+')">Enregistrer</button>'
+    +'<button class="btn-secondary" onclick="renderConfig()">Annuler</button></div></div>';
+}
+function saveEditCms(id){
+  const nom=document.getElementById('ecms-nom-'+id).value.trim();
+  const adr=document.getElementById('ecms-adr-'+id).value.trim();
+  state.cmsList=state.cmsList.map(c=>c.id===id?{...c,nom,adresse:adr}:c);saveData();renderConfig();
+}
+
+// ============================================================
+// SECTEURS CRUD
+// ============================================================
+function addSecteur(){
+  const v=document.getElementById('new-secteur').value.trim();if(!v)return;
+  state.secteurs.push(v);saveData();renderConfig();renderSelects();
+  document.getElementById('new-secteur').value="";
+}
+function deleteSecteur(i){state.secteurs.splice(i,1);saveData();renderConfig();renderSelects();}
+function moveSecteur(i,dir){
+  const j=i+dir;if(j<0||j>=state.secteurs.length)return;
+  [state.secteurs[i],state.secteurs[j]]=[state.secteurs[j],state.secteurs[i]];
+  saveData();renderConfig();renderSelects();
+}
+function startEditSecteur(i){
+  const rows=document.getElementById('secteurs-list').querySelectorAll('.item-row');
+  if(rows[i])rows[i].innerHTML='<div style="display:flex;gap:7px;flex:1;">'
+    +'<input value="'+esc(state.secteurs[i])+'" id="esec-'+i+'" style="flex:1;" onkeydown="if(event.key===\'Enter\')saveEditSecteur('+i+')">'
+    +'<button class="btn-primary" onclick="saveEditSecteur('+i+')">✓</button>'
+    +'<button class="btn-secondary" onclick="renderConfig()">✕</button></div>';
+}
+function saveEditSecteur(i){
+  const v=document.getElementById('esec-'+i).value.trim();if(!v)return;
+  state.secteurs[i]=v;saveData();renderConfig();renderSelects();
+}
+
+// ============================================================
+// DÉMARCHES CRUD
+// ============================================================
+function addDemarche(){
+  const nom=document.getElementById('new-dem-nom').value.trim();if(!nom)return;
+  const docs=document.getElementById('new-dem-docs').value.split("\n").map(s=>s.trim()).filter(Boolean);
+  state.demarches.push({id:Date.now(),nom,documents:docs});saveData();renderConfig();
+  document.getElementById('new-dem-nom').value="";document.getElementById('new-dem-docs').value="";
+}
+function deleteDem(id){state.demarches=state.demarches.filter(d=>d.id!==id);saveData();renderConfig();}
+function moveDemarche(i,dir){
+  const j=i+dir;if(j<0||j>=state.demarches.length)return;
+  [state.demarches[i],state.demarches[j]]=[state.demarches[j],state.demarches[i]];
+  saveData();renderConfig();renderSelects();
+}
+function startEditDem(id){
+  const d=state.demarches.find(x=>x.id===id);
+  const rows=document.getElementById('demarches-list').querySelectorAll('.item-row');
+  for(const row of rows){if(row.querySelector('[onclick="startEditDem('+id+')"]')){
+    row.innerHTML='<div style="display:grid;gap:7px;width:100%;">'
+      +'<input value="'+esc(d.nom)+'" id="edem-nom-'+id+'">'
+      +'<textarea rows="6" id="edem-docs-'+id+'">'+esc((d.documents||[]).join("\n"))+'</textarea>'
+      +'<div style="display:flex;gap:7px;">'
+      +'<button class="btn-primary" onclick="saveEditDem('+id+')">Enregistrer</button>'
+      +'<button class="btn-secondary" onclick="renderConfig()">Annuler</button></div></div>';break;
+  }}
+}
+function saveEditDem(id){
+  const nom=document.getElementById('edem-nom-'+id).value.trim();
+  const docs=document.getElementById('edem-docs-'+id).value.split("\n").map(s=>s.trim()).filter(Boolean);
+  state.demarches=state.demarches.map(d=>d.id===id?{...d,nom,documents:docs}:d);saveData();renderConfig();
+}
+
+// ============================================================
+// BUILTIN TEMPLATES
+// ============================================================
+function startEditBuiltin(k){document.getElementById('view-'+k).classList.add('hidden');document.getElementById('edit-'+k).classList.remove('hidden');document.getElementById('ta-'+k).value=state.templates[k]||DEFAULT_TEMPLATES[k]||"";}
+function cancelEditBuiltin(k){document.getElementById('view-'+k).classList.remove('hidden');document.getElementById('edit-'+k).classList.add('hidden');}
+function saveBuiltin(k){state.templates[k]=document.getElementById('ta-'+k).value;saveData();renderTemplates();}
+function resetBuiltin(k){state.templates[k]=DEFAULT_TEMPLATES[k];saveData();renderTemplates();}
+function duplicateBuiltin(k){
+  const isSubj=k.includes("sujet");
+  if(isSubj){toast("Les objets mail ne peuvent pas être dupliqués seuls","warn");return;}
+  const canal=k.startsWith("sms")?"sms":"mail";
+  const typeMap={proposition:"proposition",confirmation:"confirmation",sans_appel:"sans_appel"};
+  const type=Object.keys(typeMap).find(t=>k.includes(t))||"proposition";
+  const body=state.templates[k]||DEFAULT_TEMPLATES[k]||"";
+  const sujetKey=canal==="mail"?(k.replace(/^mail_/,"mail_")+"").replace(/(proposition|confirmation|sans_appel)$/,"$1_sujet").replace("mail_","mail_"):"";
+  // build correct subject key
+  const sk={proposition:"mail_proposition_sujet",confirmation:"mail_confirmation_sujet",sans_appel:"mail_sans_appel_sujet"};
+  const sujet=canal==="mail"?( state.templates[sk[type]]||DEFAULT_TEMPLATES[sk[type]]||"" ):"";
+  state.customTemplates.push({id:Date.now(),nom:TEMPLATE_LABELS[k]+' (copie)',canal,type,sujet,body});
+  saveData();renderTemplates();renderSelects();
+  toast("Dupliqué vers Mes modèles");
+}
+function deleteBuiltin(k){state.hiddenBuiltinKeys.push(k);saveData();renderTemplates();updateTplActionBtns();}
+function restoreBuiltin(k){state.hiddenBuiltinKeys=state.hiddenBuiltinKeys.filter(x=>x!==k);saveData();renderTemplates();updateTplActionBtns();}
+function deleteAllBuiltin(){state.hiddenBuiltinKeys=Object.keys(TEMPLATE_LABELS);saveData();hideConfirm();renderTemplates();updateTplActionBtns();}
+function restoreAllBuiltin(){state.hiddenBuiltinKeys=[];saveData();renderTemplates();updateTplActionBtns();}
+
+// ============================================================
+// CUSTOM TEMPLATES CRUD
+// ============================================================
+function addCustomTemplate(){
+  const nom=document.getElementById('new-tpl-nom').value.trim();
+  const body=document.getElementById('new-tpl-body').value.trim();
+  if(!nom||!body)return;
+  const canal=document.getElementById('new-tpl-canal').value;
+  const type=document.getElementById('new-tpl-type').value;
+  const sujet=canal==="mail"?document.getElementById('new-tpl-sujet').value.trim():"";
+  state.customTemplates.push({id:Date.now(),nom,canal,type,sujet,body});
+  saveData();renderTemplates();renderSelects();
+  document.getElementById('new-tpl-nom').value="";document.getElementById('new-tpl-body').value="";document.getElementById('new-tpl-sujet').value="";
+  toast("Modèle créé");
+}
+function deleteCustomTpl(id){
+  state.customTemplates=state.customTemplates.filter(t=>t.id!==id);
+  if(String(state.selectedTemplate)===String(id))state.selectedTemplate="__default__";
+  saveData();renderTemplates();renderSelects();
+}
+function duplicateCustomTpl(id){
+  const t=state.customTemplates.find(x=>x.id===id);
+  if(!t)return;
+  state.customTemplates.push({...t,id:Date.now(),nom:t.nom+' (copie)'});
+  saveData();renderTemplates();renderSelects();
+  toast("Modèle dupliqué");
+}
+function deleteAllCustomTemplates(){state.customTemplates=[];state.selectedTemplate="__default__";saveData();hideConfirm();renderTemplates();renderSelects();}
+function startEditCustomTpl(id){
+  const t=state.customTemplates.find(x=>x.id===id);
+  const el=document.getElementById('ctpl-'+id);
+  const isMail=t.canal==="mail";
+  el.innerHTML='<div style="display:grid;gap:7px;width:100%;">'
+    +'<div><label>Nom</label><input value="'+esc(t.nom)+'" id="etpl-nom-'+id+'"></div>'
+    +'<div class="grid2">'
+    +'<div><label>Canal</label><select id="etpl-canal-'+id+'"><option value="sms"'+(t.canal==="sms"?" selected":"")+'>📱 SMS</option><option value="mail"'+(t.canal==="mail"?" selected":"")+'>📧 Mail</option></select></div>'
+    +'<div><label>Type</label><select id="etpl-type-'+id+'"><option value="proposition"'+(t.type==="proposition"?" selected":"")+'>📨 Proposition</option><option value="confirmation"'+(t.type==="confirmation"?" selected":"")+'>✅ Confirmation</option><option value="sans_appel"'+(t.type==="sans_appel"?" selected":"")+'>✉️ Sans appel</option></select></div>'
+    +'</div>'
+    +(isMail?'<div><label>Objet</label><input value="'+esc(t.sujet||"")+'" id="etpl-sujet-'+id+'"></div>':"")
+    +'<div><label>Corps</label><textarea rows="9" id="etpl-body-'+id+'">'+esc(t.body)+'</textarea></div>'
+    +'<div style="display:flex;gap:7px;">'
+    +'<button class="btn-primary" onclick="saveEditCustomTpl('+id+')">Enregistrer</button>'
+    +'<button class="btn-secondary" onclick="renderCustomTplList()">Annuler</button></div></div>';
+}
+function saveEditCustomTpl(id){
+  const nom=document.getElementById('etpl-nom-'+id).value.trim();
+  const canal=document.getElementById('etpl-canal-'+id).value;
+  const type=document.getElementById('etpl-type-'+id).value;
+  const sujetEl=document.getElementById('etpl-sujet-'+id);
+  const sujet=sujetEl?sujetEl.value.trim():"";
+  const body=document.getElementById('etpl-body-'+id).value.trim();
+  state.customTemplates=state.customTemplates.map(t=>t.id===id?{...t,nom,canal,type,sujet,body}:t);
+  saveData();renderTemplates();renderSelects();toast("Modèle enregistré");
+}
+
+// ============================================================
+// VARS CRUD
+// ============================================================
+function addCustomVar(){
+  const nom=document.getElementById('new-var-nom').value.replace(/[{}#\s]/g,"").toLowerCase().trim();
+  const valeur=document.getElementById('new-var-valeur').value.trim();
+  if(!nom||!valeur)return;
+  if(state.customVars.find(v=>v.nom===nom))return;
+  state.customVars.push({id:Date.now(),nom,valeur});saveData();renderTemplates();
+  document.getElementById('new-var-nom').value="";document.getElementById('new-var-valeur').value="";
+}
+function deleteVar(id){state.customVars=state.customVars.filter(v=>v.id!==id);saveData();renderTemplates();}
+function deleteAllVars(){state.customVars=[];saveData();hideConfirm();renderTemplates();}
+function startEditVar(id){
+  const v=state.customVars.find(x=>x.id===id);
+  const rows=document.getElementById('vars-list').querySelectorAll('.item-row');
+  for(const row of rows){if(row.querySelector('[onclick="startEditVar('+id+')"]')){
+    row.innerHTML='<div class="grid2" style="flex:1;">'
+      +'<div><label>Nom</label><input value="'+esc(v.nom)+'" id="evar-nom-'+id+'"></div>'
+      +'<div><label>Valeur</label><input value="'+esc(v.valeur)+'" id="evar-val-'+id+'"></div></div>'
+      +'<div style="display:flex;gap:7px;margin-top:7px;grid-column:span 2;">'
+      +'<button class="btn-primary" onclick="saveEditVar('+id+')">Enregistrer</button>'
+      +'<button class="btn-secondary" onclick="renderVarsList()">Annuler</button></div>';break;
+  }}
+}
+function saveEditVar(id){
+  const nom=document.getElementById('evar-nom-'+id).value.replace(/[{}#\s]/g,"").toLowerCase().trim();
+  const valeur=document.getElementById('evar-val-'+id).value.trim();
+  state.customVars=state.customVars.map(v=>v.id===id?{...v,nom,valeur}:v);saveData();renderVarsList();renderVarsChips();
+}
+
+// ============================================================
+// CONFIRM
+// ============================================================
+function showConfirm(w){hideConfirm();document.getElementById('confirm-reset-'+w).classList.remove('hidden');}
+function hideConfirm(){["builtin","custom","vars"].forEach(w=>document.getElementById('confirm-reset-'+w).classList.add('hidden'));}
+
+// ============================================================
+// EXPORT / IMPORT
+// ============================================================
+function handleExportData(){
+  const data={cmsList:state.cmsList,demarches:state.demarches,secteurs:state.secteurs,customTemplates:state.customTemplates,customVars:state.customVars,templates:state.templates};
+  document.getElementById('export-text').value=JSON.stringify(data,null,2);
+  openModal('export-modal');
+}
+function downloadExport(){
+  const data={cmsList:state.cmsList,demarches:state.demarches,secteurs:state.secteurs,customTemplates:state.customTemplates,customVars:state.customVars,templates:state.templates};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const d=new Date().toISOString().slice(0,10);
+  a.download='ess-cms-sauvegarde-'+d+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("Fichier téléchargé");
+}
+async function copyExport(){
+  const ok=await doCopy(document.getElementById('export-text').value);
+  if(ok){const btn=document.getElementById('btn-copy-export');btn.textContent="✓ Copié !";setTimeout(()=>{btn.textContent="📋 Copier";},2000);toast("Sauvegarde copiée");}
+}
+function handleImportFile(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    document.getElementById('import-text').value=e.target.result;
+    input.value="";
+  };
+  reader.onerror=()=>toast("Erreur de lecture du fichier","err");
+  reader.readAsText(file);
+}
+function handleImport(){
+  const raw=document.getElementById('import-text').value.trim();
+  const errEl=document.getElementById('import-error');
+  try{
+    const data=JSON.parse(raw);
+    if(data.cmsList)state.cmsList=data.cmsList;
+    if(data.demarches)state.demarches=data.demarches;
+    if(data.secteurs)state.secteurs=data.secteurs;
+    if(data.customTemplates)state.customTemplates=data.customTemplates;
+    if(data.customVars)state.customVars=data.customVars;
+    if(data.templates)state.templates={...DEFAULT_TEMPLATES,...data.templates};
+    saveData();renderSelects();
+    closeModal('import-modal');
+    document.getElementById('import-text').value="";
+    errEl.classList.add('hidden');
+    toast("✅ Import réussi !");
+  }catch(e){
+    errEl.textContent="❌ JSON invalide. Vérifiez que vous avez copié la sauvegarde complète.";
+    errEl.classList.remove('hidden');
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadData();
+if(state.darkMode){document.documentElement.setAttribute('data-theme','dark');document.getElementById('btn-dark').textContent='☀️ Clair';}
+const lastSave=ls('ess-lastSave',null);
+document.getElementById('save-status').textContent=lastSave?'Dernière sauvegarde : '+lastSave:'Données chargées';
+renderSelects();
+checkCanGenerate();
+</script>
+</body>
+</html>
