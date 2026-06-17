@@ -58,6 +58,7 @@
     @page{size:A4;margin:16mm;}
   }
 </style>
+<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
 </head>
 <body>
 <div id="app-root" style="min-height:100vh;display:flex;flex-direction:column;">
@@ -912,8 +913,9 @@ function renderMandat(){
   c.appendChild(col);
 
   var btns=el('div',{style:"display:flex;gap:10px;margin-top:18px;"});
-  btns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:14px;padding:13px;border-radius:13px;background:linear-gradient(135deg,oklch(0.56 0.15 264),oklch(0.48 0.16 270));box-shadow:0 6px 18px oklch(0.5 0.15 266 / .35);",onClick:function(){window.print();}},"🖨 Aperçu / Imprimer"));
-  btns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:14px;padding:13px;border-radius:13px;background:linear-gradient(135deg,oklch(0.65 0.17 38),oklch(0.58 0.18 33));box-shadow:0 6px 18px oklch(0.62 0.17 38 / .4);",onClick:archiveMandat},"📥 Archiver ce mandat"));
+  btns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:14px;padding:13px;border-radius:13px;background:linear-gradient(135deg,oklch(0.56 0.15 264),oklch(0.48 0.16 270));box-shadow:0 6px 18px oklch(0.5 0.15 266 / .35);",onClick:function(){window.print();}},"🖨 Imprimer"));
+  btns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:14px;padding:13px;border-radius:13px;background:linear-gradient(135deg,oklch(0.42 0.13 155),oklch(0.35 0.13 160));box-shadow:0 6px 18px oklch(0.4 0.13 155 / .4);",onClick:generateMandatDocx},"📄 Télécharger Word"));
+  btns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:14px;padding:13px;border-radius:13px;background:linear-gradient(135deg,oklch(0.65 0.17 38),oklch(0.58 0.18 33));box-shadow:0 6px 18px oklch(0.62 0.17 38 / .4);",onClick:archiveMandat},"📥 Archiver"));
   c.appendChild(btns);
   formWrap.appendChild(c);
   grid.appendChild(formWrap);
@@ -973,6 +975,127 @@ function buildMandatDoc(){
 
   return page;
 }
+async function generateMandatDocx(){
+  if(!window.docx){showToast("Bibliothèque Word non chargée","err");return;}
+  var D=window.docx;
+  var user=mandatUserStr()||"[Usager]";
+  var aidant=S.mandatAidant||"[Aidant]";
+  var lieu=S.mandatCommune||"";
+  var today=todayFR();
+  var d=new Date();d.setFullYear(d.getFullYear()+1);
+  var expiry=d.toLocaleDateString('fr-FR');
+  var BLUE="1B4991";
+  var ts=mandatTeleservices();
+
+  var children=[];
+
+  // Titre Aidants Connect
+  children.push(new D.Paragraph({
+    children:[
+      new D.TextRun({text:"Aidants",bold:true,size:44,color:BLUE}),
+      new D.TextRun({text:"Connect",bold:true,size:44,color:"EF4056"}),
+      new D.TextRun({text:"   |   République Française",size:18,color:"888888"}),
+    ],
+    spacing:{after:100},
+  }));
+  children.push(new D.Paragraph({
+    text:"─────────────────────────────────────────────────────────────────",
+    spacing:{after:200},
+  }));
+
+  // Titre mandat
+  children.push(new D.Paragraph({
+    children:[new D.TextRun({text:"Mandat pour réaliser des démarches en ligne avec le service « Aidants Connect »",bold:true,size:28,color:BLUE})],
+    alignment:D.AlignmentType.CENTER,
+    spacing:{after:300},
+  }));
+
+  // Encart récap
+  [[" Usager : ",user],[" Aidant : ",aidant],[" Structure : ",STRUCTURE],[" Durée : ",DUREE+" (jusqu'au "+expiry+")"]].forEach(function(r){
+    children.push(new D.Paragraph({
+      children:[new D.TextRun({text:r[0],bold:true,size:20}),new D.TextRun({text:r[1],size:20})],
+      spacing:{after:60},
+      shading:{type:D.ShadingType.CLEAR,color:"auto",fill:"EEF4FF"},
+      border:{top:{style:D.BorderStyle.SINGLE,size:1,color:"C7D7F9"},bottom:{style:D.BorderStyle.SINGLE,size:1,color:"C7D7F9"},left:{style:D.BorderStyle.SINGLE,size:1,color:"C7D7F9"},right:{style:D.BorderStyle.SINGLE,size:1,color:"C7D7F9"}},
+    }));
+  });
+  children.push(new D.Paragraph({spacing:{after:200}}));
+
+  // Corps
+  children.push(new D.Paragraph({
+    children:[
+      new D.TextRun({text:"Je soussigné(e) ",size:22}),
+      new D.TextRun({text:user,bold:true,size:22}),
+      new D.TextRun({text:" autorise ",size:22}),
+      new D.TextRun({text:aidant,bold:true,size:22}),
+      new D.TextRun({text:" rattaché(e) au ",size:22}),
+      new D.TextRun({text:STRUCTURE,bold:true,size:22}),
+      new D.TextRun({text:" à accéder à mes informations personnelles contenues dans les téléservices administratifs suivants, et ceux qui seront ouverts ultérieurement :",size:22}),
+    ],spacing:{after:160},
+  }));
+
+  // Liste téléservices
+  ts.forEach(function(t){
+    children.push(new D.Paragraph({
+      children:[new D.TextRun({text:t[0],bold:true,size:22,color:BLUE}),new D.TextRun({text:" : "+t[1],size:22})],
+      bullet:{level:0},spacing:{after:60},
+    }));
+  });
+  children.push(new D.Paragraph({spacing:{after:160}}));
+
+  children.push(new D.Paragraph({children:[new D.TextRun({text:"pour une durée de ",size:22}),new D.TextRun({text:DUREE+" (jusqu'au "+expiry+").",bold:true,size:22})],spacing:{after:160}}));
+
+  children.push(new D.Paragraph({children:[new D.TextRun({text:aidant,bold:true,size:22}),new D.TextRun({text:" agit conformément aux articles 1984 et suivants du Code Civil, est mandaté(e) et agit pour votre compte et dans votre intérêt.",size:22})],spacing:{after:160}}));
+
+  children.push(new D.Paragraph({children:[new D.TextRun({text:"Pour le ",size:22}),new D.TextRun({text:STRUCTURE,bold:true,size:22}),new D.TextRun({text:", il s'agit d'adresser un rapport d'activité de son intervention, et de s'informer au service auquel il/elle est rattaché(e) des données personnelles des usagers, notamment le nom, le prénom, les aides sociales perçues, le numéro de dossier, la date de l'intervention, la durée.",size:22})],spacing:{after:160}}));
+
+  children.push(new D.Paragraph({children:[new D.TextRun({text:"Les actions habilitées au "+STRUCTURE+" doivent :",bold:true,size:22})],spacing:{after:80}}));
+  ["Réaliser uniquement les démarches listées dans les téléservices administratifs ci-dessus",
+   "Utiliser et communiquer seulement les informations nécessaires aux démarches listées dans ce document",
+   "Permettre l'accès à mes données personnelles seulement à travers le service « Aidants Connect »",
+   "Respecter à tout moment la confidentialité de mes informations personnelles"].forEach(function(o){
+    children.push(new D.Paragraph({children:[new D.TextRun({text:o,size:22})],bullet:{level:0},spacing:{after:60}}));
+  });
+  children.push(new D.Paragraph({spacing:{after:160}}));
+
+  children.push(new D.Paragraph({children:[new D.TextRun({text:"Je prends acte que la responsabilité de réaliser les actions listées dans ce mandat incombe à l'aidant habilité, qui s'engage à assurer de façon sécurisée le traitement de toutes mes données personnelles.",size:22})],spacing:{after:160}}));
+  children.push(new D.Paragraph({children:[new D.TextRun({text:"Mon accord est valable pour une durée de ",size:22}),new D.TextRun({text:DUREE,bold:true,size:22}),new D.TextRun({text:" à compter de la date de signature. L'aidant habilité s'engage à ne pas conserver mes données au-delà de cette durée.",size:22})],spacing:{after:300}}));
+
+  // Date + lieu
+  children.push(new D.Paragraph({children:[new D.TextRun({text:"À "+(lieu||"___________")+", le "+today,size:22})],spacing:{after:400}}));
+
+  // Signatures
+  children.push(new D.Table({
+    width:{size:100,type:D.WidthType.PERCENTAGE},
+    rows:[
+      new D.TableRow({children:[
+        new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:"Signature de l'usager :",bold:true,size:22})]})],width:{size:50,type:D.WidthType.PERCENTAGE}}),
+        new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:"Signature de l'aidant :",bold:true,size:22})]})],width:{size:50,type:D.WidthType.PERCENTAGE}}),
+      ]}),
+      new D.TableRow({children:[
+        new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:user,size:20,color:BLUE})]})]}),
+        new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:aidant,size:20,color:BLUE})]})]}),
+      ]}),
+      new D.TableRow({height:{value:1200,rule:D.HeightRule.EXACT},children:[
+        new D.TableCell({children:[new D.Paragraph({text:""})]}),
+        new D.TableCell({children:[new D.Paragraph({text:""})]}),
+      ]}),
+    ],
+  }));
+
+  var doc=new D.Document({sections:[{
+    properties:{page:{size:{width:D.convertMillimetersToTwip(210),height:D.convertMillimetersToTwip(297)},margin:{top:D.convertMillimetersToTwip(20),right:D.convertMillimetersToTwip(25),bottom:D.convertMillimetersToTwip(20),left:D.convertMillimetersToTwip(25)}}},
+    children:children,
+  }]});
+
+  var blob=await D.Packer.toBlob(doc);
+  var nom=(S.mandatNom||"usager").toUpperCase();
+  var prenom=S.mandatPrenom||"";
+  var fname="mandat-aidants-connect-"+[prenom,nom].filter(Boolean).join("-").replace(/\s+/g,"-")+"-"+today.replace(/\//g,"-")+".docx";
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();URL.revokeObjectURL(a.href);
+  showToast("✓ Fichier Word téléchargé");
+}
+
 function updateMandatDoc(){
   var doc=document.getElementById('mandat-doc');if(!doc)return;clear(doc);doc.appendChild(buildMandatDoc());
 }
