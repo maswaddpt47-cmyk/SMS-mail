@@ -860,6 +860,34 @@ function renderMandat(){
   var grid=el('div',{style:"max-width:1180px;margin:0 auto;padding:clamp(18px,3vw,32px) clamp(16px,4vw,40px);display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:28px;align-items:start;"});
 
   var formWrap=el('div',{id:"mandat-form-wrap",style:"display:flex;flex-direction:column;gap:18px;min-width:0;"});
+  // Bulle mode d'emploi
+  var help=el('div',{style:"background:oklch(0.96 0.025 266);border:1.5px solid oklch(0.82 0.06 266);border-radius:16px;padding:16px 18px;display:flex;gap:13px;align-items:flex-start;"});
+  var helpIcon=el('div',{style:"flex-shrink:0;width:32px;height:32px;border-radius:50%;background:oklch(0.5 0.16 266);color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;margin-top:1px;"},"?");
+  var helpBody=el('div',{style:"flex:1;min-width:0;"});
+  helpBody.appendChild(el('div',{style:"font-weight:700;font-size:13px;color:oklch(0.4 0.13 266);margin-bottom:8px;"},"Comment générer un mandat Aidants Connect ?"));
+  var steps=[
+    ["1","Sélectionnez l'usager","Choisissez un usager dans l'historique (menu déroulant) ou saisissez manuellement sa civilité, son prénom et son nom."],
+    ["2","Choisissez le conseiller","Sélectionnez votre nom dans la liste des conseillers numériques (aidant)."],
+    ["3","Précisez le lieu","Optionnel — choisissez la commune du CMS pour que le lieu apparaisse sur le document."],
+    ["4","Téléchargez le Word","Cliquez sur « 📄 Télécharger Word » pour générer le mandat pré-rempli au format .docx."],
+    ["5","Faites signer","Imprimez le document et faites-le signer par l'usager et le conseiller."],
+    ["6","Archivez","Cliquez sur « 📥 Archiver » pour enregistrer le mandat dans l'onglet « Mandats archivés »."],
+  ];
+  steps.forEach(function(s){
+    var row=el('div',{style:"display:flex;gap:10px;align-items:flex-start;margin-bottom:7px;"});
+    var num=el('div',{style:"flex-shrink:0;width:20px;height:20px;border-radius:50%;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;"});
+    num.textContent=s[0];
+    var txt=el('div',{style:"font-size:12.5px;line-height:1.45;color:oklch(0.35 0.03 264);"});
+    var strong=el('span',{style:"font-weight:700;color:oklch(0.4 0.13 266);"});
+    strong.textContent=s[1]+" — ";
+    txt.appendChild(strong);
+    txt.appendChild(document.createTextNode(s[2]));
+    row.appendChild(num);row.appendChild(txt);
+    helpBody.appendChild(row);
+  });
+  help.appendChild(helpIcon);help.appendChild(helpBody);
+  formWrap.appendChild(help);
+
   var c=el('section',{class:'gx-card gx-lift',style:CARD});
   c.appendChild(el('div',{style:"font-weight:700;font-size:15px;letter-spacing:-.01em;margin-bottom:16px;"},"Mandat Aidants Connect"));
   var col=el('div',{style:"display:flex;flex-direction:column;gap:14px;"});
