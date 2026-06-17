@@ -1156,14 +1156,9 @@ function generateMandatDocx(){
   var faitA=lieu?('Fait \\u224? '+r(lieu)+', le '+r(today)):('Fait \\u224? ___________, le '+r(today));
   L.push('\\pard\\sb200\\sa60\\f1\\fs22 '+faitA+'\\par');
 
-  // Signatures : deux colonnes avec tabulation
-  L.push('\\pard\\sb200\\sa0\\tqc\\tx4500\\tqc\\tx9000\\f1\\fs22');
-  L.push('\\b Signature du mandant\\line (usager)\\\'a0:\\b0\\tab\\b Signature du mandataire\\line ('+r(STR)+')\\\'a0:\\b0\\par');
-  L.push('\\pard\\sb60\\sa0\\tqc\\tx4500\\tqc\\tx9000\\f1\\fs22');
-  L.push('\\tab\\par\\tab\\par\\tab\\par');
-  // Lignes de signature
-  L.push('\\pard\\sb60\\sa0\\tqc\\tx4500\\tqc\\tx9000\\f1\\fs22');
-  L.push('\\ul               \\ulnone\\tab\\ul               \\ulnone\\par');
+  // Signatures : deux colonnes simples
+  L.push('\\pard\\sb240\\sa0\\tqc\\tx4500\\tqc\\tx9000\\f1\\fs22\\b Signature du mandant (usager)\\\'a0:\\b0\\tab\\b Signature du mandataire ('+r(STR)+')\\\'a0:\\b0\\par');
+  L.push('\\pard\\sb300\\sa0\\tqc\\tx4500\\tqc\\tx9000\\f1\\fs22\\ul            \\ulnone\\tab\\ul            \\ulnone\\par');
 
   L.push('}');
 
