@@ -1065,7 +1065,23 @@ function buildMandatDoc(){
 }
 
 async function generateMandatDocx(){
-  if(!window.docx){showToast("Bibliothèque Word non chargée","err");return;}
+  if(!window.docx){
+    showToast("Chargement de la bibliothèque Word…","info");
+    await new Promise(function(resolve,reject){
+      var urls=['https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js','https://unpkg.com/docx@8.5.0/build/index.js'];
+      var idx=0;
+      function tryNext(){
+        if(idx>=urls.length){reject(new Error("CDN inaccessible"));return;}
+        var s=document.createElement('script');
+        s.src=urls[idx++];
+        s.onload=resolve;
+        s.onerror=tryNext;
+        document.head.appendChild(s);
+      }
+      tryNext();
+    }).catch(function(){showToast("Impossible de charger la bibliothèque Word — vérifiez votre connexion","err");});
+    if(!window.docx)return;
+  }
   var D=window.docx;
   if(!S.mandatNum)S.mandatNum=generateMandatNum();
   var user=mandatUserStr()||"[Usager]";
