@@ -162,7 +162,7 @@ var LABELS={
   mail_sans_appel:"✉️ Mail — Corps Proposition sans appel",
 };
 var HISTORY_MAX=20;
-
+var AIDANTS=["Michel Aswad","Cynthia Pineau","Corentin Tual","Eva Capelle"];
 var STRUCTURE="Conseil Départemental du Lot-et-Garonne";
 var DUREE="1 an";
 
@@ -183,7 +183,7 @@ var S={
   exportText:"", importText:"", importError:"",
   copied:{}, toast:null,
   mandatSource:"",
-  mandatCivilite:"", mandatPrenom:"", mandatNom:"", mandatCommune:"", mandatNum:"",  helpMandatOpen:true,
+  mandatCivilite:"", mandatPrenom:"", mandatNom:"", mandatAidant:AIDANTS[0], mandatCommune:"",
 };
 
 /* ============================== PERSISTENCE ============================== */
@@ -837,26 +837,17 @@ function renderConfig(){
 /* ============================== MANDAT ============================== */
 function todayFR(){return new Date().toLocaleDateString("fr-FR",{year:"numeric",month:"long",day:"numeric"});}
 
-function generateMandatNum(){
-  var counter=(parseInt(localStorage.getItem('ess-mandat-counter')||'0',10))+1;
-  localStorage.setItem('ess-mandat-counter',String(counter));
-  var year=new Date().getFullYear();
-  var num='MAN-'+year+'-'+String(counter).padStart(4,'0');
-  return num;
-}
-
 function mandatTeleservices(){
   return [
-    ["PAPIERS-CITOYENNETÉ","État-civil, Passeport, Élections, Papiers à conserver, Carte d'identité…"],
-    ["FAMILLE","Allocations familiales, Naissance, Mariage, Pacs, Scolarité…"],
-    ["SOCIAL – SANTÉ","Carte vitale, Chômage, Handicap, RSA, Personnes âgées…"],
-    ["TRAVAIL","CDD, Concours, Retraite, Démission, Période d'essai…"],
-    ["LOGEMENT","Allocations logement, Permis de construire, Logement social, Fin de bail…"],
-    ["TRANSPORTS","Carte grise, Permis de conduire, Contrôle technique, Infractions…"],
-    ["ARGENT","Crédit immobilier, Impôts, Consommation, Livret A, Assurance, Surendettement…"],
-    ["JUSTICE","Casier judiciaire, Plainte, Aide juridictionnelle, Saisie…"],
-    ["ÉTRANGER","Titres de séjour, Attestation d'accueil, Regroupement familial…"],
-    ["LOISIRS","Animaux, Permis bateau, Tourisme, Permis de chasser…"],
+    ["PAPIERS-CITOYENNETE","Etat-civil, Passeport, Élections, Papiers à conserver, Certificats"],
+    ["FAMILLE","Allocations familiales, Naissance, Mariage, Pacs, Scolarité"],
+    ["SOCIAL","Allocation Solidarité Personnes Agées, Caf, Retraite, Logement social, Santé"],
+    ["TRAVAIL","Côté, Concours, Retraite, Demandes, Pôle Emploi, France Travail"],
+    ["LOGEMENT","Allocations logement, Contrat de location, Logement social, Visa"],
+    ["TRANSPORTS","Carte grise, Permis de conduire, Carte de mobilité, Carte technique"],
+    ["ARGENT","Crédit impôt, Paiement de factures, Comptes, Impôts, Surendettement"],
+    ["ÉTRANGER","Titre de séjour, Attestation d'accueil, Regroupement familial"],
+    ["LOISIRS","Animaux, Permis bateau, Tourisme, Permis de chasser"],
   ];
 }
 
@@ -939,7 +930,10 @@ function renderMandat(){
   nomD.appendChild(el('input',{class:'gx-in',style:INPUT,value:S.mandatNom,placeholder:"Dupont",onInput:function(e){S.mandatNom=e.target.value;updateMandatDoc();}}));
   col.appendChild(nomD);
 
-
+  var aid=el('div');aid.appendChild(el('label',{style:LABEL},"Conseiller (aidant)"));
+  var aidSel=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;",onChange:function(e){S.mandatAidant=e.target.value;updateMandatDoc();}});
+  AIDANTS.forEach(function(a){aidSel.appendChild(el('option',{value:a,selected:S.mandatAidant===a},a));});
+  aid.appendChild(aidSel);col.appendChild(aid);
 
   var lieu=el('div');lieu.appendChild(el('label',{style:LABEL},"Lieu (commune CMS — optionnel)"));
   var lieuSel=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;",onChange:function(e){S.mandatCommune=e.target.value;updateMandatDoc();}});
@@ -948,8 +942,6 @@ function renderMandat(){
   lieu.appendChild(lieuSel);col.appendChild(lieu);
 
   var info=el('div',{style:"display:flex;flex-direction:column;gap:8px;background:oklch(0.97 0.005 256);border:1px solid oklch(0.93 0.008 256);border-radius:12px;padding:12px 14px;font-size:12.5px;color:oklch(0.5 0.02 264);"});
-  var nextNum='MAN-'+new Date().getFullYear()+'-'+String((parseInt(localStorage.getItem('ess-mandat-counter')||'0',10)+1)).padStart(4,'0');
-  info.appendChild(el('div',{html:'<b>N° Mandat :</b> <span style="font-family:monospace;color:#1B4991;">'+nextNum+'</span> <span style="font-size:11px;color:#888;">(attribué au téléchargement)</span>'}));
   info.appendChild(el('div',{html:'<b>Date :</b> '+todayFR()}));
   info.appendChild(el('div',{html:'<b>Structure :</b> '+STRUCTURE}));
   info.appendChild(el('div',{html:'<b>Durée :</b> '+DUREE}));
@@ -976,36 +968,18 @@ function renderMandat(){
 
 function buildMandatDoc(){
   var page=el('div',{class:"m-page"});
+  var logo=el('div',{class:"m-logo"});
+  var svgWrap=el('div',{style:"flex-shrink:0;"});
+  svgWrap.innerHTML='<svg width="187" height="74" viewBox="0 0 374 148" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M43.6499 67.9061H18.0585L14.5498 75.9724H0.8125L26.6815 12.9139H35.1459L60.9158 75.9724H47.1784L43.6499 67.9061ZM30.8641 33.1091L22.5187 57.4847H39.1898L30.8641 33.1091Z" fill="#1B4991"/><path d="M81.3737 75.9724H68.5879V29.5372H81.3737V75.9724Z" fill="#1B4991"/><path d="M140.981 5.59344V75.9724H129.226V70.2416C125.995 74.6575 120.603 77.0911 114.161 77.0911C100.899 77.0911 91.4238 66.7678 91.4238 52.7941C91.4238 38.8203 100.899 28.497 114.161 28.497C120.028 28.497 124.865 30.4596 128.195 34.0316V5.59344H140.981ZM128.374 52.7941C128.374 43.982 122.407 39.939 116.52 39.939C109.879 39.939 104.388 44.8259 104.388 52.6959C104.388 60.5856 109.78 65.551 116.52 65.551C122.407 65.551 128.374 61.7043 128.374 52.7941Z" fill="#1B4991"/><path d="M193.017 48.3782V75.9724H181.262V71.478C177.951 74.9518 173.015 77.1107 166.95 77.1107C156.721 77.1107 150.734 71.1051 150.734 63.2155C150.734 54.7763 157.653 49.7128 168.456 49.7128H180.211V47.652C180.211 42.5885 177.277 39.4876 171.489 39.4876C166.474 39.4876 162.965 41.8427 159.08 45.8661L152.439 38.0745C157.93 31.5979 164.67 28.497 172.916 28.497C184.87 28.497 193.017 35.1502 193.017 48.3782ZM180.211 58.623V58.0538H170.161C165.998 58.0538 163.619 59.6435 163.619 62.7445C163.619 65.9435 166.375 67.808 170.339 67.808C175.771 67.808 180.211 64.0594 180.211 58.623Z" fill="#1B4991"/><path d="M248.461 47.1614V75.9724H235.754V48.8492C235.754 43.4913 232.245 39.8409 227.032 39.8409C221.819 39.8409 218.132 43.4913 218.132 48.8492V75.9724H205.346V29.5372H217.101V33.7568C220.332 30.5577 225.07 28.497 230.838 28.497C241.82 28.497 248.461 35.9942 248.461 47.1614Z" fill="#1B4991"/><path d="M290.903 65.3744V75.9724C288.246 76.6201 285.412 77.0911 282.081 77.0911C270.525 77.0911 263.309 71.5566 263.309 59.6436V40.2138H255.915V29.5176H263.309V17.8008H276.095V29.5372H289.356V40.2334H276.095V58.5249C276.095 63.8632 278.929 65.7473 284.817 65.7473C286.363 65.7473 288.445 65.551 290.903 65.3744Z" fill="#1B4991"/><path d="M332.987 35.4447L326.544 43.2362C323.511 40.4297 319.824 38.8204 316.018 38.8204C312.985 38.8204 311.003 39.8605 311.003 42.0979C311.003 43.982 312.51 44.9044 315.939 46.2194L320.478 48.1035C328.903 51.4792 333.661 55.0511 333.661 62.2735C333.661 71.851 325.612 77.0911 315.364 77.0911C307.019 77.0911 300.1 73.5192 295.938 68.0828L302.38 60.3894C306.166 64.2361 310.527 66.6697 315.562 66.6697C318.793 66.6697 321.529 65.4529 321.529 62.823C321.529 60.6641 319.547 59.8202 316.692 58.6034L311.677 56.5427C303.708 53.3436 298.891 49.6932 298.891 42.3727C298.891 33.4624 306.186 28.3989 316.137 28.3989C322.936 28.3989 328.725 30.754 332.987 35.4447Z" fill="#1B4991"/><path d="M60.9358 99.19L51.2622 105.941C47.0994 99.3667 41.212 95.52 33.3422 95.52C21.6863 95.52 13.1625 103.959 13.1625 115.97C13.1625 127.883 21.6863 136.244 33.3422 136.244C41.212 136.244 47.0796 132.397 51.2622 125.823L60.9358 132.574C55.544 142.053 45.3946 147.961 33.2629 147.961C14.6888 147.98 0 134.105 0 115.892C0 97.6985 14.6888 83.8032 33.3621 83.8032C45.3946 83.8032 55.4449 89.7107 60.9358 99.19Z" fill="#1B4991"/><path d="M117.708 123.585C117.708 137.382 106.33 147.882 92.4143 147.882C78.4986 147.882 67.3779 137.382 67.3779 123.585C67.3779 109.886 78.459 99.3863 92.4936 99.3863C106.33 99.3863 117.708 109.886 117.708 123.585ZM80.362 123.683C80.362 131.004 85.3772 136.264 92.4936 136.264C99.4118 136.264 104.625 130.906 104.625 123.683C104.625 116.363 99.4118 110.926 92.4936 110.926C85.3772 110.926 80.362 116.363 80.362 123.683Z" fill="#1B4991"/><path d="M171.27 118.051V146.862H158.564V119.739C158.564 114.381 155.055 110.73 149.842 110.73C144.628 110.73 140.941 114.381 140.941 119.739V146.862H128.155V100.407H139.91V104.626C143.141 101.427 147.879 99.3667 153.648 99.3667C164.63 99.3863 171.27 106.883 171.27 118.051Z" fill="#1B4991"/><path d="M225.308 118.051V146.862H212.602V119.739C212.602 114.381 209.093 110.73 203.88 110.73C198.666 110.73 194.979 114.381 194.979 119.739V146.862H182.193V100.407H193.948V104.626C197.18 101.427 201.917 99.3667 207.686 99.3667C218.687 99.3863 225.308 106.883 225.308 118.051Z" fill="#1B4991"/><path d="M280.753 127.903H247.866C249.373 133.81 254.21 137.108 261.049 137.108C266.163 137.108 270.346 135.322 274.132 132.417L279.444 141.052C274.132 145.468 267.888 148 260.672 148C245.785 148 234.981 137.402 234.981 123.703C234.981 110.004 245.686 99.4059 259.522 99.4059C272.705 99.4059 281.605 108.983 281.605 120.995C281.605 123.585 281.129 126.313 280.753 127.903ZM247.866 118.993H269.196C269.097 113.085 264.458 109.611 259.047 109.611C253.655 109.611 249.294 113.183 247.866 118.993Z" fill="#1B4991"/><path d="M334.394 110.828L325.494 117.678C322.837 113.733 319.428 110.926 314.214 110.926C306.919 110.926 301.904 116.363 301.904 123.585C301.904 130.906 306.919 136.342 314.214 136.342C319.329 136.342 322.738 133.536 325.494 129.689L334.394 136.44C330.509 143.388 323.313 147.98 314.016 147.98C299.981 147.98 288.9 137.382 288.9 123.585C288.9 109.886 299.981 99.3863 314.016 99.3863C323.392 99.3863 330.509 103.881 334.394 110.828Z" fill="#1B4991"/><path d="M374 136.264V146.862C371.344 147.509 368.509 147.98 365.179 147.98C353.622 147.98 346.407 142.446 346.407 130.533V111.103H339.013V100.407H346.407V88.6705H359.192V100.407H372.454V111.103H359.192V129.395C359.192 134.733 362.027 136.617 367.915 136.617C369.461 136.637 371.542 136.44 374 136.264Z" fill="#1B4991"/><path d="M65.4949 3.80745C68.0521 1.27569 71.4022 0 74.7721 0H100.661C104.011 0 107.361 1.25607 109.918 3.78783C115.033 8.85134 115.033 17.055 109.918 22.1185C107.341 24.6699 103.951 25.926 100.562 25.9064H74.8514C71.4616 25.926 68.0917 24.6699 65.4949 22.1185C60.3806 17.0747 60.3806 8.85135 65.4949 3.80745Z" fill="url(#paint0_linear_223_218)"/><path d="M100.661 25.9064C107.887 25.9064 113.744 20.107 113.744 12.9532C113.744 5.79934 107.887 0 100.661 0C93.4357 0 87.5781 5.79934 87.5781 12.9532C87.5781 20.107 93.4357 25.9064 100.661 25.9064Z" fill="#EF4056"/><defs><linearGradient id="paint0_linear_223_218" x1="61.9534" y1="12.9612" x2="113.234" y2="12.9612" gradientUnits="userSpaceOnUse"><stop stop-color="#F38192" stop-opacity="0"/><stop offset="1" stop-color="#F05B89"/></linearGradient></defs></svg>';
+  logo.appendChild(svgWrap);
+  page.appendChild(logo);
 
-  // ── En-tête : logos ──
-  var header=el('div',{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #e8f0fe;"});
-  var acWrap=el('div',{style:"flex-shrink:0;"});
-  acWrap.innerHTML='<svg width="160" height="63" viewBox="0 0 374 148" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M43.6499 67.9061H18.0585L14.5498 75.9724H0.8125L26.6815 12.9139H35.1459L60.9158 75.9724H47.1784L43.6499 67.9061ZM30.8641 33.1091L22.5187 57.4847H39.1898L30.8641 33.1091Z" fill="#1B4991"/><path d="M81.3737 75.9724H68.5879V29.5372H81.3737V75.9724Z" fill="#1B4991"/><path d="M140.981 5.59344V75.9724H129.226V70.2416C125.995 74.6575 120.603 77.0911 114.161 77.0911C100.899 77.0911 91.4238 66.7678 91.4238 52.7941C91.4238 38.8203 100.899 28.497 114.161 28.497C120.028 28.497 124.865 30.4596 128.195 34.0316V5.59344H140.981ZM128.374 52.7941C128.374 43.982 122.407 39.939 116.52 39.939C109.879 39.939 104.388 44.8259 104.388 52.6959C104.388 60.5856 109.78 65.551 116.52 65.551C122.407 65.551 128.374 61.7043 128.374 52.7941Z" fill="#1B4991"/><path d="M193.017 48.3782V75.9724H181.262V71.478C177.951 74.9518 173.015 77.1107 166.95 77.1107C156.721 77.1107 150.734 71.1051 150.734 63.2155C150.734 54.7763 157.653 49.7128 168.456 49.7128H180.211V47.652C180.211 42.5885 177.277 39.4876 171.489 39.4876C166.474 39.4876 162.965 41.8427 159.08 45.8661L152.439 38.0745C157.93 31.5979 164.67 28.497 172.916 28.497C184.87 28.497 193.017 35.1502 193.017 48.3782ZM180.211 58.623V58.0538H170.161C165.998 58.0538 163.619 59.6435 163.619 62.7445C163.619 65.9435 166.375 67.808 170.339 67.808C175.771 67.808 180.211 64.0594 180.211 58.623Z" fill="#1B4991"/><path d="M248.461 47.1614V75.9724H235.754V48.8492C235.754 43.4913 232.245 39.8409 227.032 39.8409C221.819 39.8409 218.132 43.4913 218.132 48.8492V75.9724H205.346V29.5372H217.101V33.7568C220.332 30.5577 225.07 28.497 230.838 28.497C241.82 28.497 248.461 35.9942 248.461 47.1614Z" fill="#1B4991"/><path d="M290.903 65.3744V75.9724C288.246 76.6201 285.412 77.0911 282.081 77.0911C270.525 77.0911 263.309 71.5566 263.309 59.6436V40.2138H255.915V29.5176H263.309V17.8008H276.095V29.5372H289.356V40.2334H276.095V58.5249C276.095 63.8632 278.929 65.7473 284.817 65.7473C286.363 65.7473 288.445 65.551 290.903 65.3744Z" fill="#1B4991"/><path d="M332.987 35.4447L326.544 43.2362C323.511 40.4297 319.824 38.8204 316.018 38.8204C312.985 38.8204 311.003 39.8605 311.003 42.0979C311.003 43.982 312.51 44.9044 315.939 46.2194L320.478 48.1035C328.903 51.4792 333.661 55.0511 333.661 62.2735C333.661 71.851 325.612 77.0911 315.364 77.0911C307.019 77.0911 300.1 73.5192 295.938 68.0828L302.38 60.3894C306.166 64.2361 310.527 66.6697 315.562 66.6697C318.793 66.6697 321.529 65.4529 321.529 62.823C321.529 60.6641 319.547 59.8202 316.692 58.6034L311.677 56.5427C303.708 53.3436 298.891 49.6932 298.891 42.3727C298.891 33.4624 306.186 28.3989 316.137 28.3989C322.936 28.3989 328.725 30.754 332.987 35.4447Z" fill="#1B4991"/><path d="M60.9358 99.19L51.2622 105.941C47.0994 99.3667 41.212 95.52 33.3422 95.52C21.6863 95.52 13.1625 103.959 13.1625 115.97C13.1625 127.883 21.6863 136.244 33.3422 136.244C41.212 136.244 47.0796 132.397 51.2622 125.823L60.9358 132.574C55.544 142.053 45.3946 147.961 33.2629 147.961C14.6888 147.98 0 134.105 0 115.892C0 97.6985 14.6888 83.8032 33.3621 83.8032C45.3946 83.8032 55.4449 89.7107 60.9358 99.19Z" fill="#1B4991"/><path d="M117.708 123.585C117.708 137.382 106.33 147.882 92.4143 147.882C78.4986 147.882 67.3779 137.382 67.3779 123.585C67.3779 109.886 78.459 99.3863 92.4936 99.3863C106.33 99.3863 117.708 109.886 117.708 123.585ZM80.362 123.683C80.362 131.004 85.3772 136.264 92.4936 136.264C99.4118 136.264 104.625 130.906 104.625 123.683C104.625 116.363 99.4118 110.926 92.4936 110.926C85.3772 110.926 80.362 116.363 80.362 123.683Z" fill="#1B4991"/><path d="M171.27 118.051V146.862H158.564V119.739C158.564 114.381 155.055 110.73 149.842 110.73C144.628 110.73 140.941 114.381 140.941 119.739V146.862H128.155V100.407H139.91V104.626C143.141 101.427 147.879 99.3667 153.648 99.3667C164.63 99.3863 171.27 106.883 171.27 118.051Z" fill="#1B4991"/><path d="M225.308 118.051V146.862H212.602V119.739C212.602 114.381 209.093 110.73 203.88 110.73C198.666 110.73 194.979 114.381 194.979 119.739V146.862H182.193V100.407H193.948V104.626C197.18 101.427 201.917 99.3667 207.686 99.3667C218.687 99.3863 225.308 106.883 225.308 118.051Z" fill="#1B4991"/><path d="M280.753 127.903H247.866C249.373 133.81 254.21 137.108 261.049 137.108C266.163 137.108 270.346 135.322 274.132 132.417L279.444 141.052C274.132 145.468 267.888 148 260.672 148C245.785 148 234.981 137.402 234.981 123.703C234.981 110.004 245.686 99.4059 259.522 99.4059C272.705 99.4059 281.605 108.983 281.605 120.995C281.605 123.585 281.129 126.313 280.753 127.903ZM247.866 118.993H269.196C269.097 113.085 264.458 109.611 259.047 109.611C253.655 109.611 249.294 113.183 247.866 118.993Z" fill="#1B4991"/><path d="M334.394 110.828L325.494 117.678C322.837 113.733 319.428 110.926 314.214 110.926C306.919 110.926 301.904 116.363 301.904 123.585C301.904 130.906 306.919 136.342 314.214 136.342C319.329 136.342 322.738 133.536 325.494 129.689L334.394 136.44C330.509 143.388 323.313 147.98 314.016 147.98C299.981 147.98 288.9 137.382 288.9 123.585C288.9 109.886 299.981 99.3863 314.016 99.3863C323.392 99.3863 330.509 103.881 334.394 110.828Z" fill="#1B4991"/><path d="M374 136.264V146.862C371.344 147.509 368.509 147.98 365.179 147.98C353.622 147.98 346.407 142.446 346.407 130.533V111.103H339.013V100.407H346.407V88.6705H359.192V100.407H372.454V111.103H359.192V129.395C359.192 134.733 362.027 136.617 367.915 136.617C369.461 136.637 371.542 136.44 374 136.264Z" fill="#1B4991"/><path d="M65.4949 3.80745C68.0521 1.27569 71.4022 0 74.7721 0H100.661C104.011 0 107.361 1.25607 109.918 3.78783C115.033 8.85134 115.033 17.055 109.918 22.1185C107.341 24.6699 103.951 25.926 100.562 25.9064H74.8514C71.4616 25.926 68.0917 24.6699 65.4949 22.1185C60.3806 17.0747 60.3806 8.85135 65.4949 3.80745Z" fill="url(#g1)"/><path d="M100.661 25.9064C107.887 25.9064 113.744 20.107 113.744 12.9532C113.744 5.79934 107.887 0 100.661 0C93.4357 0 87.5781 5.79934 87.5781 12.9532C87.5781 20.107 93.4357 25.9064 100.661 25.9064Z" fill="#EF4056"/><defs><linearGradient id="g1" x1="61.9534" y1="12.9612" x2="113.234" y2="12.9612" gradientUnits="userSpaceOnUse"><stop stop-color="#F38192" stop-opacity="0"/><stop offset="1" stop-color="#F05B89"/></linearGradient></defs></svg>';
-  var cd47Wrap=el('div',{style:"flex-shrink:0;text-align:right;"});
-  cd47Wrap.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 75" width="180" height="50"><text x="0" y="32" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="30" fill="#555555" letter-spacing="-0.5">LOT-ET-GARONNE</text><text x="0" y="52" font-family="Arial,sans-serif" font-weight="400" font-size="13" fill="#0070B8">Le Département </text><text x="92" y="52" font-family="Arial,sans-serif" font-weight="700" font-size="13" fill="#5DAF1B">Cœur du Sud-Ouest</text><polygon points="285,2 305,2 325,38 305,74 285,74 305,38" fill="#00A3C4"/><polygon points="270,18 285,2 305,38 285,74 270,58 285,38" fill="#5DAF1B"/></svg>';
-  header.appendChild(acWrap);
-  header.appendChild(cd47Wrap);
-  page.appendChild(header);
-
-  // ── Numéro de mandat ──
-  var num=S.mandatNum||"";
-  if(num){
-    var numBadge=el('div',{style:"text-align:right;font-size:10.5pt;color:#666;margin-bottom:10px;"});
-    numBadge.textContent="N° Mandat : "+num;
-    page.appendChild(numBadge);
-  }
-
-  // ── Titre ──
   page.appendChild(el('h1',null,"Mandat pour réaliser des démarches en ligne avec le service « Aidants Connect »"));
 
   var user=mandatUserStr();
+  var aidant=S.mandatAidant||"[aidant]";
 
-  // ── Corps conforme au PDF officiel ──
-  var p1=el('p');p1.innerHTML="Je m'appelle : <b>"+user+"</b> (je suis le mandant)";
-  page.appendChild(p1);
-
-  var p2=el('p');p2.innerHTML="J'autorise <b>"+STRUCTURE+"</b> (c'est le mandataire) à réaliser à ma place les démarches administratives suivantes :";
-  page.appendChild(p2);
+  page.appendChild(el('p',null,"Je soussigné(e) "+user+" autorise "+aidant+" rattaché(e) à "+STRUCTURE+" à accéder à mes informations personnelles contenues dans les téléservices administratifs suivants, et ceux qui seront ouverts ultérieurement :"));
 
   var ul=el('ul');
   mandatTeleservices().forEach(function(t){
@@ -1013,64 +987,36 @@ function buildMandatDoc(){
   });
   page.appendChild(ul);
 
-  var pDuree=el('p',{style:"font-weight:700;"});pDuree.textContent="pour une durée de "+DUREE;
-  page.appendChild(pDuree);
+  page.appendChild(el('p',null,"pour une durée de "+DUREE+"."));
+  page.appendChild(el('p',null,aidant+" agit conformément aux articles 1984 et suivants du Code Civil, est mandaté(e) et agit pour votre compte et dans votre intérêt."));
+  page.appendChild(el('p',null,"Pour "+STRUCTURE+" il s'agit à l'adresser en rapport d'activité de son intervention, et à s'informer au service auquel il/elle est rattaché(e) des données personnelles des usagers notamment le nom, le prénom, les aides sociales perçues, le numéro de dossier, la date de l'intervention, la durée."));
 
-  page.appendChild(el('p',null,"Cette autorisation est conforme aux articles 1984 et suivants du Code civil. Les démarches seront accomplies sur internet, sur des sites utilisant FranceConnect ou sur d'autres sites. Elles peuvent être aussi accomplie par tous les moyens permis par l'administration (téléphone, papier, email, …)."));
-  page.appendChild(el('p',null,"Je peux annuler mon autorisation à tout moment."));
-
-  var p3=el('p');p3.innerHTML="Pour que <b>"+STRUCTURE+"</b> puisse agir à ma place :";
-  page.appendChild(p3);
+  page.appendChild(el('p',{style:"margin-bottom:4px;font-weight:700;"},"Les actions habilitées "+STRUCTURE+" doivent :"));
   var ul2=el('ul');
-  var li2a=el('li');li2a.innerHTML="Je reconnais que l'aidant habilité par <b>"+STRUCTURE+"</b> m'a rappelé l'objet de son intervention, et m'a informé sur la nécessité et l'utilité des informations collectées ;";
-  var li2b=el('li');li2b.innerHTML="J'autorise les aidants habilités par <b>"+STRUCTURE+"</b> à utiliser mes données personnelles dans le cadre de ce mandat. Je sais que j'ai des droits sur les informations me concernant : accès, rectification, suppression.";
-  ul2.appendChild(li2a);ul2.appendChild(li2b);
+  ["Réaliser uniquement les démarches listées dans les téléservices administratifs ci-dessus",
+   "Utiliser et communiquer seulement les informations nécessaires aux démarches listées dans ce document",
+   "Permettre l'accès à mes données personnelles seulement à travers le service « Aidants Connect »",
+   "Respecter à tout moment la confidentialité de mes informations personnelles"].forEach(function(x){ul2.appendChild(el('li',null,x));});
   page.appendChild(ul2);
 
-  var p4=el('p');p4.innerHTML="Les aidants habilités par <b>"+STRUCTURE+"</b> doivent :";
-  page.appendChild(p4);
-  var ul3=el('ul');
-  ["effectuer les démarches listées dans ce document à ma place, à partir des informations que je leur ai données ;",
-   "collecter et conserver seulement les informations nécessaires aux démarches listées dans ce document ou à celles qui s'y rattachent ;",
-   "utiliser et communiquer seulement les informations nécessaires aux démarches listées dans ce document ou à celles qui s'y rattachent ;",
-   "m'informer et demander mon autorisation avant d'effectuer d'autres démarches que celle listées dans ce document ;",
-   "mettre à jour et supprimer l'ensemble de mes informations personnelles lorsqu'elles ne sont plus utiles ; s'interdire de rendre publiques mes informations personnelles ;",
-   "prendre toutes les précautions pour assurer la sécurité de mes informations personnelles."
-  ].forEach(function(x){ul3.appendChild(el('li',null,x));});
-  page.appendChild(ul3);
+  page.appendChild(el('p',null,"Je prends acte que la responsabilité de réaliser les actions listées dans ce mandat incombe à l'aidant habilité, qui s'engage à assurer de façon sécurisée le traitement de toutes mes données personnelles."));
+  page.appendChild(el('p',null,"Mon accord est valable pour une durée de "+DUREE+" à compter de la date de signature. L'aidant habilité s'engage à ne pas conserver mes données au-delà de cette durée."));
 
-  var p5=el('p');p5.innerHTML="A partir du moment où un aidant habilité par <b>"+STRUCTURE+"</b> réalise à ma place une des démarches listées dans ce document, il accepte de le faire dans les conditions décrites dans ce document.";
-  page.appendChild(p5);
-
-  var p6=el('p');p6.innerHTML="Mon autorisation est donnée et acceptée pour une durée de "+DUREE+". Elle se termine avant si :";
-  page.appendChild(p6);
-  var ul4=el('ul');
-  var term1=el('li');term1.textContent="les démarches décrites ci-dessus sont réalisées ;";
-  var term2=el('li');term2.textContent="je décide de l'annuler ;";
-  var term3=el('li');term3.innerHTML="l'aidant habilité par <b>"+STRUCTURE+"</b> décide de l'annuler ;";
-  var term4=el('li');term4.innerHTML="je donne mon autorisation à une autre personne qu'un aidant habilité par <b>"+STRUCTURE+"</b>. Dans ce cas, je dois en informer le plus vite possible <b>"+STRUCTURE+"</b>.";
-  [term1,term2,term3,term4].forEach(function(x){ul4.appendChild(x);});
-  page.appendChild(ul4);
-
-  var p7=el('p');p7.innerHTML="L'aidant habilité par <b>"+STRUCTURE+"</b> doit accomplir à ma place les démarches listées dans ce document tant que le mandat est valable. L'aidant habilité par <b>"+STRUCTURE+"</b> pourra être responsable s'il ne respecte pas les conditions décrites dans ce document (article 1991 du Code civil.).";
-  page.appendChild(p7);
-
-  page.appendChild(el('p',{style:"margin-top:20px;"},"Fait à "+(S.mandatCommune||"___________")+", le "+todayFR()));
+  page.appendChild(el('p',{style:"margin-top:18px;"},"À "+(S.mandatCommune||"")+", le "+todayFR()));
 
   var sign=el('div',{class:"m-sign"});
-  var s1=el('div');s1.appendChild(el('div',{style:"font-weight:600;"},"Signature du mandant (usager) :"));s1.appendChild(el('div',{class:"m-line"}));
-  var s2=el('div');s2.appendChild(el('div',{style:"font-weight:600;"},"Signature du mandataire ("+STRUCTURE+") :"));s2.appendChild(el('div',{class:"m-line"}));
+  var s1=el('div');s1.appendChild(el('div',null,"Signature de l'usager :"));s1.appendChild(el('div',{class:"m-line"}));
+  var s2=el('div');s2.appendChild(el('div',null,"Signature de l'aidant :"));s2.appendChild(el('div',{class:"m-line"}));
   sign.appendChild(s1);sign.appendChild(s2);
   page.appendChild(sign);
 
   return page;
 }
-
 async function generateMandatDocx(){
   if(!window.docx){showToast("Bibliothèque Word non chargée","err");return;}
   var D=window.docx;
-  if(!S.mandatNum)S.mandatNum=generateMandatNum();
   var user=mandatUserStr()||"[Usager]";
+  var aidant=S.mandatAidant||"[Aidant]";
   var lieu=S.mandatCommune||"";
   var today=todayFR();
   var d=new Date();d.setFullYear(d.getFullYear()+1);
@@ -1101,7 +1047,7 @@ async function generateMandatDocx(){
   }));
 
   // Encart récap
-  [[" N° Mandat : ",S.mandatNum||""],[" Usager : ",user],[" Structure : ",STRUCTURE],[" Durée : ",DUREE+" — jusqu'au "+expiry]].forEach(function(r){
+  [[" Usager : ",user],[" Aidant : ",aidant],[" Structure : ",STRUCTURE],[" Durée : ",DUREE+" (jusqu'au "+expiry+")"]].forEach(function(r){
     children.push(new D.Paragraph({
       children:[new D.TextRun({text:r[0],bold:true,size:20}),new D.TextRun({text:r[1],size:20})],
       spacing:{after:60},
@@ -1113,15 +1059,15 @@ async function generateMandatDocx(){
 
   // Corps
   children.push(new D.Paragraph({
-    children:[new D.TextRun({text:"Je m'appelle : ",size:22}),new D.TextRun({text:user,bold:true,size:22}),new D.TextRun({text:" (je suis le mandant)",size:22})],
-    spacing:{after:120},
-  }));
-  children.push(new D.Paragraph({
     children:[
-      new D.TextRun({text:"J'autorise ",size:22}),
+      new D.TextRun({text:"Je soussigné(e) ",size:22}),
+      new D.TextRun({text:user,bold:true,size:22}),
+      new D.TextRun({text:" autorise ",size:22}),
+      new D.TextRun({text:aidant,bold:true,size:22}),
+      new D.TextRun({text:" rattaché(e) au ",size:22}),
       new D.TextRun({text:STRUCTURE,bold:true,size:22}),
-      new D.TextRun({text:" (c'est le mandataire) à réaliser à ma place les démarches administratives suivantes :",size:22}),
-    ],spacing:{after:120},
+      new D.TextRun({text:" à accéder à mes informations personnelles contenues dans les téléservices administratifs suivants, et ceux qui seront ouverts ultérieurement :",size:22}),
+    ],spacing:{after:160},
   }));
 
   // Liste téléservices
@@ -1139,35 +1085,32 @@ async function generateMandatDocx(){
 
   children.push(new D.Paragraph({children:[new D.TextRun({text:"Pour le ",size:22}),new D.TextRun({text:STRUCTURE,bold:true,size:22}),new D.TextRun({text:", il s'agit d'adresser un rapport d'activité de son intervention, et de s'informer au service auquel il/elle est rattaché(e) des données personnelles des usagers, notamment le nom, le prénom, les aides sociales perçues, le numéro de dossier, la date de l'intervention, la durée.",size:22})],spacing:{after:160}}));
 
-  children.push(new D.Paragraph({children:[new D.TextRun({text:"Cette autorisation est conforme aux articles 1984 et suivants du Code civil.",size:22})],spacing:{after:120}}));
-  children.push(new D.Paragraph({children:[new D.TextRun({text:"Je peux annuler mon autorisation à tout moment.",size:22})],spacing:{after:120}}));
-  children.push(new D.Paragraph({children:[new D.TextRun({text:"Les aidants habilités par ",size:22}),new D.TextRun({text:STRUCTURE,bold:true,size:22}),new D.TextRun({text:" doivent :",size:22})],spacing:{after:80}}));
-  ["effectuer les démarches listées dans ce document à ma place, à partir des informations que je leur ai données ;",
-   "collecter et conserver seulement les informations nécessaires aux démarches listées dans ce document ou à celles qui s'y rattachent ;",
-   "utiliser et communiquer seulement les informations nécessaires aux démarches listées dans ce document ou à celles qui s'y rattachent ;",
-   "m'informer et demander mon autorisation avant d'effectuer d'autres démarches que celle listées dans ce document ;",
-   "mettre à jour et supprimer l'ensemble de mes informations personnelles lorsqu'elles ne sont plus utiles ; s'interdire de rendre publiques mes informations personnelles ;",
-   "prendre toutes les précautions pour assurer la sécurité de mes informations personnelles."
-  ].forEach(function(o){
+  children.push(new D.Paragraph({children:[new D.TextRun({text:"Les actions habilitées au "+STRUCTURE+" doivent :",bold:true,size:22})],spacing:{after:80}}));
+  ["Réaliser uniquement les démarches listées dans les téléservices administratifs ci-dessus",
+   "Utiliser et communiquer seulement les informations nécessaires aux démarches listées dans ce document",
+   "Permettre l'accès à mes données personnelles seulement à travers le service « Aidants Connect »",
+   "Respecter à tout moment la confidentialité de mes informations personnelles"].forEach(function(o){
     children.push(new D.Paragraph({children:[new D.TextRun({text:o,size:22})],bullet:{level:0},spacing:{after:60}}));
   });
-  children.push(new D.Paragraph({spacing:{after:120}}));
-  children.push(new D.Paragraph({children:[new D.TextRun({text:"Mon autorisation est donnée et acceptée pour une durée de ",size:22}),new D.TextRun({text:DUREE,bold:true,size:22}),new D.TextRun({text:". Elle se termine avant si les démarches sont réalisées, si je décide de l'annuler, ou si l'aidant habilité décide de l'annuler (article 1991 du Code civil).",size:22})],spacing:{after:300}}));
+  children.push(new D.Paragraph({spacing:{after:160}}));
+
+  children.push(new D.Paragraph({children:[new D.TextRun({text:"Je prends acte que la responsabilité de réaliser les actions listées dans ce mandat incombe à l'aidant habilité, qui s'engage à assurer de façon sécurisée le traitement de toutes mes données personnelles.",size:22})],spacing:{after:160}}));
+  children.push(new D.Paragraph({children:[new D.TextRun({text:"Mon accord est valable pour une durée de ",size:22}),new D.TextRun({text:DUREE,bold:true,size:22}),new D.TextRun({text:" à compter de la date de signature. L'aidant habilité s'engage à ne pas conserver mes données au-delà de cette durée.",size:22})],spacing:{after:300}}));
 
   // Date + lieu
-  children.push(new D.Paragraph({children:[new D.TextRun({text:"Fait à "+(lieu||"___________")+", le "+today,size:22})],spacing:{after:400}}));
+  children.push(new D.Paragraph({children:[new D.TextRun({text:"À "+(lieu||"___________")+", le "+today,size:22})],spacing:{after:400}}));
 
   // Signatures
   children.push(new D.Table({
     width:{size:100,type:D.WidthType.PERCENTAGE},
     rows:[
       new D.TableRow({children:[
-        new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:"Signature du mandant (usager) :",bold:true,size:22})]})],width:{size:50,type:D.WidthType.PERCENTAGE}}),
-        new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:"Signature du mandataire ("+STRUCTURE+") :",bold:true,size:22})]})],width:{size:50,type:D.WidthType.PERCENTAGE}}),
+        new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:"Signature de l'usager :",bold:true,size:22})]})],width:{size:50,type:D.WidthType.PERCENTAGE}}),
+        new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:"Signature de l'aidant :",bold:true,size:22})]})],width:{size:50,type:D.WidthType.PERCENTAGE}}),
       ]}),
       new D.TableRow({children:[
         new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:user,size:20,color:BLUE})]})]}),
-        new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:STRUCTURE,size:16,color:BLUE})]})]}),
+        new D.TableCell({children:[new D.Paragraph({children:[new D.TextRun({text:aidant,size:20,color:BLUE})]})]}),
       ]}),
       new D.TableRow({height:{value:1200,rule:D.HeightRule.EXACT},children:[
         new D.TableCell({children:[new D.Paragraph({text:""})]}),
@@ -1197,7 +1140,7 @@ function archiveMandat(){
   var item={
     id:Date.now(),
     civilite:S.mandatCivilite,prenom:S.mandatPrenom,nom:S.mandatNom,
-    commune:S.mandatCommune,num:S.mandatNum,
+    aidant:S.mandatAidant,commune:S.mandatCommune,
     structure:STRUCTURE,duree:DUREE,
     date:todayFR(),ts:new Date().toLocaleString('fr-FR')
   };
@@ -1238,7 +1181,7 @@ function renderMandats(){
 function regenMandat(m){
   S.mandatSource="";
   S.mandatCivilite=m.civilite||"";S.mandatPrenom=m.prenom||"";S.mandatNom=m.nom||"";
-  S.mandatNum=m.num||"";S.mandatCommune=m.commune||"";
+  S.mandatAidant=m.aidant||AIDANTS[0];S.mandatCommune=m.commune||"";
   S.activeTab="mandat";
   renderTabs();showActivePane();renderMandat();
 }
@@ -1306,7 +1249,7 @@ function init(){
   S.selectedDemarche=last.selectedDemarche||"";
   S.commune=last.commune||"";
   S.saveStatus=lastSave?('Dernière sauvegarde : '+lastSave):'Données chargées';
-
+  S.mandatAidant=AIDANTS[0];
   regen();
   renderAll();
 
