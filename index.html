@@ -226,12 +226,12 @@ function fillTemplate(tpl,v){
   var dateFmt=v.date?new Date(v.date).toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"}):"[date]";
   var docList=(v.documents||[]).map(function(d){return "• "+d;}).join("\n");
   var r=(tpl||"")
-    .replace(/{civilite}/g,civStr).replace(/{prenom}/g,prenomStr).replace(/{nom}/g,nomStr)
-    .replace(/{prenom_nom}/g,fullName).replace(/{greeting}/g,greeting)
     .replace(/Bonjour \{civilite\} \{prenom\}/g,"Bonjour"+greeting)
     .replace(/Bonjour\{civilite\} \{prenom\}/g,"Bonjour"+greeting)
     .replace(/Bonjour \{prenom\}/g,"Bonjour"+greeting)
     .replace(/Bonjour\{prenom\}/g,"Bonjour"+greeting)
+    .replace(/{civilite}/g,civStr).replace(/{prenom}/g,prenomStr).replace(/{nom}/g,nomStr)
+    .replace(/{prenom_nom}/g,fullName).replace(/{greeting}/g,greeting)
     .replace(/{demarche}/g,v.demarche||"[démarche]").replace(/{date}/g,dateFmt)
     .replace(/{heure}/g,v.heure||"[heure]").replace(/{adresse}/g,v.adresse||"[adresse]")
     .replace(/{documents}/g,docList).replace(/{commune}/g,v.commune||"[commune]");
