@@ -1155,12 +1155,21 @@ function renderMandat(){
   btns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:14px;padding:13px;border-radius:13px;background:linear-gradient(135deg,oklch(0.56 0.15 264),oklch(0.48 0.16 270));box-shadow:0 6px 18px oklch(0.5 0.15 266 / .35);",onClick:function(){
     var doc=document.getElementById('mandat-doc');
     if(!doc){showToast("Aucun mandat à imprimer","warn");return;}
-    var css=Array.from(document.styleSheets).map(function(ss){try{return Array.from(ss.cssRules).map(function(r){return r.cssText;}).join('\n');}catch(e){return '';}}).join('\n');
     var w=window.open('','_blank','width=900,height=750');
-    w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>​</title><style>'+css+'@page{size:A4;margin:16mm;}body{background:#fff;margin:0;padding:0;}#mandat-doc{background:#fff;}</style></head><body><div id="mandat-doc">'+doc.innerHTML+'</div></body></html>');
+    w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Mandat — ESS CMS</title><style>'+
+      '@page{size:A4 portrait;margin:16mm 18mm;}'+
+      '*{box-sizing:border-box;}'+
+      'body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#111;background:#fff;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'+
+      'table{border-collapse:collapse;width:100%;}'+
+      'td,th{vertical-align:top;}'+
+      'img{max-width:100%;}'+
+      'h1,h2,h3{page-break-after:avoid;}'+
+      '.page-break{page-break-before:always;}'+
+      '@media print{body{font-size:10pt;}button{display:none;}}'+
+    '</style></head><body>'+doc.innerHTML+'</body></html>');
     w.document.close();
     setTimeout(function(){w.focus();w.print();},400);
-  }},"🖨 Imprimer"));
+  }},"📄 PDF / Imprimer"));
   btns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:14px;padding:13px;border-radius:13px;background:linear-gradient(135deg,oklch(0.42 0.13 155),oklch(0.35 0.13 160));box-shadow:0 6px 18px oklch(0.4 0.13 155 / .4);",onClick:generateMandatDocx},"📄 Télécharger Word"));
   btns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:14px;padding:13px;border-radius:13px;background:linear-gradient(135deg,oklch(0.65 0.17 38),oklch(0.58 0.18 33));box-shadow:0 6px 18px oklch(0.62 0.17 38 / .4);",onClick:archiveMandat},"📥 Archiver"));
   c.appendChild(btns);
