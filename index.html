@@ -70,6 +70,62 @@
   @media(min-width:480px){.hdr-btn{font-size:13px;padding:9px 15px;}}
   .tab-pane-inner{max-width:1180px;margin:0 auto;padding:clamp(14px,3vw,32px) clamp(12px,4vw,40px);}
 
+  /* ===== DARK MODE ===== */
+  :root{
+    --c-bg:oklch(0.968 0.008 256);--c-card:#fff;--c-input:#fff;
+    --c-border:oklch(0.92 0.008 256);--c-border-in:oklch(0.89 0.01 256);
+    --c-text:oklch(0.26 0.03 264);--c-muted:oklch(0.6 0.02 264);
+    --c-subtle:oklch(0.55 0.02 264);--c-dim:oklch(0.5 0.02 264);
+    --c-header:oklch(0.985 0.004 256 / .82);--c-nav:#fff;
+    --c-hover:oklch(0.94 0.006 256);--c-subtle-bg:oklch(0.97 0.005 256);
+  }
+  [data-theme="dark"]{
+    --c-bg:oklch(0.13 0.015 264);--c-card:oklch(0.19 0.015 264);--c-input:oklch(0.23 0.015 264);
+    --c-border:oklch(0.3 0.015 264);--c-border-in:oklch(0.33 0.015 264);
+    --c-text:oklch(0.92 0.008 264);--c-muted:oklch(0.65 0.015 264);
+    --c-subtle:oklch(0.62 0.015 264);--c-dim:oklch(0.72 0.015 264);
+    --c-header:oklch(0.14 0.015 264 / .95);--c-nav:oklch(0.17 0.015 264);
+    --c-hover:oklch(0.25 0.015 264);--c-subtle-bg:oklch(0.22 0.015 264);
+  }
+  /* éléments statiques */
+  [data-theme="dark"] body{background:var(--c-bg)!important;color:var(--c-text)!important;}
+  [data-theme="dark"] header{background:var(--c-header)!important;border-color:var(--c-border)!important;}
+  [data-theme="dark"] #tabnav{background:var(--c-nav)!important;border-color:var(--c-border)!important;}
+  /* surcharges inline */
+  [data-theme="dark"] [style*="background:#fff"]{background:var(--c-card)!important;}
+  [data-theme="dark"] [style*="color:oklch(0.6 0.02 264)"]{color:var(--c-muted)!important;}
+  [data-theme="dark"] [style*="color:oklch(0.55 0.02 264)"]{color:var(--c-subtle)!important;}
+  [data-theme="dark"] [style*="color:oklch(0.62 0.02 264)"]{color:var(--c-subtle)!important;}
+  [data-theme="dark"] [style*="color:oklch(0.58 0.02 264)"]{color:var(--c-muted)!important;}
+  [data-theme="dark"] [style*="color:oklch(0.5 0.02 264)"]{color:var(--c-dim)!important;}
+  [data-theme="dark"] [style*="color:oklch(0.45 0.03 264)"]{color:var(--c-dim)!important;}
+  [data-theme="dark"] [style*="color:oklch(0.4 0.03 264)"]{color:var(--c-dim)!important;}
+  [data-theme="dark"] [style*="color:oklch(0.42 0.02 264)"]{color:var(--c-dim)!important;}
+  [data-theme="dark"] [style*="color:oklch(0.26 0.03 264)"]{color:var(--c-text)!important;}
+  [data-theme="dark"] [style*="border:1px solid oklch(0.92 0.008 256)"]{border-color:var(--c-border)!important;}
+  [data-theme="dark"] [style*="border:1.5px solid oklch(0.89 0.01 256)"]{border-color:var(--c-border-in)!important;}
+  [data-theme="dark"] [style*="border:2px solid oklch(0.91 0.01 256)"]{border-color:var(--c-border)!important;}
+  [data-theme="dark"] [style*="border:1px solid oklch(0.88"]{border-color:var(--c-border)!important;}
+  [data-theme="dark"] [style*="border:1px solid oklch(0.82"]{border-color:var(--c-border)!important;}
+  [data-theme="dark"] [style*="border:1px solid oklch(0.89"]{border-color:var(--c-border)!important;}
+  [data-theme="dark"] [style*="background:oklch(0.97"]{background:var(--c-subtle-bg)!important;}
+  [data-theme="dark"] [style*="background:oklch(0.96 0.006 256)"]{background:var(--c-hover)!important;}
+  [data-theme="dark"] [style*="background:oklch(0.94 0.006 256)"]{background:var(--c-hover)!important;}
+  [data-theme="dark"] [style*="background:oklch(0.93 0.006 256)"]{background:var(--c-hover)!important;}
+  [data-theme="dark"] [style*="background:oklch(0.95 0.006 256)"]{background:var(--c-hover)!important;}
+  [data-theme="dark"] [style*="background:oklch(0.96 0.025 266)"]{background:oklch(0.25 0.06 266)!important;}
+  [data-theme="dark"] [style*="background:oklch(0.96 0.03 25)"]{background:oklch(0.22 0.04 25)!important;}
+  [data-theme="dark"] [style*="background:oklch(0.968 0.008 256)"]{background:var(--c-bg)!important;}
+  [data-theme="dark"] [style*="background:#f0f0f5"]{background:oklch(0.22 0.015 264)!important;}
+  [data-theme="dark"] [style*="background:oklch(0.985"]{background:var(--c-header)!important;}
+  /* modal & toast */
+  [data-theme="dark"] .gx-modal [style*="background:#fff"]{background:var(--c-card)!important;}
+  [data-theme="dark"] [style*="background:oklch(0.2 0.03 264"]{background:oklch(0.05 0.02 264 / .7)!important;}
+  /* mandat doc reste blanc pour impression */
+  [data-theme="dark"] #mandat-doc,[data-theme="dark"] #mandat-doc *{background:#fff!important;color:#1a1a1a!important;border-color:#e0e0e0!important;}
+  /* scrollbar dark */
+  [data-theme="dark"] .gx-scroll::-webkit-scrollbar-thumb{background:oklch(0.35 0.015 264);}
+
   /* ===== PRINT ===== */
   @media print{
     body{background:#fff;}
@@ -98,6 +154,7 @@
       <div style="font-weight:800;font-size:16px;letter-spacing:-.02em;line-height:1.1;">Générateur SMS &amp; Mail</div>
       <div id="saveStatus" style="font-size:12px;color:oklch(0.56 0.02 264);font-weight:500;margin-top:1px;"></div>
     </div>
+    <button class="gx-press" id="btnDark" title="Mode sombre" style="cursor:pointer;font-family:inherit;border:none;background:none;font-size:20px;padding:4px 6px;line-height:1;border-radius:9px;flex-shrink:0;">🌙</button>
     <button class="gx-press hdr-btn" id="btnImport" style="border:1px solid oklch(0.88 0.01 256);background:#fff;color:oklch(0.4 0.03 264);">Importer</button>
     <button class="gx-press hdr-btn" id="btnExport" style="border:none;background:oklch(0.26 0.03 264);color:#fff;box-shadow:0 4px 12px oklch(0.26 0.03 264 / .25);">Sauvegarder</button>
   </header>
@@ -1736,6 +1793,22 @@ function renderAll(){
   renderModal();renderToast();
 }
 
+/* ============================== DARK MODE ============================== */
+function initTheme(){
+  var dark=localStorage.getItem('ess-dark')==='1';
+  document.documentElement.setAttribute('data-theme',dark?'dark':'');
+  var btn=document.getElementById('btnDark');
+  if(btn)btn.textContent=dark?'☀️':'🌙';
+}
+function toggleDark(){
+  var isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'');
+  localStorage.setItem('ess-dark',isDark?'1':'0');
+  var btn=document.getElementById('btnDark');
+  if(btn)btn.textContent=isDark?'☀️':'🌙';
+}
+
 /* ============================== INIT ============================== */
 function init(){
   var last=ls('ess-last',{});
@@ -1757,6 +1830,8 @@ function init(){
   regen();
   renderAll();
 
+  initTheme();
+  document.getElementById('btnDark').addEventListener('click',toggleDark);
   document.getElementById('btnImport').addEventListener('click',openImport);
   document.getElementById('btnExport').addEventListener('click',openExport);
 
@@ -1766,6 +1841,8 @@ function init(){
     if(ctrl&&e.shiftKey&&(e.key==='C'||e.key==='c')){e.preventDefault();if(S.generatedBody)copyBody();}
   });
 }
+/* appliquer le thème avant le rendu pour éviter le flash */
+(function(){var d=localStorage.getItem('ess-dark')==='1';document.documentElement.setAttribute('data-theme',d?'dark':'');})();
 document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
