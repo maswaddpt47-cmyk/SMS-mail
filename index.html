@@ -174,7 +174,7 @@ var S={
   selectedCMS:"", selectedDemarche:"", commune:"",
   civilite:"", prenom:"", nom:"", telephone:"", date:"", heure:"", demarcheAutre:"",
   generatedBody:"", generatedSubject:"",
-  activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all",
+  activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all", historySearch:"",
   cmsList:[], demarches:[], secteurs:[], templates:{}, customTemplates:[], customVars:[], hiddenBuiltinKeys:[], history:[], mandats:[],
   saveStatus:"Données chargées",
   modal:null, histItem:null,
@@ -291,7 +291,7 @@ function handleGenerate(){
     if(parts>3&&!confirm("⚠️ Ce message fait "+parts+" SMS ("+len+" caractères).\nContinuer quand même ?"))return;
   }
   S.generatedBody=body;S.generatedSubject=subject;
-  addHistory({channel:S.channel,msgType:S.msgType,body:body,subject:subject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:dem?dem.nom:"",date:S.date,heure:S.heure,ts:new Date().toLocaleString('fr-FR')});
+  addHistory({channel:S.channel,msgType:S.msgType,body:body,subject:subject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:dem?dem.nom:"",selectedDemarche:S.selectedDemarche,demarcheAutre:S.demarcheAutre,commune:S.commune,selectedCMS:S.selectedCMS,date:S.date,heure:S.heure,ts:new Date().toLocaleString('fr-FR')});
   showToast("✓ Message généré et enregistré");
   renderGenerate();renderHistory();renderMandat();
 }
@@ -408,6 +408,17 @@ function copyHistModal(){var h=S.histItem;if(!h)return;doCopy(h.body).then(funct
 function clearHistory(){S.history=[];lsSet('ess-history',[]);renderHistory();}
 function deleteHistItem(realIdx){S.history.splice(realIdx,1);lsSet('ess-history',S.history);renderHistory();}
 function saveHistItem(realIdx){S.history[realIdx].body=S.editHistBody;lsSet('ess-history',S.history);S.editHistIdx=null;S.editHistBody="";renderHistory();}
+function reuseHistItem(h){
+  S.civilite=h.civilite||"";S.prenom=h.prenom||"";S.nom=h.nom||"";S.telephone=h.telephone||"";
+  S.commune=h.commune||"";S.selectedCMS=h.selectedCMS||"";
+  S.channel=h.channel||"sms";S.msgType=h.msgType||"proposition";
+  if(h.selectedDemarche)S.selectedDemarche=h.selectedDemarche;
+  if(h.demarcheAutre)S.demarcheAutre=h.demarcheAutre;
+  S.date="";S.heure="";
+  S.selectedTemplate="__default__";
+  regen();S.activeTab="generate";showActivePane();renderTabs();renderGenerate();
+  showToast("✓ Usager chargé — modifiez la date, l'heure et la démarche");
+}
 
 /* ============================== STYLE HELPERS ============================== */
 function badge(bg,fg){return "display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.02em;background:"+bg+";color:"+fg+";";}
@@ -642,12 +653,22 @@ function renderHistory(){
   head.appendChild(el('h2',{style:"margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;"},"Historique"));
   head.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:clearHistory},"Vider"));
   wrap.appendChild(head);
+  var searchRow=el('div',{style:"position:relative;margin-bottom:14px;"});
+  var searchIn=el('input',{class:'gx-in',style:INPUT+"padding-left:36px;",placeholder:"Rechercher un nom…",value:S.historySearch,onInput:function(e){S.historySearch=e.target.value;renderHistory();}});
+  searchRow.appendChild(el('span',{style:"position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;"},"🔍"));
+  searchRow.appendChild(searchIn);
+  wrap.appendChild(searchRow);
   var filt=el('div',{style:"display:flex;gap:8px;margin-bottom:16px;"});
   [["all","Tous"],["sms","💬 SMS"],["mail","✉️ Mail"]].forEach(function(f){
     filt.appendChild(el('button',{class:'gx-press',style:pillStyle(S.historyFilter===f[0]),onClick:function(){S.historyFilter=f[0];renderHistory();}},f[1]));
   });
   wrap.appendChild(filt);
-  var filtered=S.historyFilter==='all'?S.history:S.history.filter(function(h){return h.channel===S.historyFilter;});
+  var q=(S.historySearch||"").trim().toLowerCase();
+  var filtered=S.history.filter(function(h){
+    if(S.historyFilter!=='all'&&h.channel!==S.historyFilter)return false;
+    if(!q)return true;
+    return ([h.civilite,h.prenom,h.nom,h.demarche,h.telephone].join(" ").toLowerCase().indexOf(q)!==-1);
+  });
   if(filtered.length===0){
     wrap.appendChild(el('div',{style:"text-align:center;padding:60px 0;color:oklch(0.6 0.02 264);",html:'<div style="font-size:40px;margin-bottom:10px;opacity:.5;">🕊</div><div style="font-size:14px;">Aucun message dans l\'historique.</div>'}));
   } else {
@@ -664,7 +685,8 @@ function renderHistory(){
       meta.appendChild(el('span',{style:"margin-left:auto;display:flex;gap:6px;"}));
       var actWrap=meta.lastChild;
       if(!isEditing){
-        actWrap.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.82 0.06 264);background:oklch(0.97 0.01 264);color:oklch(0.4 0.1 264);font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;",onClick:function(e){e.stopPropagation();S.editHistIdx=realIdx;S.editHistBody=h.body||"";renderHistory();}},"✏️ Modifier"));
+        actWrap.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.72 0.14 155);background:oklch(0.95 0.05 155);color:oklch(0.38 0.13 155);font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px;",onClick:function(e){e.stopPropagation();reuseHistItem(h);}},"↩ Réutiliser"));
+        actWrap.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.82 0.06 264);background:oklch(0.97 0.01 264);color:oklch(0.4 0.1 264);font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;",onClick:function(e){e.stopPropagation();S.editHistIdx=realIdx;S.editHistBody=h.body||"";renderHistory();}},"✏️"));
       }
       actWrap.appendChild(el('button',{class:'gx-press',style:BTNDEL+"font-size:12px;padding:4px 9px;border-radius:8px;",onClick:function(e){e.stopPropagation();if(confirm("Supprimer cet historique ?"))deleteHistItem(realIdx);}},"🗑"));
       card.appendChild(meta);
