@@ -8,13 +8,7 @@ Toujours exécuter avant de toucher le moindre fichier :
 git pull origin main
 ```
 
-### 2. Backup daté de index.html
-Avant toute modification de `index.html`, créer une copie horodatée :
-```bash
-cp index.html index.backup.$(date +%Y%m%d-%H%M).html
-```
-
-### 3. Commits séparés par modification
+### 2. Commits séparés par modification
 Chaque changement distinct = un commit séparé avec préfixe conventionnel :
 - `feat:` pour une nouvelle fonctionnalité
 - `fix:` pour une correction de bug
@@ -25,8 +19,11 @@ git add <fichier>
 git commit -m "feat: description claire du changement"
 ```
 
-### 4. Push vers main
-Après chaque commit, pousser directement dans le repo main :
+> Les commits git servent de backup — pas besoin de copies horodatées locales.
+> Pour revenir en arrière : `git log` pour trouver le commit, `git checkout <sha> -- index.html` pour restaurer.
+
+### 3. Push vers main
+Après chaque commit, pousser dans le repo :
 ```bash
 git push -u origin main
 ```
@@ -35,7 +32,6 @@ git push -u origin main
 
 ```
 git pull origin main
-→ backup daté de index.html
 → modification
 → commit (feat/fix/refactor)
 → git push origin main
