@@ -286,10 +286,6 @@ function setFieldSave(patch){Object.assign(S,patch);regen();saveLast();renderGen
 function handleGenerate(){
   if(!canGenerate())return;
   var r=compute();var body=r.body,subject=r.subject,dem=r.dem;
-  if(S.channel==='sms'){
-    var t=body;var len=t.length;var u=/[^\x00-\x7F€£¥]/.test(t);var single=u?70:160,multi=u?67:153;var parts=len<=single?1:Math.ceil(len/multi);
-    if(parts>3&&!confirm("⚠️ Ce message fait "+parts+" SMS ("+len+" caractères).\nContinuer quand même ?"))return;
-  }
   S.generatedBody=body;S.generatedSubject=subject;
   addHistory({channel:S.channel,msgType:S.msgType,body:body,subject:subject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:dem?dem.nom:"",selectedDemarche:S.selectedDemarche,demarcheAutre:S.demarcheAutre,commune:S.commune,selectedCMS:S.selectedCMS,date:S.date,heure:S.heure,ts:new Date().toLocaleString('fr-FR')});
   showToast("✓ Message généré et enregistré");
