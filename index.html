@@ -498,7 +498,11 @@ function renderGenerate(){
   dd.appendChild(el('input',{class:'gx-in',style:INPUT,type:"date",value:S.date,onChange:function(e){setFieldSave({date:e.target.value});}}));
   row2.appendChild(dd);
   var hh=el('div');hh.appendChild(el('label',{style:LABEL},"Heure *"));
-  hh.appendChild(el('input',{class:'gx-in',style:INPUT,type:"time",value:S.heure,onChange:function(e){setFieldSave({heure:e.target.value});}}));
+  var timeSlots=[];for(var h=7;h<=19;h++){timeSlots.push(String(h).padStart(2,'0')+":00");timeSlots.push(String(h).padStart(2,'0')+":30");}
+  var timeSel=el('select',{class:'gx-in',style:INPUT+"padding:11px 8px;cursor:pointer;",onChange:function(e){setFieldSave({heure:e.target.value});}});
+  timeSel.appendChild(el('option',{value:""},"— Choisir —"));
+  timeSlots.forEach(function(t){timeSel.appendChild(el('option',{value:t,selected:S.heure===t},t));});
+  hh.appendChild(timeSel);
   row2.appendChild(hh);
   col.appendChild(row2);
 
