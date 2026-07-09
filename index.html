@@ -506,7 +506,14 @@ function renderGenerate(){
   col.appendChild(row1);
 
   var tel=el('div');tel.appendChild(el('label',{style:LABEL},"Téléphone"));
-  tel.appendChild(el('input',{class:'gx-in',style:INPUT,type:"tel",value:S.telephone,placeholder:"06 12 34 56 78",onInput:function(e){S.telephone=formatTel(e.target.value);e.target.value=S.telephone;updatePreviewOnly();}}));
+  var telRow=el('div',{style:"display:flex;gap:7px;align-items:center;"});
+  var telIn=el('input',{class:'gx-in',style:INPUT+"flex:1;",type:"tel",value:S.telephone,placeholder:"06 12 34 56 78"});
+  telIn.addEventListener('input',function(e){S.telephone=formatTel(e.target.value);e.target.value=S.telephone;updatePreviewOnly();});
+  telRow.appendChild(telIn);
+  var btnS="cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.01 256);background:#fff;color:oklch(0.45 0.03 264);font-weight:600;font-size:12px;padding:8px 10px;border-radius:10px;white-space:nowrap;flex-shrink:0;";
+  telRow.appendChild(el('button',{class:'gx-press',title:"Copier le numéro",style:btnS,onClick:function(){if(!S.telephone)return;navigator.clipboard.writeText(S.telephone);showToast("✓ Numéro copié");}},"📋"));
+  telRow.appendChild(el('button',{class:'gx-press',title:"Ouvrir WhatsApp",style:btnS,onClick:function(){if(!S.telephone)return;var num=S.telephone.replace(/\s/g,'').replace(/^0/,'33');window.open('https://wa.me/'+num,'_blank');}},"💬 WA"));
+  tel.appendChild(telRow);
   col.appendChild(tel);
 
   var row2=el('div',{style:"display:grid;grid-template-columns:1fr 1fr;gap:11px;"});
