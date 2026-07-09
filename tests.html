@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Tests — SMS-mail</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:0;background:#f5f5f7;color:#1d1d1f;}
+  h1{margin:0;padding:20px 24px 12px;font-size:20px;border-bottom:1px solid #e0e0e0;background:#fff;}
+  #summary{padding:12px 24px;font-size:14px;font-weight:600;background:#fff;border-bottom:1px solid #e0e0e0;}
+  #results{padding:16px 24px;display:flex;flex-direction:column;gap:8px;}
+  .suite{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .suite-title{padding:10px 14px;font-size:13px;font-weight:700;background:#f0f0f5;border-bottom:1px solid #e8e8ee;}
+  .test{display:flex;align-items:flex-start;gap:10px;padding:8px 14px;border-bottom:1px solid #f2f2f2;font-size:13px;}
+  .test:last-child{border-bottom:none;}
+  .badge{flex-shrink:0;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;margin-top:1px;}
+  .pass{background:#d4f4dd;color:#1a7d3a;}
+  .fail{background:#fde8e8;color:#c0392b;}
+  .detail{color:#888;font-size:11px;margin-top:2px;}
+  #run-btn{margin:16px 24px 0;padding:10px 22px;font-size:14px;font-weight:600;background:#0071e3;color:#fff;border:none;border-radius:8px;cursor:pointer;}
+  iframe{display:none;}
+</style>
+</head>
+<body>
+<h1>🧪 Suite de tests — Générateur SMS &amp; Mail ESS CMS</h1>
+<div id="summary">En attente de l'app…</div>
+<button id="run-btn" onclick="runAll()">▶ Relancer les tests</button>
+<div id="results"></div>
+<iframe id="app" src="index.html"></iframe>
+
+<script>
+var passed=0, failed=0;
+var suites=[];
+var currentSuite=null;
+
+function suite(name){
+  currentSuite={name:name,tests:[]};
+  suites.push(currentSuite);
+}
+function test(name, fn){
+  currentSuite.tests.push({name:name,fn:fn});
+}
+function assert(cond, msg){
+  if(!cond) throw new Error(msg||"Assertion échouée");
+}
+function assertEqual(a,b,msg){
+  if(a!==b) throw new Error((msg||"")+" — attendu: "+JSON.stringify(b)+" obtenu: "+JSON.stringify(a));
+}
+function assertContains(str,sub,msg){
+  if(typeof str!=="string"||str.indexOf(sub)===-1) throw new Error((msg||"")+" — «"+sub+"» absent de: "+str);
+}
+function assertNotContains(str,sub,msg){
+  if(typeof str==="string"&&str.indexOf(sub)!==-1) throw new Error((msg||"")+" — «"+sub+"» présent mais ne devrait pas l'être");
+}
+
+var W; // iframe window
+
+function defineTests(){
+  var S, fillTemplate, canGenerate, missingFields, partsInfo, compute, addHistory, reuseHistItem;
+
+  // Récupère les références depuis l'iframe
+  function init(){
+    S=W.S; fillTemplate=W.fillTemplate; canGenerate=W.canGenerate;
+    missingFields=W.missingFields; partsInfo=W.partsInfo; compute=W.compute;
+    addHistory=W.addHistory; reuseHistItem=W.reuseHistItem;
+  }
+
+  function resetState(){
+    init();
+    Object.assign(S,{
+      channel:"sms",msgType:"proposition",selectedTemplate:"__default__",
+      selectedCMS:"",selectedDemarche:"",commune:"",
+      civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",demarcheAutre:"",
+      generatedBody:"",generatedSubject:"",
+      cmsList:[{id:1,nom:"Fumel",adresse:"CMS Fumel, 2 Place Voltaire"}],
+      demarches:[{id:10,nom:"CAF",documents:["Pièce d'identité","Numéro CAF"]},{id:11,nom:"Impôts",documents:["Avis d'imposition"]}],
+      customTemplates:[],customVars:[],history:[],templates:{}
+    });
+  }
+
+  /* ── 1. fillTemplate ── */
+  suite("fillTemplate — substitutions");
+
+  test("Bonjour {civilite} {prenom} → nom inclus", function(){
+    resetState();
+    var r=fillTemplate("Bonjour {civilite} {prenom},",{civilite:"M.",prenom:"Jean",nom:"Dupont",date:"",heure:"",demarche:"",adresse:"",commune:"",documents:[]});
+    assertContains(r,"Bonjour M. Jean Dupont,","Bonjour avec civilité+prénom+nom");
+  });
+
+  test("Bonjour sans civilité → prénom+nom uniquement", function(){
+    resetState();
+    var r=fillTemplate("Bonjour {civilite} {prenom},",{civilite:"",prenom:"Jean",nom:"Dupont",date:"",heure:"",demarche:"",adresse:"",commune:"",documents:[]});
+    assertContains(r,"Bonjour Jean Dupont,");
+  });
+
+  test("{demarche} remplacé correctement", function(){
+    resetState();
+    var r=fillTemplate("Démarche : {demarche}",{civilite:"",prenom:"",nom:"",date:"",heure:"",demarche:"CAF",adresse:"",commune:"",documents:[]});
+    assertContains(r,"Démarche : CAF");
+  });
+
+  test("{heure} et {adresse} remplacés", function(){
+    resetState();
+    var r=fillTemplate("{heure} — {adresse}",{civilite:"",prenom:"",nom:"",date:"",heure:"09:30",demarche:"",adresse:"CMS Fumel",commune:"",documents:[]});
+    assertContains(r,"09:30");
+    assertContains(r,"CMS Fumel");
+  });
+
+  test("double espace Bonjour nettoyé (civilité seule)", function(){
+    resetState();
+    var r=fillTemplate("Bonjour {civilite} {prenom},",{civilite:"M.",prenom:"",nom:"",date:"",heure:"",demarche:"",adresse:"",commune:"",documents:[]});
+    assertNotContains(r,"Bonjour  ","Double espace présent");
+  });
+
+  test("{documents} liste à puces", function(){
+    resetState();
+    var r=fillTemplate("{documents}",{civilite:"",prenom:"",nom:"",date:"",heure:"",demarche:"",adresse:"",commune:"",documents:["Pièce d'identité","RIB"]});
+    assertContains(r,"• Pièce d'identité");
+    assertContains(r,"• RIB");
+  });
+
+  /* ── 2. canGenerate / missingFields ── */
+  suite("canGenerate — champs obligatoires");
+
+  test("tout vide → false", function(){
+    resetState();
+    assert(!canGenerate(),"devrait être false si tout vide");
+  });
+
+  test("tous les champs requis remplis → true", function(){
+    resetState();
+    Object.assign(S,{civilite:"M.",nom:"Dupont",selectedCMS:"1",selectedDemarche:"10",date:"2026-07-09",heure:"09:00",commune:"Fumel"});
+    assert(canGenerate(),"devrait être true");
+  });
+
+  test("nom manquant → false", function(){
+    resetState();
+    Object.assign(S,{civilite:"M.",nom:"",selectedCMS:"1",selectedDemarche:"10",date:"2026-07-09",heure:"09:00",commune:"Fumel"});
+    assert(!canGenerate(),"false si nom manquant");
+  });
+
+  test("Autre sélectionné sans texte → false", function(){
+    resetState();
+    Object.assign(S,{civilite:"M.",nom:"Dupont",selectedCMS:"1",selectedDemarche:"__autre__",demarcheAutre:"",date:"2026-07-09",heure:"09:00",commune:"Fumel"});
+    assert(!canGenerate(),"false si Autre sans texte");
+  });
+
+  test("Autre sélectionné avec texte → true", function(){
+    resetState();
+    Object.assign(S,{civilite:"M.",nom:"Dupont",selectedCMS:"1",selectedDemarche:"__autre__",demarcheAutre:"Aide exceptionnelle",date:"2026-07-09",heure:"09:00",commune:"Fumel"});
+    assert(canGenerate(),"true si Autre avec texte");
+  });
+
+  test("missingFields liste les bons champs manquants", function(){
+    resetState();
+    Object.assign(S,{civilite:"",nom:"",selectedCMS:"",selectedDemarche:"",date:"",heure:"",commune:""});
+    var m=missingFields();
+    assert(m.some(function(x){return x.indexOf("Civilité")!==-1;}),"Civilité manquante");
+    assert(m.some(function(x){return x.indexOf("Nom")!==-1;}),"Nom manquant");
+    assert(m.some(function(x){return x.indexOf("Date")!==-1;}),"Date manquante");
+  });
+
+  test("missingFields vide quand tout est rempli", function(){
+    resetState();
+    Object.assign(S,{civilite:"M.",nom:"Dupont",selectedCMS:"1",selectedDemarche:"10",date:"2026-07-09",heure:"09:00",commune:"Fumel"});
+    assertEqual(missingFields().length,0,"Aucun champ manquant attendu");
+  });
+
+  /* ── 3. compute ── */
+  suite("compute — génération du corps SMS/mail");
+
+  test("SMS proposition contient la démarche", function(){
+    resetState();
+    Object.assign(S,{civilite:"Mme",prenom:"Marie",nom:"Martin",selectedCMS:"1",selectedDemarche:"10",date:"2026-07-09",heure:"10:00",commune:"Fumel",channel:"sms",msgType:"proposition"});
+    var r=compute();
+    assertContains(r.body,"CAF","Démarche CAF dans le corps");
+  });
+
+  test("SMS confirmation contient l'heure", function(){
+    resetState();
+    Object.assign(S,{civilite:"M.",prenom:"Paul",nom:"Durand",selectedCMS:"1",selectedDemarche:"11",date:"2026-07-09",heure:"14:30",commune:"Fumel",channel:"sms",msgType:"confirmation"});
+    var r=compute();
+    assertContains(r.body,"14:30","Heure présente");
+  });
+
+  test("Mail a un sujet non vide", function(){
+    resetState();
+    Object.assign(S,{civilite:"M.",prenom:"Paul",nom:"Durand",selectedCMS:"1",selectedDemarche:"10",date:"2026-07-09",heure:"09:00",commune:"Fumel",channel:"mail",msgType:"proposition"});
+    var r=compute();
+    assert(r.subject.length>0,"Sujet mail non vide");
+    assertContains(r.subject,"CAF","Démarche dans le sujet");
+  });
+
+  test("Démarche __autre__ utilise demarcheAutre", function(){
+    resetState();
+    Object.assign(S,{civilite:"M.",prenom:"Jean",nom:"Dupont",selectedCMS:"1",selectedDemarche:"__autre__",demarcheAutre:"Aide exceptionnelle",date:"2026-07-09",heure:"09:00",commune:"Fumel",channel:"sms",msgType:"proposition"});
+    var r=compute();
+    assertContains(r.body,"Aide exceptionnelle","demarcheAutre dans le corps");
+  });
+
+  test("SMS sans_appel contient le CMS commune", function(){
+    resetState();
+    Object.assign(S,{civilite:"Mme",prenom:"Sophie",nom:"Leblanc",selectedCMS:"1",selectedDemarche:"10",date:"2026-07-09",heure:"11:00",commune:"Fumel",channel:"sms",msgType:"sans_appel"});
+    var r=compute();
+    assertContains(r.body,"Fumel","Commune présente dans sans_appel");
+  });
+
+  /* ── 4. partsInfo — comptage SMS ── */
+  suite("partsInfo — segments SMS");
+
+  test("message vide → 0 caractères, 1 part", function(){
+    resetState();
+    S.generatedBody="";
+    var p=partsInfo();
+    assertEqual(p.len,0);
+    assertEqual(p.parts,1);
+  });
+
+  test("160 caractères ASCII → 1 part", function(){
+    resetState();
+    S.generatedBody="A".repeat(160);
+    var p=partsInfo();
+    assertEqual(p.parts,1,"160 car = 1 SMS");
+  });
+
+  test("161 caractères ASCII → 2 parts", function(){
+    resetState();
+    S.generatedBody="A".repeat(161);
+    var p=partsInfo();
+    assertEqual(p.parts,2,"161 car = 2 SMS");
+  });
+
+  test("message unicode → seuil 70 car", function(){
+    resetState();
+    S.generatedBody="é".repeat(70);
+    var p=partsInfo();
+    assertEqual(p.parts,1,"70 car unicode = 1 SMS");
+    S.generatedBody="é".repeat(71);
+    p=partsInfo();
+    assertEqual(p.parts,2,"71 car unicode = 2 SMS");
+  });
+
+  /* ── 5. Historique ── */
+  suite("Historique — addHistory / reuseHistItem");
+
+  test("addHistory ajoute une entrée", function(){
+    resetState();
+    S.history=[];
+    addHistory({channel:"sms",msgType:"proposition",body:"Test",subject:"",civilite:"M.",prenom:"Jean",nom:"Dupont",telephone:"",demarche:"CAF",selectedDemarche:"10",demarcheAutre:"",commune:"Fumel",selectedCMS:"1",date:"2026-07-09",heure:"09:00",ts:"09/07/2026"});
+    assertEqual(S.history.length,1,"1 entrée dans l'historique");
+  });
+
+  test("addHistory limite à HISTORY_MAX (20)", function(){
+    resetState();
+    S.history=[];
+    for(var i=0;i<22;i++){
+      addHistory({channel:"sms",msgType:"proposition",body:"Test "+i,subject:"",civilite:"M.",prenom:"X",nom:"Y",telephone:"",demarche:"CAF",selectedDemarche:"10",demarcheAutre:"",commune:"Fumel",selectedCMS:"1",date:"2026-07-09",heure:"09:00",ts:""});
+    }
+    assert(S.history.length<=20,"Max 20 entrées");
+  });
+
+  test("reuseHistItem recharge les champs dans S", function(){
+    resetState();
+    S.history=[];
+    var entry={channel:"mail",msgType:"confirmation",body:"Corps",subject:"Sujet",civilite:"Mme",prenom:"Marie",nom:"Martin",telephone:"0600000000",demarche:"Impôts",selectedDemarche:"11",demarcheAutre:"",commune:"Marmande",selectedCMS:"1",date:"2026-06-01",heure:"10:00",ts:""};
+    reuseHistItem(entry);
+    assertEqual(S.civilite,"Mme","civilité restaurée");
+    assertEqual(S.prenom,"Marie","prénom restauré");
+    assertEqual(S.nom,"Martin","nom restauré");
+    assertEqual(S.channel,"mail","canal restauré");
+    assertEqual(S.selectedDemarche,"11","démarche restaurée");
+  });
+
+  test("reuseHistItem remet date et heure à vide", function(){
+    resetState();
+    var entry={channel:"sms",msgType:"proposition",body:"",subject:"",civilite:"M.",prenom:"Jean",nom:"Dupont",telephone:"",demarche:"CAF",selectedDemarche:"10",demarcheAutre:"",commune:"Fumel",selectedCMS:"1",date:"2026-01-01",heure:"09:00",ts:""};
+    reuseHistItem(entry);
+    assertEqual(S.date,"","date doit être vidée");
+    assertEqual(S.heure,"","heure doit être vidée");
+  });
+}
+
+function runAll(){
+  if(!W){
+    document.getElementById('summary').textContent="App pas encore chargée, réessayez dans 2s…";
+    return;
+  }
+  suites=[];
+  defineTests();
+  passed=0;failed=0;
+  var html="";
+  suites.forEach(function(s){
+    html+='<div class="suite"><div class="suite-title">'+s.name+'</div>';
+    s.tests.forEach(function(t){
+      var ok=false,err="";
+      try{t.fn();ok=true;}catch(e){err=e.message;}
+      if(ok)passed++;else failed++;
+      html+='<div class="test"><span class="badge '+(ok?'pass':'fail')+'">'+(ok?'PASS':'FAIL')+'</span><div><div>'+t.name+'</div>'+(err?'<div class="detail">'+err+'</div>':"")+'</div></div>';
+    });
+    html+='</div>';
+  });
+  var total=passed+failed;
+  var sum=document.getElementById('summary');
+  sum.textContent=(failed===0?"✅ Tous les tests passent":"❌ "+failed+" échec"+(failed>1?"s":""))+" — "+passed+"/"+total;
+  sum.style.color=failed===0?"#1a7d3a":"#c0392b";
+  document.getElementById('results').innerHTML=html;
+}
+
+document.getElementById('app').addEventListener('load',function(){
+  W=document.getElementById('app').contentWindow;
+  setTimeout(runAll,300);
+});
+</script>
+</body>
+</html>
