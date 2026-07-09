@@ -608,6 +608,15 @@ function renderGenerate(){
     inputBar.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;border:none;width:38px;height:38px;border-radius:50%;background:linear-gradient(160deg,oklch(0.58 0.15 264),oklch(0.5 0.16 270));color:#fff;font-size:15px;flex-shrink:0;",onClick:copyBody},"↑"));
     screen.appendChild(inputBar);
     phone.appendChild(screen);right.appendChild(phone);
+    var isUni2=/[^\x00-\x7F€£¥]/.test(S.generatedBody)||/[Ā-￿]/.test(S.generatedBody);
+    var single2=isUni2?70:160,multi2=isUni2?67:153;
+    var limit2=pi.parts<=1?single2:multi2;
+    var prog2=pi.parts<=1?pi.len:((pi.len-(pi.parts-1)*multi2));
+    var barPct=Math.min(100,Math.round(prog2/limit2*100));
+    var barCol2=pi.parts===1?'oklch(0.62 0.14 155)':pi.parts===2?'oklch(0.7 0.15 85)':'oklch(0.6 0.17 25)';
+    var barWrap=el('div',{style:"background:oklch(0.91 0.008 256);border-radius:4px;height:5px;overflow:hidden;"});
+    var barInner=el('div',{id:'parts-bar-inner',style:"height:5px;border-radius:4px;width:"+barPct+"%;background:"+barCol2+";transition:width .2s,background .2s;"});
+    barWrap.appendChild(barInner);right.appendChild(barWrap);
   } else {
     var mail=el('div',{class:'gx-card',style:"background:#fff;border:1px solid oklch(0.91 0.008 256);border-radius:18px;overflow:hidden;box-shadow:0 20px 50px oklch(0.4 0.04 266 / .12),0 2px 8px oklch(0.4 0.04 266 / .08);"});
     mail.appendChild(el('div',{style:"background:oklch(0.26 0.03 264);padding:12px 18px;display:flex;align-items:center;gap:9px;",html:'<span style="width:11px;height:11px;border-radius:50%;background:oklch(0.7 0.17 25);"></span><span style="width:11px;height:11px;border-radius:50%;background:oklch(0.82 0.15 85);"></span><span style="width:11px;height:11px;border-radius:50%;background:oklch(0.72 0.16 150);"></span><span style="margin-left:8px;color:#fff;font-size:13px;font-weight:600;">Nouveau message</span>'}));
@@ -634,10 +643,21 @@ function renderGenerate(){
 }
 function updatePartsLabel(){
   var lbl=document.getElementById('partsLabel');if(!lbl)return;
-  var pi=partsInfo();lbl.textContent=pi.len+" car. · "+pi.parts+" SMS";
+  var pi=partsInfo();
+  var isUni=/[^\x00-\x7F€£¥]/.test(S.generatedBody)||/[Ā-￿]/.test(S.generatedBody);
+  var single=isUni?70:160,multi=isUni?67:153;
+  var limit=pi.parts<=1?single:multi;
+  var progress=pi.parts<=1?pi.len:((pi.len-(pi.parts-1)*multi));
+  lbl.textContent=pi.len+" / "+limit+" car. · "+pi.parts+" SMS";
   var bg=pi.parts===1?'oklch(0.95 0.04 155)':pi.parts===2?'oklch(0.96 0.05 85)':'oklch(0.96 0.04 25)';
   var fg=pi.parts===1?'oklch(0.42 0.12 155)':pi.parts===2?'oklch(0.5 0.1 70)':'oklch(0.52 0.16 25)';
   lbl.style.background=bg;lbl.style.color=fg;
+  var bar=document.getElementById('parts-bar-inner');
+  if(bar){
+    var pct=Math.min(100,Math.round(progress/limit*100));
+    var barCol=pi.parts===1?'oklch(0.62 0.14 155)':pi.parts===2?'oklch(0.7 0.15 85)':'oklch(0.6 0.17 25)';
+    bar.style.width=pct+'%';bar.style.background=barCol;
+  }
 }
 function updatePreviewOnly(){
   var ta=document.querySelector('#pane-generate textarea');
