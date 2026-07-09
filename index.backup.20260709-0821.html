@@ -406,8 +406,8 @@ function doImport(){
 function openHistItem(i){S.histItem=S.history[i];S.modal='hist';renderModal();}
 function copyHistModal(){var h=S.histItem;if(!h)return;doCopy(h.body).then(function(ok){if(ok){flashCopied('histmodal');showToast("✓ Copié !");}});}
 function clearHistory(){S.history=[];lsSet('ess-history',[]);renderHistory();}
-function deleteHistItem(realIdx){S.history.splice(realIdx,1);lsSet('ess-history',S.history);renderHistoryList();}
-function saveHistItem(realIdx){S.history[realIdx].body=S.editHistBody;lsSet('ess-history',S.history);S.editHistIdx=null;S.editHistBody="";renderHistoryList();}
+function deleteHistItem(realIdx){S.history.splice(realIdx,1);lsSet('ess-history',S.history);renderHistory();}
+function saveHistItem(realIdx){S.history[realIdx].body=S.editHistBody;lsSet('ess-history',S.history);S.editHistIdx=null;S.editHistBody="";renderHistory();}
 function reuseHistItem(h){
   S.civilite=h.civilite||"";S.prenom=h.prenom||"";S.nom=h.nom||"";S.telephone=h.telephone||"";
   S.commune=h.commune||"";S.selectedCMS=h.selectedCMS||"";
@@ -646,10 +646,23 @@ function updatePreviewOnly(){
 }
 
 /* ============================== RENDER: HISTORY ============================== */
-function renderHistoryList(){
-  var container=document.getElementById('hist-list-container');
-  if(!container)return;
-  while(container.firstChild)container.removeChild(container.firstChild);
+function renderHistory(){
+  var pane=document.getElementById('pane-history');clear(pane);
+  var wrap=el('div',{style:"max-width:760px;margin:0 auto;padding:clamp(18px,3vw,32px) clamp(16px,4vw,40px);"});
+  var head=el('div',{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"});
+  head.appendChild(el('h2',{style:"margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;"},"Historique"));
+  head.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:clearHistory},"Vider"));
+  wrap.appendChild(head);
+  var searchRow=el('div',{style:"position:relative;margin-bottom:14px;"});
+  var searchIn=el('input',{class:'gx-in',style:INPUT+"padding-left:36px;",placeholder:"Rechercher un nom…",value:S.historySearch,onInput:function(e){var pos=e.target.selectionStart;S.historySearch=e.target.value;renderHistory();var inp=document.querySelector('#pane-history input[placeholder="Rechercher un nom…"]');if(inp){inp.focus();try{inp.setSelectionRange(pos,pos);}catch(x){}}}});
+  searchRow.appendChild(el('span',{style:"position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;"},"🔍"));
+  searchRow.appendChild(searchIn);
+  wrap.appendChild(searchRow);
+  var filt=el('div',{style:"display:flex;gap:8px;margin-bottom:16px;"});
+  [["all","Tous"],["sms","💬 SMS"],["mail","✉️ Mail"]].forEach(function(f){
+    filt.appendChild(el('button',{class:'gx-press',style:pillStyle(S.historyFilter===f[0]),onClick:function(){S.historyFilter=f[0];renderHistory();}},f[1]));
+  });
+  wrap.appendChild(filt);
   var q=(S.historySearch||"").trim().toLowerCase();
   var filtered=S.history.filter(function(h){
     if(S.historyFilter!=='all'&&h.channel!==S.historyFilter)return false;
@@ -657,25 +670,25 @@ function renderHistoryList(){
     return ([h.civilite,h.prenom,h.nom,h.demarche,h.telephone].join(" ").toLowerCase().indexOf(q)!==-1);
   });
   if(filtered.length===0){
-    container.appendChild(el('div',{style:"text-align:center;padding:60px 0;color:oklch(0.6 0.02 264);",html:'<div style="font-size:40px;margin-bottom:10px;opacity:.5;">🕊</div><div style="font-size:14px;">'+(q?"Aucun résultat pour « "+q+" »":"Aucun message dans l\'historique.")+'</div>'}));
+    wrap.appendChild(el('div',{style:"text-align:center;padding:60px 0;color:oklch(0.6 0.02 264);",html:'<div style="font-size:40px;margin-bottom:10px;opacity:.5;">🕊</div><div style="font-size:14px;">Aucun message dans l\'historique.</div>'}));
   } else {
     var list=el('div',{style:"display:flex;flex-direction:column;gap:10px;"});
     filtered.forEach(function(h){
       var realIdx=S.history.indexOf(h);
       var who=[h.civilite,h.prenom,h.nom].filter(Boolean).join(" ");
       var isEditing=S.editHistIdx===realIdx;
-      var card=el('div',{style:"background:#fff;border:1px solid "+(isEditing?'oklch(0.7 0.1 266)':'oklch(0.92 0.008 256)')+";border-radius:16px;padding:15px 17px;box-shadow:0 1px 2px oklch(0.5 0.05 264 / .04);"+(isEditing?"outline:3px solid oklch(0.5 0.16 266 / .15);":"")});
-      var meta=el('div',{style:"display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;"});
+      var card=el('div',{style:"background:#fff;border:1px solid "+(isEditing?'oklch(0.7 0.1 266)':'oklch(0.92 0.008 256)')+";border-radius:16px;padding:15px 17px;box-shadow:0 1px 2px oklch(0.5 0.05 264 / .04);"+(isEditing?"box-shadow:0 0 0 3px oklch(0.5 0.16 266 / .15);":"")});
+      var meta=el('div',{style:"display:flex;align-items:center;gap:8px;margin-bottom:8px;"});
       meta.appendChild(el('span',{style:chanBadgeStyle(h.channel)},h.channel==="sms"?"💬 SMS":"✉️ Mail"));
       meta.appendChild(el('span',{style:typeBadgeStyle(h.msgType)},TLABEL[h.msgType]||h.msgType));
       meta.appendChild(el('span',{style:"font-size:11.5px;color:oklch(0.62 0.02 264);"},h.ts));
-      var actWrap=el('span',{style:"margin-left:auto;display:flex;gap:6px;"});
+      meta.appendChild(el('span',{style:"margin-left:auto;display:flex;gap:6px;"}));
+      var actWrap=meta.lastChild;
       if(!isEditing){
         actWrap.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.72 0.14 155);background:oklch(0.95 0.05 155);color:oklch(0.38 0.13 155);font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px;",onClick:function(e){e.stopPropagation();reuseHistItem(h);}},"↩ Réutiliser"));
-        actWrap.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.82 0.06 264);background:oklch(0.97 0.01 264);color:oklch(0.4 0.1 264);font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;",onClick:function(e){e.stopPropagation();S.editHistIdx=realIdx;S.editHistBody=h.body||"";renderHistoryList();}},"✏️"));
+        actWrap.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.82 0.06 264);background:oklch(0.97 0.01 264);color:oklch(0.4 0.1 264);font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;",onClick:function(e){e.stopPropagation();S.editHistIdx=realIdx;S.editHistBody=h.body||"";renderHistory();}},"✏️"));
       }
-      actWrap.appendChild(el('button',{class:'gx-press',style:BTNDEL+"font-size:12px;padding:4px 9px;border-radius:8px;",onClick:function(e){e.stopPropagation();if(confirm("Supprimer cet entrée ?"))deleteHistItem(realIdx);}},"🗑"));
-      meta.appendChild(actWrap);
+      actWrap.appendChild(el('button',{class:'gx-press',style:BTNDEL+"font-size:12px;padding:4px 9px;border-radius:8px;",onClick:function(e){e.stopPropagation();if(confirm("Supprimer cet historique ?"))deleteHistItem(realIdx);}},"🗑"));
       card.appendChild(meta);
       card.appendChild(el('div',{style:"font-weight:700;font-size:14px;"},h.demarche));
       card.appendChild(el('div',{style:"font-size:12.5px;color:oklch(0.55 0.02 264);margin-top:2px;"},who+(h.telephone?(who?" · ":"")+h.telephone:"")));
@@ -684,7 +697,7 @@ function renderHistoryList(){
         ta.value=S.editHistBody;card.appendChild(ta);
         var btns=el('div',{style:"display:flex;gap:8px;margin-top:10px;"});
         btns.appendChild(el('button',{class:'gx-press',style:BTNP+"flex:1;",onClick:function(){saveHistItem(realIdx);}},"✓ Enregistrer"));
-        btns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.02 256);background:#fff;color:oklch(0.5 0.02 264);font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;",onClick:function(){S.editHistIdx=null;S.editHistBody="";renderHistoryList();}},"Annuler"));
+        btns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.02 256);background:#fff;color:oklch(0.5 0.02 264);font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;",onClick:function(){S.editHistIdx=null;S.editHistBody="";renderHistory();}},"Annuler"));
         card.appendChild(btns);
       } else {
         card.style.cursor="pointer";
@@ -693,31 +706,9 @@ function renderHistoryList(){
       }
       list.appendChild(card);
     });
-    container.appendChild(list);
+    wrap.appendChild(list);
   }
-}
-function renderHistory(){
-  var pane=document.getElementById('pane-history');clear(pane);
-  var wrap=el('div',{style:"max-width:760px;margin:0 auto;padding:clamp(18px,3vw,32px) clamp(16px,4vw,40px);"});
-  var head=el('div',{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"});
-  head.appendChild(el('h2',{style:"margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;"},"Historique"));
-  head.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:function(){if(S.history.length===0)return;if(confirm("Vider tout l'historique ? Cette action est irréversible."))clearHistory();}},"Vider"));
-  wrap.appendChild(head);
-  var searchRow=el('div',{style:"position:relative;margin-bottom:14px;"});
-  var searchIn=el('input',{class:'gx-in',id:"hist-search-input",style:INPUT+"padding-left:36px;",placeholder:"Rechercher un nom…",value:S.historySearch});
-  searchIn.addEventListener('input',function(e){S.historySearch=e.target.value;renderHistoryList();});
-  searchRow.appendChild(el('span',{style:"position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;"},"🔍"));
-  searchRow.appendChild(searchIn);
-  wrap.appendChild(searchRow);
-  var filt=el('div',{style:"display:flex;gap:8px;margin-bottom:16px;"});
-  [["all","Tous"],["sms","💬 SMS"],["mail","✉️ Mail"]].forEach(function(f){
-    filt.appendChild(el('button',{class:'gx-press',style:pillStyle(S.historyFilter===f[0]),onClick:function(){S.historyFilter=f[0];renderHistoryList();this.parentNode.querySelectorAll('button').forEach(function(b,i){b.style.cssText=pillStyle([["all","Tous"],["sms","💬 SMS"],["mail","✉️ Mail"]][i][0]===S.historyFilter);});}},(f[1])));
-  });
-  wrap.appendChild(filt);
-  var container=el('div',{id:'hist-list-container'});
-  wrap.appendChild(container);
   pane.appendChild(wrap);
-  renderHistoryList();
 }
 
 /* ============================== RENDER: TEMPLATES ============================== */
