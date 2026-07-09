@@ -654,7 +654,7 @@ function renderHistory(){
   head.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:clearHistory},"Vider"));
   wrap.appendChild(head);
   var searchRow=el('div',{style:"position:relative;margin-bottom:14px;"});
-  var searchIn=el('input',{class:'gx-in',style:INPUT+"padding-left:36px;",placeholder:"Rechercher un nom…",value:S.historySearch,onInput:function(e){var pos=e.target.selectionStart;S.historySearch=e.target.value;renderHistory();var inp=document.querySelector('#pane-history input[placeholder="Rechercher un nom…"]');if(inp){inp.focus();try{inp.setSelectionRange(pos,pos);}catch(x){}}}});
+  var searchIn=el('input',{class:'gx-in',style:INPUT+"padding-left:36px;",placeholder:"Rechercher un nom…",value:S.historySearch,onInput:function(e){S.historySearch=e.target.value;renderHistory();}});
   searchRow.appendChild(el('span',{style:"position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;"},"🔍"));
   searchRow.appendChild(searchIn);
   wrap.appendChild(searchRow);
