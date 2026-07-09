@@ -405,6 +405,16 @@ function doImport(){
 function openHistItem(i){S.histItem=S.history[i];S.modal='hist';renderModal();}
 function copyHistModal(){var h=S.histItem;if(!h)return;doCopy(h.body).then(function(ok){if(ok){flashCopied('histmodal');showToast("✓ Copié !");}});}
 function clearHistory(){S.history=[];lsSet('ess-history',[]);renderHistory();}
+function exportHistoryCSV(){
+  if(!S.history.length){showToast("Aucun historique à exporter","warn");return;}
+  var cols=["Date","Canal","Type","Civilité","Prénom","Nom","Téléphone","Démarche","Commune","CMS","Corps"];
+  var esc=function(v){return '"'+(String(v||"").replace(/"/g,'""'))+'"';};
+  var rows=S.history.map(function(h){return[h.ts,h.channel==="sms"?"SMS":"Mail",h.msgType||"",h.civilite,h.prenom,h.nom,h.telephone,h.demarche,h.commune,h.selectedCMS,h.body].map(esc).join(";");});
+  var csv="﻿"+cols.map(esc).join(";")+"\n"+rows.join("\n");
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="historique-ess-cms-"+new Date().toISOString().slice(0,10)+".csv";a.click();
+  showToast("✓ Export CSV téléchargé");
+}
 function deleteHistItem(realIdx){S.history.splice(realIdx,1);lsSet('ess-history',S.history);renderHistoryList();}
 function saveHistItem(realIdx){S.history[realIdx].body=S.editHistBody;lsSet('ess-history',S.history);S.editHistIdx=null;S.editHistBody="";renderHistoryList();}
 function reuseHistItem(h){
@@ -753,7 +763,10 @@ function renderHistory(){
   var wrap=el('div',{style:"max-width:760px;margin:0 auto;padding:clamp(18px,3vw,32px) clamp(16px,4vw,40px);"});
   var head=el('div',{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"});
   head.appendChild(el('h2',{style:"margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;"},"Historique"));
-  head.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:function(){if(S.history.length===0)return;if(confirm("Vider tout l'historique ? Cette action est irréversible."))clearHistory();}},"Vider"));
+  var headBtns=el('div',{style:"display:flex;gap:8px;"});
+  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.82 0.08 155);background:#fff;color:oklch(0.42 0.12 155);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:exportHistoryCSV},"📥 CSV"));
+  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:function(){if(S.history.length===0)return;if(confirm("Vider tout l'historique ? Cette action est irréversible."))clearHistory();}},"Vider"));
+  head.appendChild(headBtns);
   wrap.appendChild(head);
   if(S.history.length>0){
     var h=S.history;
