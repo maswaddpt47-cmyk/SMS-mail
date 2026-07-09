@@ -546,7 +546,9 @@ function renderGenerate(){
 
   if(S.selectedDemarche==="__autre__"){
     var da=el('div');da.appendChild(el('label',{style:LABEL},"Préciser la démarche *"));
-    da.appendChild(el('input',{class:'gx-in',style:INPUT,value:S.demarcheAutre,placeholder:"ex : Aide exceptionnelle…",onInput:function(e){S.demarcheAutre=e.target.value;regen();updatePreviewOnly();}}));
+    var autreIn=el('input',{class:'gx-in',id:'autre-demarche-input',style:INPUT,value:S.demarcheAutre,placeholder:"ex : Aide exceptionnelle…"});
+    autreIn.addEventListener('input',function(e){S.demarcheAutre=e.target.value;regen();updatePreviewOnly();});
+    da.appendChild(autreIn);
     col.appendChild(da);
   }
   c2.appendChild(col);
@@ -556,14 +558,14 @@ function renderGenerate(){
   var genStyle=canGen
     ?"cursor:pointer;flex:1;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:14px;background:linear-gradient(135deg,oklch(0.65 0.17 38),oklch(0.58 0.18 33));box-shadow:0 6px 18px oklch(0.62 0.17 38 / .4);"
     :"flex:1;font-family:inherit;border:none;color:oklch(0.7 0.01 256);font-weight:700;font-size:15px;padding:14px;border-radius:14px;background:oklch(0.93 0.006 256);cursor:not-allowed;";
-  var genBtn=el('button',{class:'gx-press',style:genStyle,onClick:handleGenerate},"Générer le "+(isMail?"mail":"SMS"));
+  var genBtn=el('button',{id:'gen-btn',class:'gx-press',style:genStyle,onClick:handleGenerate},"Générer le "+(isMail?"mail":"SMS"));
   if(!canGen)genBtn.disabled=true;
   btnRow.appendChild(genBtn);
   btnRow.appendChild(el('button',{class:'gx-press',title:"Réinitialiser",style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.01 256);background:#fff;color:oklch(0.5 0.03 264);font-weight:600;font-size:14px;padding:0 16px;border-radius:13px;",onClick:onReset},"↺"));
   c2.appendChild(btnRow);
 
   if(!canGen){
-    var missDiv=el('div',{style:"display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;"});
+    var missDiv=el('div',{id:'gen-missing',style:"display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;"});
     missingFields().forEach(function(m){missDiv.appendChild(el('span',{style:"font-size:11px;font-weight:600;background:oklch(0.96 0.03 35);color:oklch(0.5 0.15 33);border:1px solid oklch(0.88 0.05 35);border-radius:8px;padding:4px 9px;"},m));});
     c2.appendChild(missDiv);
   }
@@ -643,6 +645,18 @@ function updatePreviewOnly(){
   var sub=document.querySelector('#pane-generate input[placeholder="Objet du mail"]');
   if(sub)sub.value=S.generatedSubject;
   updatePartsLabel();
+  updateGenBtn();
+}
+function updateGenBtn(){
+  var btn=document.getElementById('gen-btn');
+  if(!btn)return;
+  var can=canGenerate();
+  btn.disabled=!can;
+  var activeStyle="cursor:pointer;flex:1;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:14px;background:linear-gradient(135deg,oklch(0.65 0.17 38),oklch(0.58 0.18 33));box-shadow:0 6px 18px oklch(0.62 0.17 38 / .4);";
+  var inactiveStyle="flex:1;font-family:inherit;border:none;color:oklch(0.7 0.01 256);font-weight:700;font-size:15px;padding:14px;border-radius:14px;background:oklch(0.93 0.006 256);cursor:not-allowed;";
+  btn.style.cssText=can?activeStyle:inactiveStyle;
+  var miss=document.getElementById('gen-missing');
+  if(miss){miss.style.display=can?'none':'flex';}
 }
 
 /* ============================== RENDER: HISTORY ============================== */
