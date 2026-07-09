@@ -1011,8 +1011,7 @@ function renderHistory(){
   head.appendChild(el('h2',{style:"margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;"},"Historique"));
   var headBtns=el('div',{style:"display:flex;gap:8px;flex-wrap:wrap;"});
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.82 0.08 155);background:#fff;color:oklch(0.42 0.12 155);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:exportHistoryCSV},"📥 CSV"));
-  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.75 0.12 280);background:#fff;color:oklch(0.45 0.14 280);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:loadDemoData},"🎲 Démo"));
-  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:function(){if(S.history.length===0)return;if(confirm("Vider tout l'historique ? Cette action est irréversible."))clearHistory();}},"Vider"));
+headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:function(){if(S.history.length===0)return;if(confirm("Vider tout l'historique ? Cette action est irréversible."))clearHistory();}},"Vider"));
   head.appendChild(headBtns);
   wrap.appendChild(head);
   if(S.history.length>0){
