@@ -175,7 +175,7 @@ var S={
   civilite:"", prenom:"", nom:"", telephone:"", date:"", heure:"", demarcheAutre:"",
   generatedBody:"", generatedSubject:"",
   activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all", historySearch:"",
-  cmsList:[], demarches:[], secteurs:[], templates:{}, customTemplates:[], customVars:[], hiddenBuiltinKeys:[], history:[], mandats:[],
+  cmsList:[], demarches:[], secteurs:[], templates:{}, customTemplates:[], customVars:[], hiddenBuiltinKeys:[], history:[], mandats:[], favDemarches:[],
   saveStatus:"Données chargées",
   modal:null, histItem:null,
   editBuiltin:null, editBuiltinText:"",
@@ -380,7 +380,8 @@ function moveSect(i,dir){var j=i+dir;var a=S.secteurs.slice();if(j<0||j>=a.lengt
 function saveSect(i){if(!S.editSect||!S.editSect.val.trim())return;var a=S.secteurs.slice();a[i]=S.editSect.val.trim();S.secteurs=a;S.editSect=null;persist();renderConfig();}
 /* demarches */
 function addDem(){var nom=S.nd.nom,docs=S.nd.docs;if(!nom.trim())return;var documents=docs.split("\n").map(function(s){return s.trim();}).filter(Boolean);S.demarches=S.demarches.concat([{id:Date.now(),nom:nom.trim(),documents:documents}]);S.nd={nom:"",docs:""};persist();renderConfig();}
-function deleteDem(id){S.demarches=S.demarches.filter(function(d){return d.id!==id;});persist();renderConfig();}
+function deleteDem(id){S.demarches=S.demarches.filter(function(d){return d.id!==id;});S.favDemarches=(S.favDemarches||[]).filter(function(x){return x!==id;});persist();renderConfig();}
+function toggleFavDem(id){var f=S.favDemarches||[];S.favDemarches=f.indexOf(id)!==-1?f.filter(function(x){return x!==id;}):f.concat([id]);persist();renderConfig();renderGenerate();}
 function saveDem(id){var nom=(S.editDem&&S.editDem.nom)||"";var docs=(S.editDem&&S.editDem.docs)||"";if(!nom.trim())return;var documents=docs.split("\n").map(function(s){return s.trim();}).filter(Boolean);S.demarches=S.demarches.map(function(d){return d.id===id?{id:d.id,nom:nom.trim(),documents:documents}:d;});S.editDem=null;persist();renderConfig();}
 
 /* modals */
@@ -540,7 +541,19 @@ function renderGenerate(){
   var demDiv=el('div');demDiv.appendChild(el('label',{style:LABEL},"Démarche *"));
   var demSel=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;",onChange:function(e){setFieldSave({selectedDemarche:e.target.value,demarcheAutre:e.target.value==="__autre__"?S.demarcheAutre:""});}});
   demSel.appendChild(el('option',{value:"",selected:S.selectedDemarche===""},"— Sélectionner une démarche —"));
-  selectOpts(demSel,S.demarches.map(function(d){return{value:String(d.id),label:d.nom};}),S.selectedDemarche);
+  var favIds=S.favDemarches||[];
+  var favDems=S.demarches.filter(function(d){return favIds.indexOf(d.id)!==-1;});
+  var otherDems=S.demarches.filter(function(d){return favIds.indexOf(d.id)===-1;});
+  if(favDems.length>0){
+    var og1=document.createElement('optgroup');og1.label="⭐ Favoris";
+    favDems.forEach(function(d){og1.appendChild(el('option',{value:String(d.id),selected:S.selectedDemarche===String(d.id)},d.nom));});
+    demSel.appendChild(og1);
+    var og2=document.createElement('optgroup');og2.label="Toutes les démarches";
+    otherDems.forEach(function(d){og2.appendChild(el('option',{value:String(d.id),selected:S.selectedDemarche===String(d.id)},d.nom));});
+    demSel.appendChild(og2);
+  }else{
+    selectOpts(demSel,S.demarches.map(function(d){return{value:String(d.id),label:d.nom};}),S.selectedDemarche);
+  }
   demSel.appendChild(el('option',{value:"__autre__",selected:S.selectedDemarche==="__autre__"},"✏️ Autre…"));
   demDiv.appendChild(demSel);col.appendChild(demDiv);
 
@@ -987,6 +1000,7 @@ function renderConfig(){
       } else {
         var hd=el('div',{style:"display:flex;align-items:center;gap:8px;"});
         hd.appendChild(el('span',{style:"flex:1;font-weight:700;font-size:13.5px;"},d.nom));
+        (function(did){var isFav=(S.favDemarches||[]).indexOf(did)!==-1;hd.appendChild(el('button',{class:'gx-press',title:isFav?"Retirer des favoris":"Épingler en favori",style:"cursor:pointer;font-family:inherit;border:none;background:none;font-size:17px;padding:3px 6px;border-radius:8px;line-height:1;",onClick:function(){toggleFavDem(did);}},isFav?"⭐":"☆"));})(d.id);
         hd.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.82 0.06 264);background:oklch(0.97 0.01 264);color:oklch(0.4 0.1 264);font-size:13px;font-weight:600;padding:6px 11px;border-radius:9px;",onClick:function(){S.editDem={id:d.id,nom:d.nom,docs:(d.documents||[]).join("\n")};renderConfig();}},"✏️"));
         hd.appendChild(el('button',{class:'gx-press',style:BTNDEL,onClick:function(){deleteDem(d.id);}},"🗑"));
         card.appendChild(hd);
