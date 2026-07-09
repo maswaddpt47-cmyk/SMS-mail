@@ -919,6 +919,31 @@ function renderStats(){
   pane.appendChild(wrap);
 }
 
+function loadDemoData(){
+  var demarches=["CAF","Impôts","RSA","Carte d'identité","Passeport","CPAM","Retraite","Aide sociale","Permis de conduire","Logement"];
+  var communes=["Fumel","Marmande","Villeneuve-sur-Lot","Tonneins","Nérac","Agen","Monflanquin","Casteljaloux"];
+  var types=["proposition","confirmation","sans_appel"];
+  var channels=["sms","sms","sms","mail","mail"];
+  var civilites=["M.","Mme","M.","Mme","Mme","M."];
+  var prenoms=["Jean","Marie","Paul","Sophie","Pierre","Claire","Marc","Julie","Lucas","Emma","Nathalie","Alain"];
+  var noms=["Dupont","Martin","Bernard","Dubois","Moreau","Laurent","Simon","Leroy","Petit","Roux","Garcia","Thomas"];
+  function rnd(a){return a[Math.floor(Math.random()*a.length)];}
+  var entries=[];
+  for(var i=0;i<20;i++){
+    var mois=Math.floor(Math.random()*6);
+    var jour=Math.floor(Math.random()*28)+1;
+    var d=new Date(2026,mois,jour);
+    var dem=rnd(demarches);
+    var ch=rnd(channels);
+    var h2=String(8+Math.floor(Math.random()*8)).padStart(2,'0')+":"+(Math.random()>.5?"00":"30");
+    entries.push({channel:ch,msgType:rnd(types),body:"Message de démonstration",subject:ch==="mail"?"RDV — "+dem:"",civilite:rnd(civilites),prenom:rnd(prenoms),nom:rnd(noms),telephone:"",demarche:dem,selectedDemarche:"10",demarcheAutre:"",commune:rnd(communes),selectedCMS:"1",date:d.toISOString().slice(0,10),heure:h2,ts:d.toLocaleDateString('fr-FR')});
+  }
+  S.history=entries;
+  persist();
+  renderHistory();
+  renderStats();
+  showToast("✓ 20 entrées de démo chargées");
+}
 function renderHistory(){
   var pane=document.getElementById('pane-history');clear(pane);
   var wrap=el('div',{style:"max-width:760px;margin:0 auto;padding:clamp(18px,3vw,32px) clamp(16px,4vw,40px);"});
@@ -926,6 +951,7 @@ function renderHistory(){
   head.appendChild(el('h2',{style:"margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;"},"Historique"));
   var headBtns=el('div',{style:"display:flex;gap:8px;"});
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.82 0.08 155);background:#fff;color:oklch(0.42 0.12 155);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:exportHistoryCSV},"📥 CSV"));
+  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.75 0.12 280);background:#fff;color:oklch(0.45 0.14 280);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:loadDemoData},"🎲 Démo"));
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:function(){if(S.history.length===0)return;if(confirm("Vider tout l'historique ? Cette action est irréversible."))clearHistory();}},"Vider"));
   head.appendChild(headBtns);
   wrap.appendChild(head);
