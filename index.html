@@ -16,7 +16,6 @@
   @keyframes popIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
   @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(14px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
   @keyframes overlayIn{from{opacity:0;}to{opacity:1;}}
-  @keyframes barGrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
   #stat-tooltip{position:fixed;z-index:300;pointer-events:none;padding:7px 11px;border-radius:10px;font-size:12px;font-weight:600;color:#fff;background:oklch(0.22 0.02 264 / .95);box-shadow:0 4px 18px oklch(0.1 0.02 264 / .35);white-space:nowrap;display:none;max-width:240px;white-space:normal;line-height:1.4;}
   .gx-scroll::-webkit-scrollbar{width:9px;height:9px;}
   .gx-scroll::-webkit-scrollbar-thumb{background:oklch(0.86 0.01 256);border-radius:9px;border:2px solid transparent;background-clip:padding-box;}
@@ -896,13 +895,13 @@ function renderStats(){
     c.appendChild(el('div',{style:"font-size:13px;font-weight:700;color:var(--c-dim);margin-bottom:12px;"},title));
     return c;
   }
-  var barDelay=0;
+  var animBars=[];
   function barRow(label,pct,col,valStr,rankStr){
-    var delay=barDelay;barDelay+=45;
     var row=el('div',{style:"display:flex;align-items:center;gap:8px;min-width:0;cursor:default;"});
     if(rankStr)row.appendChild(el('span',{style:"font-size:11px;font-weight:700;color:oklch(0.65 0.02 264);width:14px;text-align:right;flex-shrink:0;"},rankStr));
     var outer=el('div',{style:"flex:1;background:var(--c-hover);border-radius:5px;height:22px;overflow:hidden;min-width:0;"});
-    var inner=el('div',{style:"height:100%;border-radius:5px;background:"+col+";width:"+pct+"%;display:flex;align-items:center;padding-left:7px;min-width:0;transform-origin:left center;animation:barGrow .65s cubic-bezier(.22,1,.36,1) "+delay+"ms both;"});
+    var inner=el('div',{style:"height:100%;border-radius:5px;background:"+col+";width:0%;display:flex;align-items:center;padding-left:7px;min-width:0;"});
+    animBars.push({el:inner,pct:pct});
     inner.appendChild(el('span',{style:"font-size:11px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"},label));
     outer.appendChild(inner);row.appendChild(outer);
     row.appendChild(el('span',{style:"font-size:11px;font-weight:700;color:oklch(0.5 0.03 264);flex-shrink:0;min-width:28px;text-align:right;"},valStr));
@@ -1055,7 +1054,16 @@ function renderStats(){
   wrap.appendChild(grid2);
   pane.appendChild(wrap);
 
-  barDelay=0;
+  /* Déclencher les animations width après insertion dans le DOM visible */
+  var _bars=animBars.slice();animBars=[];
+  requestAnimationFrame(function(){
+    /* Forcer reflow pour que le navigateur "voit" width:0% avant la transition */
+    _bars.forEach(function(b){b.el.getBoundingClientRect();});
+    _bars.forEach(function(b,i){
+      b.el.style.transition='width .6s cubic-bezier(.22,1,.36,1) '+i*40+'ms';
+      b.el.style.width=b.pct+'%';
+    });
+  });
 }
 
 function loadDemoData(){
