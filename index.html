@@ -1054,16 +1054,22 @@ function renderStats(){
   wrap.appendChild(grid2);
   pane.appendChild(wrap);
 
-  /* Déclencher les animations width après insertion dans le DOM visible */
+  /* Déclencher les animations width — double rAF pour garantir un frame peint à width:0% avant la transition */
   var _bars=animBars.slice();animBars=[];
-  requestAnimationFrame(function(){
-    /* Forcer reflow pour que le navigateur "voit" width:0% avant la transition */
-    _bars.forEach(function(b){b.el.getBoundingClientRect();});
-    _bars.forEach(function(b,i){
-      b.el.style.transition='width .6s cubic-bezier(.22,1,.36,1) '+i*40+'ms';
-      b.el.style.width=b.pct+'%';
+  var reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(reducedMotion){
+    _bars.forEach(function(b){b.el.style.width=b.pct+'%';});
+  } else {
+    requestAnimationFrame(function(){
+      _bars.forEach(function(b){b.el.getBoundingClientRect();});/* forcer layout width:0% */
+      requestAnimationFrame(function(){
+        _bars.forEach(function(b,i){
+          b.el.style.transition='width .7s cubic-bezier(.22,1,.36,1) '+i*50+'ms';
+          b.el.style.width=b.pct+'%';
+        });
+      });
     });
-  });
+  }
 }
 
 function loadDemoData(){
