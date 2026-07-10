@@ -897,7 +897,9 @@ function renderStats(){
   }
   var animBars=[];
   function barRow(label,pct,col,valStr,rankStr){
-    var row=el('div',{style:"display:flex;align-items:center;gap:8px;min-width:0;cursor:default;"});
+    var row=el('div',{style:"display:flex;align-items:center;gap:8px;min-width:0;cursor:default;border-radius:7px;padding:3px 4px;margin:-3px -4px;transition:background .18s,transform .18s;"});
+    row.addEventListener('mouseenter',function(){this.style.background='var(--c-hover)';this.style.transform='scale(1.015)';});
+    row.addEventListener('mouseleave',function(){this.style.background='';this.style.transform='';});
     if(rankStr)row.appendChild(el('span',{style:"font-size:11px;font-weight:700;color:oklch(0.65 0.02 264);width:14px;text-align:right;flex-shrink:0;"},rankStr));
     var outer=el('div',{style:"flex:1;background:var(--c-hover);border-radius:5px;height:22px;overflow:hidden;min-width:0;"});
     var inner=el('div',{style:"height:100%;border-radius:5px;background:"+col+";width:0%;display:flex;align-items:center;padding-left:7px;min-width:0;"});
