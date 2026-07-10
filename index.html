@@ -406,12 +406,24 @@ function doCopy(text){
   });
 }
 function flashCopied(key){S.copied[key]=true;renderAll();setTimeout(function(){S.copied[key]=false;renderAll();},1800);}
+function isDuplicate(nom,demarche,date){
+  return S.history.some(function(h){
+    return h.nom&&nom&&h.nom.toLowerCase()===nom.toLowerCase()
+      &&h.demarche&&demarche&&h.demarche.toLowerCase()===demarche.toLowerCase()
+      &&h.date===date;
+  });
+}
 function copyBody(){
   doCopy(S.generatedBody).then(function(ok){
     if(!ok)return;
     if(S.generatedBody&&(!S.history.length||S.history[0].body!==S.generatedBody)){
       var r=compute();var cms=S.cmsList.find(function(c){return String(c.id)===String(S.selectedCMS);});
-      if(cms&&r.dem)addHistory({channel:S.channel,msgType:S.msgType,body:S.generatedBody,subject:S.generatedSubject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:r.dem.nom,date:S.date,heure:S.heure,ts:new Date().toLocaleString('fr-FR')});
+      if(cms&&r.dem){
+        if(isDuplicate(S.nom,r.dem.nom,S.date)){
+          showToast('⚠️ Doublon détecté : '+S.nom+' / '+r.dem.nom+' déjà dans l\'historique','warn');
+        }
+        addHistory({channel:S.channel,msgType:S.msgType,body:S.generatedBody,subject:S.generatedSubject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:r.dem.nom,date:S.date,heure:S.heure,ts:new Date().toLocaleString('fr-FR')});
+      }
     }
     flashCopied('body');showToast("✓ Copié !");
   });
@@ -615,9 +627,20 @@ function renderGenerate(){
   var tel=el('div');tel.appendChild(el('label',{style:LABEL},"Téléphone"));
   var telRow=el('div',{style:"display:flex;gap:7px;align-items:center;"});
   var telIn=el('input',{class:'gx-in',style:INPUT+"flex:1;",type:"tel",value:S.telephone,placeholder:"06 12 34 56 78"});
+  function applyTelFormat(val){
+    var fmt=formatTel(val);
+    S.telephone=fmt;telIn.value=fmt;
+    var digits=fmt.replace(/\s/g,'');
+    var valid=digits.length===0||digits.length===10;
+    telIn.style.borderColor=(!valid&&digits.length>0)?'oklch(0.6 0.18 25)':'';
+    if(!valid&&digits.length>0)showToast('⚠️ Numéro incomplet ('+digits.length+'/10 chiffres)','warn');
+    updatePreviewOnly();
+  }
   telIn.addEventListener('input',function(e){S.telephone=formatTel(e.target.value);e.target.value=S.telephone;updatePreviewOnly();});
+  telIn.addEventListener('blur',function(e){applyTelFormat(e.target.value);});
   telRow.appendChild(telIn);
   var btnS="cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);font-weight:600;font-size:12px;padding:8px 10px;border-radius:10px;white-space:nowrap;flex-shrink:0;";
+  telRow.appendChild(el('button',{class:'gx-press',title:"Formater le numéro",style:btnS,onClick:function(){applyTelFormat(telIn.value);showToast("✓ Numéro formaté");}},"# Fmt"));
   telRow.appendChild(el('button',{class:'gx-press',title:"Copier le numéro",style:btnS,onClick:function(){if(!S.telephone)return;navigator.clipboard.writeText(S.telephone);showToast("✓ Numéro copié");}},"📋"));
   telRow.appendChild(el('button',{class:'gx-press',title:"Ouvrir WhatsApp",style:btnS,onClick:function(){if(!S.telephone)return;var num=S.telephone.replace(/\s/g,'').replace(/^0/,'33');window.open('https://wa.me/'+num,'_blank');}},"💬 WA"));
   tel.appendChild(telRow);

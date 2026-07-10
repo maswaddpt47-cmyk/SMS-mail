@@ -319,6 +319,56 @@ function defineTests(){
     W.downloadExport();
     assertEqual(W.localStorage.getItem('ess-since-export'),'0',"compteur remis à 0 après export");
   });
+
+  /* ── 8. Détection doublon ── */
+  suite("isDuplicate — détection de doublon");
+
+  test("isDuplicate détecte même nom + démarche + date", function(){
+    resetState();
+    S.history=[{nom:"Dupont",demarche:"CAF",date:"2026-07-09"}];
+    assert(W.isDuplicate("Dupont","CAF","2026-07-09"),"doit détecter le doublon");
+  });
+
+  test("isDuplicate insensible à la casse", function(){
+    resetState();
+    S.history=[{nom:"dupont",demarche:"caf",date:"2026-07-09"}];
+    assert(W.isDuplicate("DUPONT","CAF","2026-07-09"),"insensible à la casse");
+  });
+
+  test("isDuplicate ne bloque pas une date différente", function(){
+    resetState();
+    S.history=[{nom:"Dupont",demarche:"CAF",date:"2026-07-09"}];
+    assert(!W.isDuplicate("Dupont","CAF","2026-07-10"),"date différente → pas de doublon");
+  });
+
+  test("isDuplicate ne bloque pas une démarche différente", function(){
+    resetState();
+    S.history=[{nom:"Dupont",demarche:"CAF",date:"2026-07-09"}];
+    assert(!W.isDuplicate("Dupont","Impôts","2026-07-09"),"démarche différente → pas de doublon");
+  });
+
+  /* ── 9. Format téléphone ── */
+  suite("formatTel — formatage numéro");
+
+  test("06 12 34 56 78 formaté correctement", function(){
+    assertEqual(W.formatTel("0612345678"),"06 12 34 56 78");
+  });
+
+  test("numéro collé formaté", function(){
+    assertEqual(W.formatTel("0756789012"),"07 56 78 90 12");
+  });
+
+  test("numéro avec tirets formaté", function(){
+    assertEqual(W.formatTel("06-12-34-56-78"),"06 12 34 56 78");
+  });
+
+  test("numéro vide → vide", function(){
+    assertEqual(W.formatTel(""),"");
+  });
+
+  test("limite à 10 chiffres", function(){
+    assertEqual(W.formatTel("061234567899"),"06 12 34 56 78");
+  });
 }
 
 function runAll(){
