@@ -49,7 +49,7 @@
   .gen-grid{display:flex;flex-direction:column;gap:20px;max-width:1180px;margin:0 auto;padding:clamp(14px,3vw,32px) clamp(12px,4vw,40px);}
   @media(min-width:720px){.gen-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:28px;align-items:start;}}
   .gen-preview{position:static;}
-  @media(min-width:720px){.gen-preview{position:sticky;top:96px;}}
+  @media(min-width:720px){.gen-preview{position:sticky;top:136px;}}
   .gen-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   @media(min-width:420px){.gen-type-grid{grid-template-columns:1fr 1fr 1fr;}}
   .gen-row1{display:grid;grid-template-columns:80px 1fr;gap:9px;}
@@ -148,8 +148,9 @@
 <body>
 <div id="app-root" style="min-height:100vh;display:flex;flex-direction:column;">
 
-  <!-- HEADER -->
-  <header style="position:sticky;top:0;z-index:40;background:var(--c-header);backdrop-filter:blur(16px);border-bottom:1px solid var(--c-border);padding:14px clamp(16px,4vw,40px);display:flex;align-items:center;gap:14px;">
+  <!-- HEADER + TABS (sticky ensemble) -->
+  <div style="position:sticky;top:0;z-index:100;">
+  <header style="background:var(--c-header);backdrop-filter:blur(16px);border-bottom:1px solid var(--c-border);padding:14px clamp(16px,4vw,40px);display:flex;align-items:center;gap:14px;">
     <div style="width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,oklch(0.56 0.16 266),oklch(0.46 0.16 272));display:flex;align-items:center;justify-content:center;color:#fff;font-size:19px;box-shadow:0 6px 16px oklch(0.5 0.16 266 / .35);flex-shrink:0;">✦</div>
     <div style="flex:1;min-width:0;">
       <div style="font-weight:800;font-size:16px;letter-spacing:-.02em;line-height:1.1;">Générateur SMS &amp; Mail</div>
@@ -159,9 +160,8 @@
     <button class="gx-press hdr-btn" id="btnImport" style="border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);">Importer</button>
     <button class="gx-press hdr-btn" id="btnExport" style="border:none;background:oklch(0.26 0.03 264);color:#fff;box-shadow:0 4px 12px oklch(0.26 0.03 264 / .25);">Sauvegarder</button>
   </header>
-
-  <!-- TABS -->
-  <nav id="tabnav" style="position:sticky;top:0;z-index:100;background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:0 clamp(16px,4vw,40px);display:flex;gap:4px;overflow-x:auto;"></nav>
+  <nav id="tabnav" style="background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:0 clamp(16px,4vw,40px);display:flex;gap:4px;overflow-x:auto;"></nav>
+  </div>
 
   <main class="gx-scroll" style="flex:1;overflow-y:auto;">
     <div id="pane-generate" class="tab-pane"></div>
