@@ -277,6 +277,48 @@ function defineTests(){
     assertEqual(S.date,"","date doit être vidée");
     assertEqual(S.heure,"","heure doit être vidée");
   });
+
+  /* ── 6. Dark mode ── */
+  suite("Dark mode — data-theme");
+
+  test("initTheme applique dark quand ess-dark=1", function(){
+    W.localStorage.setItem('ess-dark','1');
+    W.initTheme();
+    assertEqual(W.document.documentElement.getAttribute('data-theme'),'dark',"data-theme doit être dark");
+  });
+
+  test("toggleDark bascule de light à dark", function(){
+    W.document.documentElement.setAttribute('data-theme','');
+    W.localStorage.setItem('ess-dark','0');
+    W.toggleDark();
+    assertEqual(W.document.documentElement.getAttribute('data-theme'),'dark',"doit passer en dark");
+    assertEqual(W.localStorage.getItem('ess-dark'),'1',"ess-dark doit valoir 1");
+  });
+
+  test("toggleDark bascule de dark à light", function(){
+    W.document.documentElement.setAttribute('data-theme','dark');
+    W.localStorage.setItem('ess-dark','1');
+    W.toggleDark();
+    assertEqual(W.document.documentElement.getAttribute('data-theme'),'','doit repasser en light');
+    assertEqual(W.localStorage.getItem('ess-dark'),'0','ess-dark doit valoir 0');
+  });
+
+  /* ── 7. Auto-export reminder ── */
+  suite("Auto-export — rappel tous les 5 messages");
+
+  test("compteur ess-since-export incrémente à chaque addHistory", function(){
+    resetState();
+    W.localStorage.setItem('ess-since-export','0');
+    S.history=[];
+    addHistory({channel:"sms",msgType:"proposition",body:"A",subject:"",civilite:"M.",prenom:"X",nom:"Y",demarche:"CAF",commune:"Fumel",date:"2026-07-09",heure:"09:00",ts:""});
+    assertEqual(W.localStorage.getItem('ess-since-export'),'1',"compteur doit être 1");
+  });
+
+  test("downloadExport remet le compteur à 0", function(){
+    W.localStorage.setItem('ess-since-export','7');
+    W.downloadExport();
+    assertEqual(W.localStorage.getItem('ess-since-export'),'0',"compteur remis à 0 après export");
+  });
 }
 
 function runAll(){
