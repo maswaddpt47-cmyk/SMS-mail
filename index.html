@@ -388,6 +388,10 @@ function onReset(){
 function addHistory(item){
   var h=[item].concat(S.history);if(h.length>HISTORY_MAX)h.pop();
   S.history=h;lsSet('ess-history',h);
+  /* Rappel export tous les 5 messages */
+  var since=parseInt(localStorage.getItem('ess-since-export')||'0',10)+1;
+  localStorage.setItem('ess-since-export',since);
+  if(since>0&&since%5===0)setTimeout(function(){showToast('💾 '+since+' messages non sauvegardés — pensez à exporter !','warn');},600);
 }
 
 function doCopy(text){
@@ -475,7 +479,7 @@ function saveDem(id){var nom=(S.editDem&&S.editDem.nom)||"";var docs=(S.editDem&
 /* modals */
 function exportData(){return{cmsList:S.cmsList,demarches:S.demarches,secteurs:S.secteurs,customTemplates:S.customTemplates,customVars:S.customVars,templates:S.templates,mandats:S.mandats,history:S.history};}
 function openExport(){S.exportText=JSON.stringify(exportData(),null,2);S.modal='export';renderModal();}
-function downloadExport(){var blob=new Blob([JSON.stringify(exportData(),null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ess-cms-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);showToast("Fichier téléchargé");}
+function downloadExport(){var blob=new Blob([JSON.stringify(exportData(),null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ess-cms-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);localStorage.setItem('ess-since-export','0');showToast("✓ Fichier téléchargé");}
 function copyExport(){doCopy(S.exportText).then(function(ok){if(ok){flashCopied('export');showToast("Sauvegarde copiée");}});}
 function openImport(){S.modal='import';S.importText="";S.importError="";renderModal();}
 function closeModal(){S.modal=null;renderModal();}
@@ -737,18 +741,45 @@ function renderGenerate(){
     var barInner=el('div',{id:'parts-bar-inner',style:"height:5px;border-radius:4px;width:"+barPct+"%;background:"+barCol2+";transition:width .2s,background .2s;"});
     barWrap.appendChild(barInner);right.appendChild(barWrap);
   } else {
+    /* ── Aperçu Mail style Outlook ── */
     var mail=el('div',{class:'gx-card',style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:18px;overflow:hidden;box-shadow:0 20px 50px oklch(0.4 0.04 266 / .12),0 2px 8px oklch(0.4 0.04 266 / .08);"});
-    mail.appendChild(el('div',{style:"background:oklch(0.26 0.03 264);padding:12px 18px;display:flex;align-items:center;gap:9px;",html:'<span style="width:11px;height:11px;border-radius:50%;background:oklch(0.7 0.17 25);"></span><span style="width:11px;height:11px;border-radius:50%;background:oklch(0.82 0.15 85);"></span><span style="width:11px;height:11px;border-radius:50%;background:oklch(0.72 0.16 150);"></span><span style="margin-left:8px;color:#fff;font-size:13px;font-weight:600;">Nouveau message</span>'}));
-    var toRow=el('div',{style:"padding:4px 18px;border-bottom:1px solid oklch(0.94 0.006 256);display:flex;gap:10px;align-items:center;"});
-    toRow.appendChild(el('span',{style:"font-size:12px;color:var(--c-muted);width:42px;"},"À"));
-    toRow.appendChild(el('span',{style:"font-size:13px;font-weight:500;padding:9px 0;"},recipient));
+    /* barre titre Outlook bleue */
+    var olBar=el('div',{style:"background:oklch(0.44 0.18 252);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;"});
+    olBar.appendChild(el('div',{style:"display:flex;align-items:center;gap:9px;",html:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="18" rx="3" fill="white" opacity=".9"/><path d="M2 7l10 7 10-7" stroke="oklch(0.44 0.18 252)" stroke-width="2" stroke-linecap="round"/></svg><span style="color:#fff;font-size:13px;font-weight:700;letter-spacing:.01em;">Nouveau message</span>'}));
+    olBar.appendChild(el('div',{style:"display:flex;gap:10px;"},
+      el('span',{style:"color:rgba(255,255,255,.7);font-size:16px;cursor:default;"},"−"),
+      el('span',{style:"color:rgba(255,255,255,.7);font-size:16px;cursor:default;"},"✕")
+    ));
+    mail.appendChild(olBar);
+    /* toolbar rapide */
+    var tb=el('div',{style:"background:oklch(0.96 0.005 252);border-bottom:1px solid var(--c-border);padding:6px 14px;display:flex;gap:6px;align-items:center;"});
+    ['Envoyer','Joindre','Signature'].forEach(function(lbl){
+      tb.appendChild(el('span',{style:"font-size:11px;font-weight:600;color:oklch(0.44 0.18 252);padding:4px 10px;border:1px solid oklch(0.82 0.01 252);border-radius:5px;cursor:default;background:var(--c-card);"},lbl));
+    });
+    mail.appendChild(tb);
+    /* champs À / De / Objet */
+    var fieldStyle="padding:7px 16px;border-bottom:1px solid var(--c-border);display:flex;gap:10px;align-items:center;";
+    var lblStyle="font-size:11px;font-weight:700;color:var(--c-muted);width:46px;flex-shrink:0;";
+    var deRow=el('div',{style:fieldStyle});
+    deRow.appendChild(el('span',{style:lblStyle},"De"));
+    deRow.appendChild(el('span',{style:"font-size:12.5px;color:var(--c-dim);"},"Michel Aswad <m.aswad@cg47.fr>"));
+    mail.appendChild(deRow);
+    var toRow=el('div',{style:fieldStyle});
+    toRow.appendChild(el('span',{style:lblStyle},"À"));
+    toRow.appendChild(el('span',{style:"font-size:12.5px;font-weight:600;color:var(--c-text);flex:1;"},recipient||"—"));
     mail.appendChild(toRow);
-    var subjRow=el('div',{style:"padding:4px 18px;border-bottom:1px solid oklch(0.94 0.006 256);display:flex;gap:10px;align-items:center;"});
-    subjRow.appendChild(el('span',{style:"font-size:12px;color:var(--c-muted);width:42px;"},"Objet"));
-    var subjIn=el('input',{placeholder:"Objet du mail",style:"flex:1;border:none;outline:none;font-family:inherit;font-size:13.5px;font-weight:600;padding:9px 0;background:transparent;color:inherit;",onInput:function(e){S.generatedSubject=e.target.value;}});
+    var subjRow=el('div',{style:fieldStyle});
+    subjRow.appendChild(el('span',{style:lblStyle},"Objet"));
+    var subjIn=el('input',{placeholder:"Objet du mail",style:"flex:1;border:none;outline:none;font-family:inherit;font-size:13px;font-weight:700;padding:5px 0;background:transparent;color:inherit;",onInput:function(e){S.generatedSubject=e.target.value;}});
     subjIn.value=S.generatedSubject;subjRow.appendChild(subjIn);mail.appendChild(subjRow);
-    var mta=el('textarea',{spellcheck:"false",class:'gx-scroll',style:"width:100%;height:420px;border:none;outline:none;resize:none;font-family:inherit;font-size:13.5px;line-height:1.6;padding:16px 18px;background:transparent;color:oklch(0.28 0.025 264);",onInput:function(e){S.generatedBody=e.target.value;}});
+    /* corps */
+    var mta=el('textarea',{spellcheck:"false",class:'gx-scroll',style:"width:100%;height:400px;border:none;outline:none;resize:none;font-family:inherit;font-size:13.5px;line-height:1.7;padding:16px 18px;background:var(--c-card);color:var(--c-text);box-sizing:border-box;",onInput:function(e){S.generatedBody=e.target.value;}});
     mta.value=S.generatedBody;mail.appendChild(mta);
+    /* pied : signature simulée */
+    var sigBar=el('div',{style:"padding:10px 18px;border-top:1px solid var(--c-border);background:oklch(0.97 0.004 252);font-size:11px;color:var(--c-muted);line-height:1.5;"});
+    sigBar.appendChild(el('div',{style:"font-weight:700;color:var(--c-dim);"},"Michel Aswad"));
+    sigBar.appendChild(el('div',{},"Conseiller Numérique · Conseil Départemental 47"));
+    mail.appendChild(sigBar);
     right.appendChild(mail);
   }
 
@@ -980,9 +1011,12 @@ function renderStats(){
       var sH=maxVal?Math.round(monthMap[m].sms/maxVal*(H-PT)):0;
       var mH=maxVal?Math.round(monthMap[m].mail/maxVal*(H-PT)):0;
       var x=i*step+step*0.1,bw=step*0.36;
-      var rS=svgEl("rect",{x:x,y:PT+(H-PT),width:bw,height:0,fill:"oklch(0.62 0.14 155)",rx:3});
-      var rM=svgEl("rect",{x:x+bw+1,y:PT+(H-PT),width:bw,height:0,fill:"oklch(0.56 0.15 264)",rx:3});
-      svgBars.push({el:rS,y:PT+(H-PT-sH),h:sH},{el:rM,y:PT+(H-PT-mH),h:mH});
+      var baseY=PT+(H-PT);
+      var rS=svgEl("rect",{x:x,y:PT+(H-PT-sH),width:bw,height:sH,fill:"oklch(0.62 0.14 155)",rx:3});
+      var rM=svgEl("rect",{x:x+bw+1,y:PT+(H-PT-mH),width:bw,height:mH,fill:"oklch(0.56 0.15 264)",rx:3});
+      rS.style.cssText="transform-box:fill-box;transform-origin:bottom;transform:scaleY(0);transition:transform .6s cubic-bezier(.22,1,.36,1) "+(i*60)+"ms;";
+      rM.style.cssText="transform-box:fill-box;transform-origin:bottom;transform:scaleY(0);transition:transform .6s cubic-bezier(.22,1,.36,1) "+(i*60+30)+"ms;";
+      svgBars.push(rS,rM);
       /* zone tap */
       var hit=svgEl("rect",{x:x,y:PT,width:bw*2+1,height:H-PT,fill:"transparent"});
       function makeShow(mkey,bx,bw2){return function(e){
@@ -1009,16 +1043,10 @@ function renderStats(){
     svg.appendChild(leg);
     svg.addEventListener('click',function(){ttip.style.display="none";});
     var sw=el('div',{style:"overflow-x:auto;-webkit-overflow-scrolling:touch;"});sw.appendChild(svgWrap);svgWrap.appendChild(svg);barCard.appendChild(sw);
-    /* Animer les barres SVG après insertion */
+    /* Animer les barres SVG via scaleY après un frame peint */
     var _svgBars=svgBars.slice();
     setTimeout(function(){
-      _svgBars.forEach(function(b,i){
-        setTimeout(function(){
-          b.el.style.transition='y .6s cubic-bezier(.22,1,.36,1),height .6s cubic-bezier(.22,1,.36,1)';
-          b.el.setAttribute('y',b.y);
-          b.el.setAttribute('height',b.h);
-        },i*30);
-      });
+      _svgBars.forEach(function(r){r.style.transform='scaleY(1)';});
     },20);
   }else{barCard.appendChild(el('div',{style:"color:var(--c-muted);font-size:13px;"},"Pas assez de données"));}
   wrap.appendChild(barCard);
