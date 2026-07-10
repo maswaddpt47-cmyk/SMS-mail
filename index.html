@@ -1048,7 +1048,7 @@ function renderStats(){
   var typeList=[{k:"proposition",lbl:"Proposition",col:"oklch(0.7 0.15 85)"},{k:"confirmation",lbl:"Confirmation",col:"oklch(0.62 0.14 155)"},{k:"sans_appel",lbl:"Sans appel",col:"oklch(0.56 0.15 264)"}];
   var typeTotal=typeList.reduce(function(s,t){return s+typeMap[t.k];},0)||1;
   var tw=el('div',{style:"display:flex;flex-direction:column;gap:7px;"});
-  typeList.forEach(function(t){var pct=Math.round(typeMap[t.k]/typeTotal*100);tw.appendChild(barRow(t.lbl,pct,t.col,typeMap[t.k]+" ("+pct+"%)",null));});
+  typeList.forEach(function(t){if(!typeMap[t.k])return;var pct=Math.round(typeMap[t.k]/typeTotal*100);tw.appendChild(barRow(t.lbl,pct,t.col,typeMap[t.k]+" ("+pct+"%)",null));});
   typeCard.appendChild(tw);col2.appendChild(typeCard);
 
   var cmsMap={};
