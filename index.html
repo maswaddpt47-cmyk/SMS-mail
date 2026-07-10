@@ -547,7 +547,7 @@ function renderTabs(){
   var nav=document.getElementById('tabnav');clear(nav);
   var defs=[["generate","Générer"],["history","Historique"],["stats","📊 Stats"],["templates","Modèles"],["config","Configuration"],["mandat","Mandat"],["mandats","Mandats archivés"]];
   defs.forEach(function(d){
-    nav.appendChild(el('button',{class:'gx-press',style:tabStyle(S.activeTab===d[0]),onClick:function(){S.activeTab=d[0];showActivePane();renderTabs();}},d[1]));
+    nav.appendChild(el('button',{class:'gx-press',style:tabStyle(S.activeTab===d[0]),onClick:function(){S.activeTab=d[0];showActivePane();renderTabs();if(d[0]==='stats')renderStats();}},d[1]));
   });
 }
 function showActivePane(){
@@ -1811,7 +1811,8 @@ function renderModal(){
 /* ============================== MASTER RENDER ============================== */
 function renderAll(){
   renderHeader();renderTabs();showActivePane();
-  renderGenerate();renderHistory();renderStats();renderTemplates();renderConfig();renderMandat();renderMandats();
+  renderGenerate();renderHistory();renderTemplates();renderConfig();renderMandat();renderMandats();
+  if(S.activeTab==='stats')renderStats();
   renderModal();renderToast();
 }
 
