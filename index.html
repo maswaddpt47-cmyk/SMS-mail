@@ -261,7 +261,7 @@ var DUREE="1 an";
 var S={
   channel:"sms", msgType:"proposition", selectedTemplate:"__default__",
   selectedCMS:"", selectedDemarche:"", commune:"",
-  civilite:"", prenom:"", nom:"", telephone:"", date:"", heure:"", demarcheAutre:"",
+  civilite:"", prenom:"", nom:"", telephone:"", date:"", heure:"", demarcheAutre:"", dateDemande:new Date().toISOString().slice(0,10),
   generatedBody:"", generatedSubject:"",
   activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all", historySearch:"", historyGrouped:false,
   statsCMS:"",
@@ -378,12 +378,12 @@ function handleGenerate(){
   if(!canGenerate())return;
   var r=compute();var body=r.body,subject=r.subject,dem=r.dem;
   S.generatedBody=body;S.generatedSubject=subject;
-  addHistory({channel:S.channel,msgType:S.msgType,body:body,subject:subject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:dem?dem.nom:"",selectedDemarche:S.selectedDemarche,demarcheAutre:S.demarcheAutre,commune:S.commune,selectedCMS:S.selectedCMS,date:S.date,heure:S.heure,ts:new Date().toLocaleString('fr-FR')});
+  addHistory({channel:S.channel,msgType:S.msgType,body:body,subject:subject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:dem?dem.nom:"",selectedDemarche:S.selectedDemarche,demarcheAutre:S.demarcheAutre,commune:S.commune,selectedCMS:S.selectedCMS,date:S.date,heure:S.heure,dateDemande:S.dateDemande||"",ts:new Date().toLocaleString('fr-FR')});
   showToast("✓ Message généré et enregistré");
   renderGenerate();renderHistory();renderMandat();
 }
 function onReset(){
-  Object.assign(S,{civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",demarcheAutre:"",selectedCMS:"",selectedDemarche:"",commune:""});
+  Object.assign(S,{civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",demarcheAutre:"",selectedCMS:"",selectedDemarche:"",commune:"",dateDemande:new Date().toISOString().slice(0,10)});
   regen();renderGenerate();
 }
 function addHistory(item){
@@ -655,7 +655,7 @@ function renderGenerate(){
   col.appendChild(tel);
 
   var row2=el('div',{style:"display:grid;grid-template-columns:1fr 1fr;gap:11px;"});
-  var dd=el('div');dd.appendChild(el('label',{style:LABEL},"Date *"));
+  var dd=el('div');dd.appendChild(el('label',{style:LABEL},"Date RDV *"));
   dd.appendChild(el('input',{class:'gx-in',style:INPUT,type:"date",value:S.date,onChange:function(e){setFieldSave({date:e.target.value});}}));
   row2.appendChild(dd);
   var hh=el('div');hh.appendChild(el('label',{style:LABEL},"Heure *"));
@@ -666,6 +666,10 @@ function renderGenerate(){
   hh.appendChild(timeSel);
   row2.appendChild(hh);
   col.appendChild(row2);
+
+  var ddem=el('div');ddem.appendChild(el('label',{style:LABEL},"Date de réception de la demande"));
+  ddem.appendChild(el('input',{class:'gx-in',style:INPUT,type:"date",value:S.dateDemande,onChange:function(e){S.dateDemande=e.target.value;}}));
+  col.appendChild(ddem);
 
   var comm=el('div');comm.appendChild(el('label',{style:LABEL},"CMS *"));
   var commSel=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;",onChange:function(e){setFieldSave({commune:e.target.value});}});
@@ -1038,7 +1042,16 @@ function renderStats(){
   var smsN=hist.filter(function(h){return h.channel==="sms";}).length;
   var mailN=hist.filter(function(h){return h.channel==="mail";}).length;
   var usagers={};hist.forEach(function(h){var k=(h.nom||"")+(h.prenom||"");if(k)usagers[k]=1;});
-  /* avg days between ts (creation) and date (appointment) */
+  /* avg reactivity: days between dateDemande and ts (send date) */
+  var reactDiffs=[];hist.forEach(function(h){
+    if(!h.dateDemande||!h.ts)return;
+    var dem=new Date(h.dateDemande);
+    var m=h.ts.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    var sendDate=m?new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1])):null;
+    if(sendDate&&!isNaN(dem.getTime())&&sendDate>=dem){reactDiffs.push(Math.round((sendDate-dem)/86400000));}
+  });
+  var avgReact=reactDiffs.length?Math.round(reactDiffs.reduce(function(s,d){return s+d;},0)/reactDiffs.length):null;
+  /* avg days between ts and date (appointment) */
   var diffs=[];hist.forEach(function(h){
     if(!h.ts||!h.date)return;
     var m=h.ts.match(/(\d{2})\/(\d{2})\/(\d{4})/);
@@ -1059,7 +1072,15 @@ function renderStats(){
     var target=k.val,start=Date.now(),dur=600;
     (function tick(){var p=Math.min(1,(Date.now()-start)/dur);valEl.textContent=String(Math.round(p*target));if(p<1)requestAnimationFrame(tick);})();
   });
-  /* avg RDV card (text, no count-up) */
+  /* reactivity KPI */
+  if(avgReact!==null){
+    var reactC=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:14px;padding:13px 14px;"});
+    reactC.appendChild(el('div',{style:"font-size:20px;margin-bottom:3px;"},"⚡"));
+    reactC.appendChild(el('div',{style:"font-size:26px;font-weight:800;color:oklch(0.52 0.14 155);line-height:1;"},avgReact+"j"));
+    reactC.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);margin-top:3px;font-weight:600;"},"Réactivité moy."));
+    kpiRow.appendChild(reactC);
+  }
+  /* avg RDV delay */
   if(avgRdv!==null){
     var rdvC=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:14px;padding:13px 14px;"});
     rdvC.appendChild(el('div',{style:"font-size:20px;margin-bottom:3px;"},"📅"));
