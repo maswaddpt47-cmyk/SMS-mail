@@ -2171,7 +2171,21 @@ function renderModal(){
   else if(S.modal==='import'){
     box.appendChild(header("Importer une sauvegarde"));
     box.appendChild(el('div',{style:"background:oklch(0.97 0.04 75);border:1px solid oklch(0.87 0.06 75);border-radius:12px;padding:12px 14px;font-size:12.5px;color:oklch(0.46 0.09 70);line-height:1.55;"},"⚠️ L'import remplacera toutes vos données actuelles."));
-    var ita=el('textarea',{placeholder:'{ "cmsList": [...], "demarches": [...] }',class:'gx-scroll',style:"width:100%;height:200px;font-family:ui-monospace,monospace;font-size:11px;border:1.5px solid var(--c-border-in);border-radius:12px;padding:12px;resize:none;color:var(--c-dim);background:var(--c-card);",onInput:function(e){S.importText=e.target.value;}});ita.value=S.importText;box.appendChild(ita);
+    // File picker button
+    var fileIn=el('input',{type:'file',accept:'.json,application/json',style:"display:none;"});
+    fileIn.addEventListener('change',function(e){
+      var f=e.target.files&&e.target.files[0];
+      if(!f)return;
+      var reader=new FileReader();
+      reader.onload=function(ev){S.importText=ev.target.result;doImport();};
+      reader.readAsText(f);
+    });
+    var fileLbl=el('label',{style:"display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-family:inherit;background:oklch(0.96 0.025 266);color:oklch(0.42 0.14 266);font-weight:700;font-size:13.5px;padding:12px;border-radius:12px;border:1.5px dashed oklch(0.7 0.1 266);"},"📂 Choisir un fichier JSON");
+    fileLbl.appendChild(fileIn);
+    box.appendChild(fileLbl);
+    // Separator
+    box.appendChild(el('div',{style:"display:flex;align-items:center;gap:8px;color:var(--c-muted);font-size:12px;"},[el('hr',{style:"flex:1;border:none;border-top:1px solid var(--c-border);"}),document.createTextNode("ou coller le contenu"),el('hr',{style:"flex:1;border:none;border-top:1px solid var(--c-border);"})]));
+    var ita=el('textarea',{placeholder:'{ "cmsList": [...], "demarches": [...] }',class:'gx-scroll',style:"width:100%;height:160px;font-family:ui-monospace,monospace;font-size:11px;border:1.5px solid var(--c-border-in);border-radius:12px;padding:12px;resize:none;color:var(--c-dim);background:var(--c-card);",onInput:function(e){S.importText=e.target.value;}});ita.value=S.importText;box.appendChild(ita);
     box.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13.5px;padding:12px;border-radius:12px;",onClick:doImport},"Importer et remplacer"));
     if(S.importError)box.appendChild(el('div',{style:"color:oklch(0.55 0.16 25);font-size:12.5px;font-weight:600;text-align:center;"},S.importError));
   }
