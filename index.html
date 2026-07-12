@@ -2259,7 +2259,16 @@ function renderModal(){
       row.appendChild(el('div',{style:"font-size:13px;color:var(--c-dim);font-weight:600;flex:1;word-break:break-all;"},r[1]));
       box.appendChild(row);
     });
-    box.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;margin-top:12px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){S.modal=null;renderModal();}},'Fermer'));
+    var btnRow=el('div',{style:"display:flex;gap:8px;margin-top:12px;"});
+    btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){S.modal=null;renderModal();}},'Fermer'));
+    btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.96 0.03 25);color:oklch(0.48 0.15 25);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
+      if(!confirm('Supprimer ce RDV ?'))return;
+      var idx=S.history.indexOf(t);
+      if(idx===-1)idx=S.history.findIndex(function(h){return h===t;});
+      if(idx!==-1){S.history.splice(idx,1);lsSet('ess-history',S.history);}
+      S.modal=null;renderModal();renderAgenda();showToast('🗑 RDV supprimé');
+    }},'🗑 Supprimer'));
+    box.appendChild(btnRow);
   }
   else if(S.modal==='hist'){
     var hi=S.histItem;
