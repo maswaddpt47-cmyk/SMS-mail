@@ -503,16 +503,18 @@ function toggleFavDem(id){var f=S.favDemarches||[];S.favDemarches=f.indexOf(id)!
 function saveDem(id){var nom=(S.editDem&&S.editDem.nom)||"";var docs=(S.editDem&&S.editDem.docs)||"";if(!nom.trim())return;var documents=docs.split("\n").map(function(s){return s.trim();}).filter(Boolean);S.demarches=S.demarches.map(function(d){return d.id===id?{id:d.id,nom:nom.trim(),documents:documents}:d;});S.editDem=null;persist();renderConfig();}
 
 /* permanences */
+function toLocalDateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function getPermanence(commune){return S.permanences.find(function(p){return p.commune===commune;});}
 function nextPermDate(perm){
   var d=new Date();
   var diff=(perm.jour-d.getDay()+7)%7||7;
   d.setDate(d.getDate()+diff);
-  return d.toISOString().slice(0,10);
+  return toLocalDateStr(d);
 }
 function isPermDay(perm,dateStr){
   if(!dateStr||!perm)return false;
-  return new Date(dateStr).getDay()===perm.jour;
+  /* parse avec T12:00 pour éviter le décalage UTC */
+  return new Date(dateStr+'T12:00:00').getDay()===perm.jour;
 }
 function getSlots(commune,dateStr){
   var perm=getPermanence(commune);if(!perm)return[];
@@ -1346,6 +1348,7 @@ function renderAgenda(){
 
   /* Générer les 6 prochaines semaines de permanences */
   var today=new Date();today.setHours(0,0,0,0);
+  var todayStr=toLocalDateStr(today);
   var days=[];
   for(var w=0;w<8;w++){
     S.permanences.forEach(function(perm){
@@ -1358,7 +1361,7 @@ function renderAgenda(){
       var baseDay=base.getDay();
       var fwd=(perm.jour-baseDay+7)%7;
       var target=new Date(base);target.setDate(base.getDate()+fwd);
-      var dateStr=target.toISOString().slice(0,10);
+      var dateStr=toLocalDateStr(target);
       if(!days.find(function(x){return x.dateStr===dateStr&&x.perm.commune===perm.commune;})){
         days.push({dateStr:dateStr,perm:perm,date:target});
       }
@@ -1372,11 +1375,11 @@ function renderAgenda(){
     var takenCount=slots.filter(function(s){return s.taken;}).length;
     var freeCount=slots.length-takenCount;
     var isPast=day.date<today;
-    var isToday=day.dateStr===today.toISOString().slice(0,10);
+    var isToday=day.dateStr===todayStr;
     var card=el('div',{style:"background:var(--c-card);border:1px solid "+(isToday?'oklch(0.62 0.14 266)':'var(--c-border)')+";border-radius:18px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px oklch(0.5 0.05 264 / .06);opacity:"+(isPast?'.55':'1')+";"});
     /* en-tête du jour */
     var dayHead=el('div',{style:"display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;"});
-    var dateLabel=JOURS_FR[day.perm.commune?new Date(day.dateStr+'T12:00').getDay():day.perm.jour]+' '+day.date.getDate()+' '+MONTHS[day.date.getMonth()];
+    var dateLabel=JOURS_FR[day.date.getDay()]+' '+day.date.getDate()+' '+MONTHS[day.date.getMonth()];
     dayHead.appendChild(el('div',{style:"font-weight:800;font-size:15px;"},dateLabel));
     dayHead.appendChild(el('div',{style:"font-weight:700;font-size:13px;color:var(--c-muted);"},day.perm.commune));
     if(isToday)dayHead.appendChild(el('span',{style:"background:oklch(0.5 0.16 266);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;"},"Aujourd'hui"));
