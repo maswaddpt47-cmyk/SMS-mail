@@ -1346,20 +1346,16 @@ function renderAgenda(){
     pane.appendChild(wrap);return;
   }
 
-  /* Générer les 6 prochaines semaines de permanences */
+  /* 4 semaines passées + 6 semaines futures */
   var today=new Date();today.setHours(0,0,0,0);
   var todayStr=toLocalDateStr(today);
   var days=[];
-  for(var w=0;w<8;w++){
+  for(var w=-4;w<7;w++){
     S.permanences.forEach(function(perm){
-      var d=new Date(today);
-      var diff=(perm.jour-d.getDay()+7)%7+(w>0?w*7:0);
-      if(diff===0&&w===0)diff=7;
-      if(diff<0)diff+=7;
-      /* trouver le prochain jour correspondant à partir d'aujourd'hui + w semaines */
       var base=new Date(today);base.setDate(base.getDate()+w*7);
       var baseDay=base.getDay();
       var fwd=(perm.jour-baseDay+7)%7;
+      /* pour la semaine courante (w=0), si fwd=0 c'est aujourd'hui → on garde */
       var target=new Date(base);target.setDate(base.getDate()+fwd);
       var dateStr=toLocalDateStr(target);
       if(!days.find(function(x){return x.dateStr===dateStr&&x.perm.commune===perm.commune;})){
@@ -1368,6 +1364,8 @@ function renderAgenda(){
     });
   }
   days.sort(function(a,b){return a.dateStr<b.dateStr?-1:a.dateStr>b.dateStr?1:0;});
+  /* supprimer les doublons éventuels */
+  var seen={};days=days.filter(function(d){var k=d.dateStr+d.perm.commune;if(seen[k])return false;seen[k]=1;return true;});
 
   var MONTHS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
   days.forEach(function(day){
@@ -1376,13 +1374,16 @@ function renderAgenda(){
     var freeCount=slots.length-takenCount;
     var isPast=day.date<today;
     var isToday=day.dateStr===todayStr;
-    var card=el('div',{style:"background:var(--c-card);border:1px solid "+(isToday?'oklch(0.62 0.14 266)':'var(--c-border)')+";border-radius:18px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px oklch(0.5 0.05 264 / .06);opacity:"+(isPast?'.55':'1')+";"});
+    var cardBorder=isToday?'oklch(0.62 0.14 266)':isPast?'var(--c-border)':'var(--c-border)';
+    var card=el('div',{style:"background:var(--c-card);border:1px solid "+cardBorder+";border-left:4px solid "+(isPast?'oklch(0.78 0.03 264)':'oklch(0.62 0.14 266)')+";border-radius:18px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px oklch(0.5 0.05 264 / .06);opacity:"+(isPast?'.6':'1')+";"});
     /* en-tête du jour */
     var dayHead=el('div',{style:"display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;"});
     var dateLabel=JOURS_FR[day.date.getDay()]+' '+day.date.getDate()+' '+MONTHS[day.date.getMonth()];
     dayHead.appendChild(el('div',{style:"font-weight:800;font-size:15px;"},dateLabel));
     dayHead.appendChild(el('div',{style:"font-weight:700;font-size:13px;color:var(--c-muted);"},day.perm.commune));
     if(isToday)dayHead.appendChild(el('span',{style:"background:oklch(0.5 0.16 266);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;"},"Aujourd'hui"));
+    if(isPast&&takenCount>0)dayHead.appendChild(el('span',{style:"background:oklch(0.96 0.04 25);color:oklch(0.5 0.16 25);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;"},takenCount+" RDV passé"+(takenCount>1?"s":"")));
+    if(isPast&&takenCount===0)dayHead.appendChild(el('span',{style:"font-size:11px;color:var(--c-muted);font-weight:600;"},"Passé"));
     var freeBadge=el('span',{style:"margin-left:auto;font-size:12px;font-weight:700;color:"+(freeCount>0?'oklch(0.42 0.12 155)':'oklch(0.5 0.16 25)')+";"},freeCount+" libre"+(freeCount!==1?"s":"")+" / "+slots.length);
     dayHead.appendChild(freeBadge);
     card.appendChild(dayHead);
