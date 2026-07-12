@@ -273,7 +273,7 @@ var S={
   activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all", historySearch:"", historyGrouped:false,
   statsCMS:"",
   cmsList:[], demarches:[], secteurs:[], templates:{}, customTemplates:[], customVars:[], hiddenBuiltinKeys:[], history:[], mandats:[], favDemarches:[], permanences:[],
-  editPerm:null, np:{commune:'',jour:4,debut:'09:00',fin:'15:00',duree:30},
+  editPerm:null, np:{commune:'',jour:4,debut:'09:00',fin:'15:00',duree:30}, agendaRdv:null,
   saveStatus:"Données chargées",
   modal:null, histItem:null,
   editBuiltin:null, editBuiltinText:"",
@@ -1387,18 +1387,27 @@ function renderAgenda(){
     var freeBadge=el('span',{style:"margin-left:auto;font-size:12px;font-weight:700;color:"+(freeCount>0?'oklch(0.42 0.12 155)':'oklch(0.5 0.16 25)')+";"},freeCount+" libre"+(freeCount!==1?"s":"")+" / "+slots.length);
     dayHead.appendChild(freeBadge);
     card.appendChild(dayHead);
-    /* grille des créneaux */
-    var sg=el('div',{style:"display:flex;flex-wrap:wrap;gap:6px;"});
+    /* grille des créneaux — colonnes fixes pour éviter les trous */
+    var sg=el('div',{style:"display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;"});
     slots.forEach(function(slot){
       var who=slot.taken?[slot.taken.civilite,slot.taken.prenom,slot.taken.nom].filter(Boolean).join(' '):'';
-      var pill=el('div',{style:"display:flex;flex-direction:column;align-items:center;padding:5px 10px;border-radius:10px;border:1px solid "+(slot.taken?'oklch(0.82 0.08 25)':'oklch(0.82 0.08 155)')+";background:"+(slot.taken?'oklch(0.96 0.03 25)':'oklch(0.95 0.04 155)')+";min-width:58px;cursor:"+(isPast?'default':'pointer')+";"});
-      pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;color:"+(slot.taken?'oklch(0.48 0.15 25)':'oklch(0.42 0.12 155)')},slot.heure));
-      if(slot.taken)pill.appendChild(el('div',{style:"font-size:10px;font-weight:600;color:oklch(0.48 0.15 25);max-width:80px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"},who));
-      if(!slot.taken&&!isPast){
+      var pill=el('div',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+(slot.taken?'oklch(0.82 0.08 25)':'oklch(0.82 0.08 155)')+";background:"+(slot.taken?'oklch(0.96 0.03 25)':'oklch(0.95 0.04 155)')+";cursor:"+(slot.taken?'pointer':(isPast?'default':'pointer'))+";overflow:hidden;"});
+      pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+(slot.taken?'oklch(0.48 0.15 25)':'oklch(0.42 0.12 155)')},slot.heure));
+      if(slot.taken&&who){
+        var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.48 0.15 25);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"});
+        nameEl.textContent=who;
+        pill.appendChild(nameEl);
+      }
+      if(slot.taken){
+        (function(s,d){
+          pill.addEventListener('click',function(){
+            S.modal='agenda-rdv';S.agendaRdv={slot:s,day:d};renderModal();
+          });
+        })(slot,day);
+      } else if(!isPast){
         pill.title='Prendre ce créneau';
         pill.addEventListener('click',function(){
           S.date=day.dateStr;S.commune=day.perm.commune;S.heure=slot.heure;
-          /* trouver le secteur correspondant */
           if(S.secteurs.indexOf(day.perm.commune)!==-1){saveLast();}
           S.activeTab='generate';showActivePane();renderTabs();renderGenerate();
           showToast('✓ Créneau pré-rempli — '+slot.heure+' · '+day.perm.commune);
@@ -2188,6 +2197,25 @@ function renderModal(){
     var ita=el('textarea',{placeholder:'{ "cmsList": [...], "demarches": [...] }',class:'gx-scroll',style:"width:100%;height:160px;font-family:ui-monospace,monospace;font-size:11px;border:1.5px solid var(--c-border-in);border-radius:12px;padding:12px;resize:none;color:var(--c-dim);background:var(--c-card);",onInput:function(e){S.importText=e.target.value;}});ita.value=S.importText;box.appendChild(ita);
     box.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13.5px;padding:12px;border-radius:12px;",onClick:doImport},"Importer et remplacer"));
     if(S.importError)box.appendChild(el('div',{style:"color:oklch(0.55 0.16 25);font-size:12.5px;font-weight:600;text-align:center;"},S.importError));
+  }
+  else if(S.modal==='agenda-rdv'){
+    var ar=S.agendaRdv||{};var t=ar.slot&&ar.slot.taken||{};var d=ar.day||{};
+    var fullName=[t.civilite,t.prenom,t.nom].filter(Boolean).join(' ')||'—';
+    box.appendChild(header('📅 RDV — '+(ar.slot&&ar.slot.heure||'')+' · '+(d.perm&&d.perm.commune||'')));
+    var rows=[
+      ['Bénéficiaire',fullName],
+      ['Téléphone',t.telephone||'—'],
+      ['Démarche',t.demarche||'—'],
+      ['Date',(d.dateStr||'').split('-').reverse().join('/')],
+      ['Notes',t.notes||'—']
+    ];
+    rows.forEach(function(r){
+      var row=el('div',{style:"display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--c-border);"});
+      row.appendChild(el('div',{style:"font-size:12px;font-weight:700;color:var(--c-muted);min-width:100px;"},r[0]));
+      row.appendChild(el('div',{style:"font-size:13px;color:var(--c-dim);font-weight:600;flex:1;word-break:break-all;"},r[1]));
+      box.appendChild(row);
+    });
+    box.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;margin-top:12px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){S.modal=null;renderModal();}},'Fermer'));
   }
   else if(S.modal==='hist'){
     var hi=S.histItem;
