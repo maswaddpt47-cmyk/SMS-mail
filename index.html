@@ -1391,30 +1391,26 @@ function renderAgenda(){
     var sg=el('div',{style:"display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;"});
     slots.forEach(function(slot){
       var who=slot.taken?[slot.taken.civilite,slot.taken.prenom,slot.taken.nom].filter(Boolean).join(' '):'';
-      var pill=el('div',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+(slot.taken?'oklch(0.82 0.08 25)':'oklch(0.82 0.08 155)')+";background:"+(slot.taken?'oklch(0.96 0.03 25)':'oklch(0.95 0.04 155)')+";cursor:"+(slot.taken?'pointer':(isPast?'default':'pointer'))+";overflow:hidden;"});
+      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+(slot.taken?'oklch(0.82 0.08 25)':'oklch(0.82 0.08 155)')+";background:"+(slot.taken?'oklch(0.96 0.03 25)':'oklch(0.95 0.04 155)')+";cursor:pointer;overflow:hidden;font-family:inherit;"});
       pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+(slot.taken?'oklch(0.48 0.15 25)':'oklch(0.42 0.12 155)')},slot.heure));
       if(slot.taken&&who){
         var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.48 0.15 25);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"});
         nameEl.textContent=who;
         pill.appendChild(nameEl);
       }
-      if(slot.taken){
-        (function(s,d){
-          pill.addEventListener('click',function(){
+      (function(s,d){
+        pill.addEventListener('click',function(){
+          if(s.taken){
             S.modal='agenda-rdv';S.agendaRdv={slot:s,day:d};renderModal();
-          });
-        })(slot,day);
-      } else if(!isPast){
-        (function(s,d){
-          pill.addEventListener('click',function(){
+          } else {
             S.modal='agenda-new';
             S.agendaNew={heure:s.heure,dateStr:d.dateStr,commune:d.perm.commune,
               civilite:'',prenom:'',nom:'',telephone:'',selectedCMS:S.selectedCMS||'',
               selectedDemarche:S.selectedDemarche||'',demarcheAutre:'',channel:S.channel||'sms'};
             renderModal();
-          });
-        })(slot,day);
-      }
+          }
+        });
+      })(slot,day);
       sg.appendChild(pill);
     });
     card.appendChild(sg);
