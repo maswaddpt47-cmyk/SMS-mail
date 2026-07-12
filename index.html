@@ -525,13 +525,13 @@ function getSlots(commune,dateStr){
   for(var t=start;t<=end;t+=perm.duree){
     var hh=String(Math.floor(t/60)).padStart(2,'0'),mm=String(t%60).padStart(2,'0');
     var heure=hh+':'+mm;
-    var taken=S.history.find(function(x){return x.date===dateStr&&x.commune===commune&&x.heure===heure;});
+    var taken=S.history.find(function(x){return x.date===dateStr&&x.heure===heure&&(x.commune===commune||!x.commune);});
     slots.push({heure:heure,taken:taken||null});
   }
   return slots;
 }
 function hasConflict(date,heure,commune){
-  return S.history.some(function(h){return h.date===date&&h.heure===heure&&h.commune===commune;});
+  return S.history.some(function(h){return h.date===date&&h.heure===heure&&(h.commune===commune||!h.commune);});
 }
 function addPerm(){
   var np=S.np;
