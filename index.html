@@ -1405,13 +1405,15 @@ function renderAgenda(){
           });
         })(slot,day);
       } else if(!isPast){
-        pill.title='Prendre ce créneau';
-        pill.addEventListener('click',function(){
-          S.date=day.dateStr;S.commune=day.perm.commune;S.heure=slot.heure;
-          if(S.secteurs.indexOf(day.perm.commune)!==-1){saveLast();}
-          S.activeTab='generate';showActivePane();renderTabs();renderGenerate();
-          showToast('✓ Créneau pré-rempli — '+slot.heure+' · '+day.perm.commune);
-        });
+        (function(s,d){
+          pill.addEventListener('click',function(){
+            S.modal='agenda-new';
+            S.agendaNew={heure:s.heure,dateStr:d.dateStr,commune:d.perm.commune,
+              civilite:'',prenom:'',nom:'',telephone:'',selectedCMS:S.selectedCMS||'',
+              selectedDemarche:S.selectedDemarche||'',demarcheAutre:'',channel:S.channel||'sms'};
+            renderModal();
+          });
+        })(slot,day);
       }
       sg.appendChild(pill);
     });
@@ -2197,6 +2199,52 @@ function renderModal(){
     var ita=el('textarea',{placeholder:'{ "cmsList": [...], "demarches": [...] }',class:'gx-scroll',style:"width:100%;height:160px;font-family:ui-monospace,monospace;font-size:11px;border:1.5px solid var(--c-border-in);border-radius:12px;padding:12px;resize:none;color:var(--c-dim);background:var(--c-card);",onInput:function(e){S.importText=e.target.value;}});ita.value=S.importText;box.appendChild(ita);
     box.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13.5px;padding:12px;border-radius:12px;",onClick:doImport},"Importer et remplacer"));
     if(S.importError)box.appendChild(el('div',{style:"color:oklch(0.55 0.16 25);font-size:12.5px;font-weight:600;text-align:center;"},S.importError));
+  }
+  else if(S.modal==='agenda-new'){
+    var an=S.agendaNew||{};
+    box.appendChild(header('📅 Nouveau RDV — '+an.heure+' · '+an.commune));
+    box.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:8px;"},an.dateStr.split('-').reverse().join('/')));
+    var INROW="display:grid;grid-template-columns:1fr 1fr;gap:8px;";
+    var INS="width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);box-sizing:border-box;";
+    var LBL="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:3px;";
+    function inField(lbl,inp){var w=el('div',{style:"display:flex;flex-direction:column;"});w.appendChild(el('div',{style:LBL},lbl));w.appendChild(inp);return w;}
+    /* civilité + prénom */
+    var civSel=el('select',{style:INS,onChange:function(e){an.civilite=e.target.value;}});
+    [['','—'],['M.','M.'],['Mme','Mme']].forEach(function(o){var opt=el('option',{value:o[0]},o[1]);if(an.civilite===o[0])opt.selected=true;civSel.appendChild(opt);});
+    var prenomIn=el('input',{type:'text',placeholder:'Prénom',style:INS,value:an.prenom||'',onInput:function(e){an.prenom=e.target.value;}});
+    var row1=el('div',{style:INROW});row1.appendChild(inField('Civilité',civSel));row1.appendChild(inField('Prénom',prenomIn));
+    box.appendChild(row1);
+    /* nom + téléphone */
+    var nomIn=el('input',{type:'text',placeholder:'Nom *',style:INS,value:an.nom||'',onInput:function(e){an.nom=e.target.value;}});
+    var telIn=el('input',{type:'tel',placeholder:'Téléphone',style:INS,value:an.telephone||'',onInput:function(e){an.telephone=e.target.value;}});
+    var row2=el('div',{style:INROW});row2.appendChild(inField('Nom *',nomIn));row2.appendChild(inField('Téléphone',telIn));
+    box.appendChild(row2);
+    /* CMS adresse */
+    var cmsSel=el('select',{style:INS,onChange:function(e){an.selectedCMS=e.target.value;}});
+    cmsSel.appendChild(el('option',{value:''},'— Adresse CMS —'));
+    S.cmsList.forEach(function(c){var o=el('option',{value:String(c.id)},c.nom);if(String(an.selectedCMS)===String(c.id))o.selected=true;cmsSel.appendChild(o);});
+    box.appendChild(inField('Adresse CMS *',cmsSel));
+    /* démarche */
+    var demSel=el('select',{style:INS,onChange:function(e){an.selectedDemarche=e.target.value;}});
+    demSel.appendChild(el('option',{value:''},'— Démarche —'));
+    S.demarches.forEach(function(d){var o=el('option',{value:String(d.id)},d.nom);if(String(an.selectedDemarche)===String(d.id))o.selected=true;demSel.appendChild(o);});
+    box.appendChild(inField('Démarche *',demSel));
+    /* canal */
+    var chanRow=el('div',{style:"display:flex;gap:8px;margin-top:2px;"});
+    ['sms','mail'].forEach(function(ch){
+      var btn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;padding:8px;border-radius:10px;font-weight:700;font-size:13px;border:1.5px solid "+(an.channel===ch?'oklch(0.5 0.16 266)':'var(--c-border-in)')+";background:"+(an.channel===ch?'oklch(0.5 0.16 266)':'var(--c-card)')+";color:"+(an.channel===ch?'#fff':'var(--c-dim)'),onClick:function(){an.channel=ch;renderModal();}},ch==='sms'?'💬 SMS':'✉️ Mail');
+      chanRow.appendChild(btn);
+    });
+    box.appendChild(inField('Canal',chanRow));
+    /* bouton générer */
+    box.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;margin-top:4px;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13.5px;padding:12px;border-radius:12px;",onClick:function(){
+      if(!an.nom||!an.selectedCMS||!an.selectedDemarche){showToast('⚠️ Nom, CMS et démarche requis','warn');return;}
+      Object.assign(S,{civilite:an.civilite,prenom:an.prenom,nom:an.nom,telephone:an.telephone,
+        selectedCMS:an.selectedCMS,selectedDemarche:an.selectedDemarche,demarcheAutre:an.demarcheAutre||'',
+        commune:an.commune,date:an.dateStr,heure:an.heure,channel:an.channel});
+      S.modal=null;S.agendaNew=null;
+      S.activeTab='generate';showActivePane();renderTabs();renderGenerate();
+    }},'Remplir le formulaire →'));
   }
   else if(S.modal==='agenda-rdv'){
     var ar=S.agendaRdv||{};var t=ar.slot&&ar.slot.taken||{};var d=ar.day||{};
