@@ -2244,31 +2244,53 @@ function renderModal(){
   }
   else if(S.modal==='agenda-rdv'){
     var ar=S.agendaRdv||{};var t=ar.slot&&ar.slot.taken||{};var d=ar.day||{};
-    var fullName=[t.civilite,t.prenom,t.nom].filter(Boolean).join(' ')||'—';
+    var isEditing=ar.editing||false;
     box.appendChild(header('📅 RDV — '+(ar.slot&&ar.slot.heure||'')+' · '+(d.perm&&d.perm.commune||'')));
-    var rows=[
-      ['Bénéficiaire',fullName],
-      ['Téléphone',t.telephone||'—'],
-      ['Démarche',t.demarche||'—'],
-      ['Date',(d.dateStr||'').split('-').reverse().join('/')],
-      ['Notes',t.notes||'—']
-    ];
-    rows.forEach(function(r){
-      var row=el('div',{style:"display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--c-border);"});
-      row.appendChild(el('div',{style:"font-size:12px;font-weight:700;color:var(--c-muted);min-width:100px;"},r[0]));
-      row.appendChild(el('div',{style:"font-size:13px;color:var(--c-dim);font-weight:600;flex:1;word-break:break-all;"},r[1]));
-      box.appendChild(row);
-    });
-    var btnRow=el('div',{style:"display:flex;gap:8px;margin-top:12px;"});
-    btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){S.modal=null;renderModal();}},'Fermer'));
-    btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.96 0.03 25);color:oklch(0.48 0.15 25);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
-      if(!confirm('Supprimer ce RDV ?'))return;
-      var idx=S.history.indexOf(t);
-      if(idx===-1)idx=S.history.findIndex(function(h){return h===t;});
-      if(idx!==-1){S.history.splice(idx,1);lsSet('ess-history',S.history);}
-      S.modal=null;renderModal();renderAgenda();showToast('🗑 RDV supprimé');
-    }},'🗑 Supprimer'));
-    box.appendChild(btnRow);
+    var INS2="width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);box-sizing:border-box;";
+    var LBL2="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:3px;display:block;";
+    if(!isEditing){
+      var fullName=[t.civilite,t.prenom,t.nom].filter(Boolean).join(' ')||'—';
+      [['Bénéficiaire',fullName],['Téléphone',t.telephone||'—'],['Démarche',t.demarche||'—'],['Date',(d.dateStr||'').split('-').reverse().join('/')],['Notes',t.notes||'—']].forEach(function(r){
+        var row=el('div',{style:"display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--c-border);"});
+        row.appendChild(el('div',{style:"font-size:12px;font-weight:700;color:var(--c-muted);min-width:100px;"},r[0]));
+        row.appendChild(el('div',{style:"font-size:13px;color:var(--c-dim);font-weight:600;flex:1;word-break:break-all;"},r[1]));
+        box.appendChild(row);
+      });
+      var btnRow=el('div',{style:"display:flex;gap:8px;margin-top:12px;"});
+      btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){S.modal=null;renderModal();}},'Fermer'));
+      btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.96 0.025 266);color:oklch(0.4 0.14 266);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){ar.editing=true;ar.edit={civilite:t.civilite||'',prenom:t.prenom||'',nom:t.nom||'',telephone:t.telephone||'',demarche:t.demarche||'',notes:t.notes||''};renderModal();}},'✏️ Modifier'));
+      btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.96 0.03 25);color:oklch(0.48 0.15 25);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
+        if(!confirm('Supprimer ce RDV ?'))return;
+        var idx=S.history.findIndex(function(h){return h===t;});
+        if(idx!==-1){S.history.splice(idx,1);lsSet('ess-history',S.history);}
+        S.modal=null;renderModal();renderAgenda();showToast('🗑 RDV supprimé');
+      }},'🗑'));
+      box.appendChild(btnRow);
+    } else {
+      var e2=ar.edit||{};
+      var INROW2="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;";
+      function field2(lbl,inp){var w=el('div');w.appendChild(el('label',{style:LBL2},lbl));w.appendChild(inp);return w;}
+      var civSel2=el('select',{style:INS2,onChange:function(ev){e2.civilite=ev.target.value;}});
+      [['','—'],['M.','M.'],['Mme','Mme']].forEach(function(o){var opt=el('option',{value:o[0]},o[1]);if(e2.civilite===o[0])opt.selected=true;civSel2.appendChild(opt);});
+      var prenomIn2=el('input',{type:'text',style:INS2,value:e2.prenom||'',onInput:function(ev){e2.prenom=ev.target.value;}});
+      var r1=el('div',{style:INROW2});r1.appendChild(field2('Civilité',civSel2));r1.appendChild(field2('Prénom',prenomIn2));box.appendChild(r1);
+      var nomIn2=el('input',{type:'text',style:INS2,value:e2.nom||'',onInput:function(ev){e2.nom=ev.target.value;}});
+      var telIn2=el('input',{type:'tel',style:INS2,value:e2.telephone||'',onInput:function(ev){e2.telephone=ev.target.value;}});
+      var r2=el('div',{style:INROW2});r2.appendChild(field2('Nom *',nomIn2));r2.appendChild(field2('Téléphone',telIn2));box.appendChild(r2);
+      var demIn2=el('input',{type:'text',style:INS2+"margin-bottom:8px;",value:e2.demarche||'',onInput:function(ev){e2.demarche=ev.target.value;}});
+      box.appendChild(field2('Démarche',demIn2));
+      var notesIn2=el('textarea',{style:INS2+"height:70px;resize:none;margin-bottom:8px;",placeholder:'Notes…',onInput:function(ev){e2.notes=ev.target.value;}});
+      notesIn2.value=e2.notes||'';box.appendChild(field2('Notes',notesIn2));
+      var btnRow2=el('div',{style:"display:flex;gap:8px;margin-top:4px;"});
+      btnRow2.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){ar.editing=false;renderModal();}},'← Retour'));
+      btnRow2.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
+        if(!e2.nom.trim()){showToast('⚠️ Nom requis','warn');return;}
+        var idx=S.history.findIndex(function(h){return h===t;});
+        if(idx!==-1){Object.assign(S.history[idx],{civilite:e2.civilite,prenom:e2.prenom,nom:e2.nom,telephone:e2.telephone,demarche:e2.demarche,notes:e2.notes});lsSet('ess-history',S.history);}
+        ar.editing=false;ar.slot.taken=S.history[idx];renderModal();renderAgenda();showToast('✅ RDV modifié');
+      }},'Enregistrer'));
+      box.appendChild(btnRow2);
+    }
   }
   else if(S.modal==='hist'){
     var hi=S.histItem;
