@@ -334,6 +334,9 @@ function fillTemplate(tpl,v){
     .replace(/{prenom_nom}/g,fullName).replace(/{greeting}/g,greeting)
     .replace(/{demarche}/g,v.demarche||"[démarche]").replace(/{date}/g,dateFmt)
     .replace(/{heure}/g,v.heure||"[heure]").replace(/{adresse}/g,v.adresse||"[adresse]")
+    .replace(/Si oui, pensez à apporter :\n\{documents\}/g, docList?'Si oui, pensez à apporter :\n'+docList:'')
+    .replace(/Pensez à apporter :\n\{documents\}/g, docList?'Pensez à apporter :\n'+docList:'')
+    .replace(/merci de prévoir les documents suivants :\n\{documents\}/g, docList?'merci de prévoir les documents suivants :\n'+docList:'')
     .replace(/{documents}/g,docList).replace(/{commune}/g,v.commune||"[commune]")
     .replace(/\n📅 Ajouter à votre calendrier : \{lienCalendrier\}/g, v.lienCalendrier ? '\n📅 Ajouter à votre calendrier : '+v.lienCalendrier : '')
     .replace(/{lienCalendrier}/g,v.lienCalendrier||"");
