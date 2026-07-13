@@ -2498,6 +2498,25 @@ function init(){
   S.demarches=ls('ess-demarches',DEFAULT_DEMARCHES);
   S.secteurs=ls('ess-secteurs',DEFAULT_SECTEURS);
   S.templates=ls('ess-templates',DEFAULT_TEMPLATES);
+  /* migration : injecter {lienCalendrier} dans les templates stockés qui ne l'ont pas encore */
+  var _calTag='\n📅 Ajouter à votre calendrier : {lienCalendrier}';
+  Object.keys(DEFAULT_TEMPLATES).forEach(function(k){
+    if(k.indexOf('sujet')!==-1)return;
+    if(S.templates[k]&&S.templates[k].indexOf('{lienCalendrier}')===-1){
+      /* trouver une bonne position : avant "Dans le cas contraire" ou avant "Cordialement" */
+      var t=S.templates[k];
+      if(t.indexOf('Dans le cas contraire')!==-1){
+        S.templates[k]=t.replace('\n\nDans le cas contraire',_calTag+'\n\nDans le cas contraire');
+      } else if(t.indexOf('\n\nDans l\'attente')!==-1){
+        S.templates[k]=t.replace('\n\nDans l\'attente',_calTag+'\n\nDans l\'attente');
+      } else if(t.indexOf('\n\nEn cas d\'empêchement')!==-1){
+        S.templates[k]=t.replace('\n\nEn cas d\'empêchement',_calTag+'\n\nEn cas d\'empêchement');
+      } else {
+        S.templates[k]=t+_calTag;
+      }
+    }
+  });
+  lsSet('ess-templates',S.templates);
   S.customTemplates=ls('ess-custom-tpl',DEFAULT_CUSTOM);
   S.customVars=ls('ess-vars',[]);
   S.hiddenBuiltinKeys=ls('ess-hidden',[]);
