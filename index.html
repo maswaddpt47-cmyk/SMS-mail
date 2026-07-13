@@ -335,6 +335,7 @@ function fillTemplate(tpl,v){
     .replace(/{demarche}/g,v.demarche||"[démarche]").replace(/{date}/g,dateFmt)
     .replace(/{heure}/g,v.heure||"[heure]").replace(/{adresse}/g,v.adresse||"[adresse]")
     .replace(/{documents}/g,docList).replace(/{commune}/g,v.commune||"[commune]")
+    .replace(/\n📅 Ajouter à votre calendrier : \{lienCalendrier\}/g, v.lienCalendrier ? '\n📅 Ajouter à votre calendrier : '+v.lienCalendrier : '')
     .replace(/{lienCalendrier}/g,v.lienCalendrier||"");
   for(var i=0;i<S.customVars.length;i++){var cv=S.customVars[i];if(cv.nom)r=r.replace(new RegExp("\\{"+cv.nom+"\\}","g"),cv.valeur);}
   return r.replace(/Bonjour  /g,"Bonjour ");
@@ -2498,17 +2499,13 @@ function init(){
   S.demarches=ls('ess-demarches',DEFAULT_DEMARCHES);
   S.secteurs=ls('ess-secteurs',DEFAULT_SECTEURS);
   S.templates=ls('ess-templates',DEFAULT_TEMPLATES);
-  /* migration : injecter {lienCalendrier} dans les templates stockés qui ne l'ont pas encore */
-  var _calTag='\n\n📅 Ajouter à votre calendrier : {lienCalendrier}';
-  Object.keys(DEFAULT_TEMPLATES).forEach(function(k){
-    if(k.indexOf('sujet')!==-1)return;
-    if(S.templates[k]&&S.templates[k].indexOf('{lienCalendrier}')===-1){
-      /* retirer toute insertion précédente mal placée puis ajouter en fin de message */
-      var t=S.templates[k].replace(/\n📅 Ajouter à votre calendrier : \{lienCalendrier\}/g,'');
-      S.templates[k]=t+_calTag;
-    }
-  });
-  lsSet('ess-templates',S.templates);
+  /* migration : forcer les templates builtin à la dernière version par défaut */
+  var _tplV='v3-cal';
+  if(ls('ess-tpl-version','')!==_tplV){
+    S.templates=Object.assign({},DEFAULT_TEMPLATES);
+    lsSet('ess-templates',S.templates);
+    lsSet('ess-tpl-version',_tplV);
+  }
   S.customTemplates=ls('ess-custom-tpl',DEFAULT_CUSTOM);
   S.customVars=ls('ess-vars',[]);
   S.hiddenBuiltinKeys=ls('ess-hidden',[]);
