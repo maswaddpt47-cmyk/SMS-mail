@@ -271,7 +271,7 @@ var S={
   civilite:"", prenom:"", nom:"", telephone:"", date:"", heure:"", demarcheAutre:"", dateDemande:new Date().toISOString().slice(0,10),
   generatedBody:"", generatedSubject:"",
   activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all", historySearch:"", historyGrouped:false,
-  statsCMS:"",
+  statsCMS:"", calendarType:"google",
   cmsList:[], demarches:[], secteurs:[], templates:{}, customTemplates:[], customVars:[], hiddenBuiltinKeys:[], history:[], mandats:[], favDemarches:[], permanences:[],
   editPerm:null, np:{commune:'',jour:4,debut:'09:00',fin:'15:00',duree:30}, agendaRdv:null,
   saveStatus:"Données chargées",
@@ -346,13 +346,21 @@ function buildCalLink(){
   var startMin=parseInt(parts[0])*60+parseInt(parts[1]||0);
   var endMin=startMin+30;
   function fmtDT(dateStr,min){return dateStr.replace(/-/g,'')+'T'+String(Math.floor(min/60)).padStart(2,'0')+String(min%60).padStart(2,'0')+'00';}
+  function fmtISO(dateStr,min){return dateStr+'T'+String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0')+':00';}
   var start=fmtDT(S.date,startMin),end=fmtDT(S.date,endMin);
+  var startISO=fmtISO(S.date,startMin),endISO=fmtISO(S.date,endMin);
   var cms=S.cmsList.find(function(c){return String(c.id)===String(S.selectedCMS);});
   var title=encodeURIComponent('RDV Conseiller Numérique'+(S.commune?' — '+S.commune:''));
   var loc=encodeURIComponent(cms?cms.adresse:S.commune||'');
   var dem=S.selectedDemarche==="__autre__"?S.demarcheAutre:((S.demarches.find(function(d){return String(d.id)===String(S.selectedDemarche);})||{}).nom||'');
   var details=encodeURIComponent(dem?'Démarche : '+dem:'');
-  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+title+'&dates='+start+'/'+end+'&location='+loc+'&details='+details;
+  var googleUrl='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+title+'&dates='+start+'/'+end+'&location='+loc+'&details='+details;
+  var outlookUrl='https://outlook.live.com/calendar/0/deeplink/compose?subject='+title+'&startdt='+encodeURIComponent(startISO)+'&enddt='+encodeURIComponent(endISO)+'&location='+loc+'&body='+details+'&path=%2Fcalendar%2Faction%2Fcompose&rru=addevent';
+  var type=S.calendarType||'google';
+  if(type==='google')return googleUrl;
+  if(type==='outlook')return outlookUrl;
+  /* les deux */
+  return 'Google : '+googleUrl+'\nOutlook : '+outlookUrl;
 }
 function compute(){
   var cms=S.cmsList.find(function(c){return String(c.id)===String(S.selectedCMS);});
@@ -1727,7 +1735,7 @@ function renderConfig(){
   var pane=document.getElementById('pane-config');clear(pane);
   var wrap=el('div',{style:"max-width:760px;margin:0 auto;padding:clamp(18px,3vw,32px) clamp(16px,4vw,40px);"});
   var tabs=el('div',{style:"display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;"});
-  [["cms","Adresses CMS ("+S.cmsList.length+")"],["secteurs","CMS ("+S.secteurs.length+")"],["demarches","Démarches ("+S.demarches.length+")"],["permanences","Permanences ("+S.permanences.length+")"]].forEach(function(c){
+  [["cms","Adresses CMS ("+S.cmsList.length+")"],["secteurs","CMS ("+S.secteurs.length+")"],["demarches","Démarches ("+S.demarches.length+")"],["permanences","Permanences ("+S.permanences.length+")"],["general","Général"]].forEach(function(c){
     tabs.appendChild(el('button',{class:'gx-press',style:pillStyle(S.configTab===c[0]),onClick:function(){S.configTab=c[0];renderConfig();}},c[1]));
   });
   wrap.appendChild(tabs);
@@ -1880,6 +1888,20 @@ function renderConfig(){
       }
       wrap.appendChild(card);
     });
+  }
+  else if(S.configTab==="general"){
+    var INS3="width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);box-sizing:border-box;cursor:pointer;";
+    var card3=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px 20px;margin-bottom:14px;"});
+    card3.appendChild(el('div',{style:"font-weight:800;font-size:14px;margin-bottom:14px;"},"📅 Lien calendrier"));
+    card3.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:10px;"},"Choisissez quel lien « Ajouter au calendrier » est inséré dans vos messages."));
+    var calSel=el('select',{style:INS3,onChange:function(e){S.calendarType=e.target.value;lsSet('ess-caltype',S.calendarType);regen();}});
+    [['google','📅 Google Calendar (Android, Gmail)'],['outlook','📅 Outlook (Outlook.com, Office 365)'],['both','📅 Les deux (Google + Outlook)']].forEach(function(o){
+      var opt=el('option',{value:o[0]},o[1]);
+      if(S.calendarType===o[0])opt.selected=true;
+      calSel.appendChild(opt);
+    });
+    card3.appendChild(calSel);
+    wrap.appendChild(card3);
   }
   pane.appendChild(wrap);
 }
@@ -2482,6 +2504,7 @@ function init(){
   S.history=ls('ess-history',[]);
   S.mandats=ls('ess-mandats',[]);
   S.permanences=ls('ess-permanences',DEFAULT_PERMANENCES);
+  S.calendarType=ls('ess-caltype','google');
   S.selectedCMS=last.selectedCMS||"";
   S.selectedDemarche=last.selectedDemarche||"";
   S.commune=last.commune||"";
