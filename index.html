@@ -726,6 +726,10 @@ function renderGenerate(){
   }
   dd.appendChild(dateLabel);
   dd.appendChild(el('input',{class:'gx-in',style:INPUT,type:"date",value:S.date,onChange:function(e){setFieldSave({date:e.target.value});}}));
+  if(perm&&S.date){
+    var agLink=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);margin-top:4px;",onClick:function(){S.activeTab='agenda';showActivePane();renderTabs();renderAgenda();}},"📅 Voir dans l'agenda");
+    dd.appendChild(agLink);
+  }
   row2.appendChild(dd);
   var hh=el('div');hh.appendChild(el('label',{style:LABEL},"Heure *"));
   if(perm&&isPermDay(perm,S.date)){
@@ -1431,7 +1435,7 @@ function renderAgenda(){
     var isPast=day.date<today;
     var isToday=day.dateStr===todayStr;
     var cardBorder=isToday?'oklch(0.62 0.14 266)':isPast?'var(--c-border)':'var(--c-border)';
-    var card=el('div',{style:"background:var(--c-card);border:1px solid "+cardBorder+";border-left:4px solid "+(isPast?'oklch(0.78 0.03 264)':'oklch(0.62 0.14 266)')+";border-radius:18px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px oklch(0.5 0.05 264 / .06);opacity:"+(isPast?'.6':'1')+";"});
+    var card=el('div',{id:'agenda-day-'+day.dateStr+'-'+day.perm.commune,style:"background:var(--c-card);border:1px solid "+cardBorder+";border-left:4px solid "+(isPast?'oklch(0.78 0.03 264)':'oklch(0.62 0.14 266)')+";border-radius:18px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px oklch(0.5 0.05 264 / .06);opacity:"+(isPast?'.6':'1')+";"});
     /* en-tête du jour */
     var dayHead=el('div',{style:"display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;"});
     var dateLabel=JOURS_FR[day.date.getDay()]+' '+day.date.getDate()+' '+MONTHS[day.date.getMonth()];
@@ -1473,6 +1477,13 @@ function renderAgenda(){
     wrap.appendChild(card);
   });
   pane.appendChild(wrap);
+  /* auto-scroll vers la date active (saisie dans Générer) */
+  if(S.date&&S.commune){
+    setTimeout(function(){
+      var target=document.getElementById('agenda-day-'+S.date+'-'+S.commune);
+      if(target)target.scrollIntoView({behavior:'smooth',block:'center'});
+    },80);
+  }
 }
 
 function renderHistory(){
