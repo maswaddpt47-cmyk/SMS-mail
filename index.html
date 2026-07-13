@@ -334,15 +334,30 @@ function fillTemplate(tpl,v){
     .replace(/{prenom_nom}/g,fullName).replace(/{greeting}/g,greeting)
     .replace(/{demarche}/g,v.demarche||"[démarche]").replace(/{date}/g,dateFmt)
     .replace(/{heure}/g,v.heure||"[heure]").replace(/{adresse}/g,v.adresse||"[adresse]")
-    .replace(/{documents}/g,docList).replace(/{commune}/g,v.commune||"[commune]");
+    .replace(/{documents}/g,docList).replace(/{commune}/g,v.commune||"[commune]")
+    .replace(/{lienCalendrier}/g,v.lienCalendrier||"");
   for(var i=0;i<S.customVars.length;i++){var cv=S.customVars[i];if(cv.nom)r=r.replace(new RegExp("\\{"+cv.nom+"\\}","g"),cv.valeur);}
   return r.replace(/Bonjour  /g,"Bonjour ");
 }
 
+function buildCalLink(){
+  if(!S.date||!S.heure)return '';
+  var parts=S.heure.split(':');
+  var startMin=parseInt(parts[0])*60+parseInt(parts[1]||0);
+  var endMin=startMin+30;
+  function fmtDT(dateStr,min){return dateStr.replace(/-/g,'')+'T'+String(Math.floor(min/60)).padStart(2,'0')+String(min%60).padStart(2,'0')+'00';}
+  var start=fmtDT(S.date,startMin),end=fmtDT(S.date,endMin);
+  var cms=S.cmsList.find(function(c){return String(c.id)===String(S.selectedCMS);});
+  var title=encodeURIComponent('RDV Conseiller Numérique'+(S.commune?' — '+S.commune:''));
+  var loc=encodeURIComponent(cms?cms.adresse:S.commune||'');
+  var dem=S.selectedDemarche==="__autre__"?S.demarcheAutre:((S.demarches.find(function(d){return String(d.id)===String(S.selectedDemarche);})||{}).nom||'');
+  var details=encodeURIComponent(dem?'Démarche : '+dem:'');
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+title+'&dates='+start+'/'+end+'&location='+loc+'&details='+details;
+}
 function compute(){
   var cms=S.cmsList.find(function(c){return String(c.id)===String(S.selectedCMS);});
   var dem=S.selectedDemarche==="__autre__"?{nom:S.demarcheAutre||"Autre",documents:[]}:S.demarches.find(function(d){return String(d.id)===String(S.selectedDemarche);});
-  var vars={civilite:S.civilite,prenom:S.prenom,nom:S.nom,demarche:dem?dem.nom:"[démarche]",date:S.date,heure:S.heure,adresse:cms?cms.adresse:"[adresse]",documents:dem?dem.documents:[],commune:S.commune};
+  var vars={civilite:S.civilite,prenom:S.prenom,nom:S.nom,demarche:dem?dem.nom:"[démarche]",date:S.date,heure:S.heure,adresse:cms?cms.adresse:"[adresse]",documents:dem?dem.documents:[],commune:S.commune,lienCalendrier:buildCalLink()};
   var body="",subject="";
   if(S.selectedTemplate!=="__default__"){
     var ct=S.customTemplates.find(function(t){return String(t.id)===String(S.selectedTemplate);});
@@ -939,6 +954,18 @@ function renderGenerate(){
   var copyStyle="cursor:pointer;width:100%;font-family:inherit;border:none;color:#fff;font-weight:700;font-size:14.5px;padding:14px;border-radius:14px;background:"+(copiedBody?'linear-gradient(135deg,oklch(0.62 0.14 155),oklch(0.55 0.14 158))':'linear-gradient(135deg,oklch(0.56 0.15 264),oklch(0.48 0.16 270))')+";box-shadow:0 6px 18px "+(copiedBody?'oklch(0.62 0.14 155 / .35)':'oklch(0.5 0.15 266 / .35)')+";";
   right.appendChild(el('button',{class:'gx-press',style:copyStyle,onClick:copyBody},copiedBody?"✓ Copié !":("Copier le "+(isMail?"mail":"SMS"))));
   if(isMail)right.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;width:100%;border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);font-weight:600;font-size:13.5px;padding:12px;border-radius:13px;",onClick:copySubject},S.copied.subject?"✓ Objet copié !":"Copier l'objet"));
+  /* bouton lien calendrier */
+  var calUrl=buildCalLink();
+  if(calUrl){
+    var calBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;width:100%;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);font-weight:700;font-size:13px;padding:11px;border-radius:13px;"});
+    calBtn.textContent='📅 Copier le lien « Ajouter au calendrier »';
+    calBtn.addEventListener('click',function(){
+      doCopy(calUrl).then(function(ok){
+        if(ok){calBtn.textContent='✓ Lien copié !';setTimeout(function(){calBtn.textContent='📅 Copier le lien « Ajouter au calendrier »';},2000);showToast('✓ Lien copié — collez-le dans votre message !');}
+      });
+    });
+    right.appendChild(calBtn);
+  }
   right.appendChild(el('div',{style:"text-align:center;font-size:11.5px;color:var(--c-subtle);"},isMail?"Collez dans votre client mail avec Ctrl+V":"Collez dans Google Messages avec Ctrl+V"));
 
   grid.appendChild(left);grid.appendChild(right);pane.appendChild(grid);
