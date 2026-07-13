@@ -504,7 +504,14 @@ function saveDem(id){var nom=(S.editDem&&S.editDem.nom)||"";var docs=(S.editDem&
 
 /* permanences */
 function toLocalDateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function getPermanence(commune){return S.permanences.find(function(p){return p.commune===commune;});}
+function getPermanence(commune,dateStr){
+  /* cherche d'abord un jour exceptionnel pour cette date, sinon la permanence régulière */
+  if(dateStr){
+    var exc=S.permanences.find(function(p){return p.commune===commune&&p.exceptDate===dateStr;});
+    if(exc)return exc;
+  }
+  return S.permanences.find(function(p){return p.commune===commune&&!p.exceptDate;});
+}
 function nextPermDate(perm){
   var d=new Date();
   var diff=(perm.jour-d.getDay()+7)%7||7;
@@ -517,7 +524,7 @@ function isPermDay(perm,dateStr){
   return new Date(dateStr+'T12:00:00').getDay()===perm.jour;
 }
 function getSlots(commune,dateStr){
-  var perm=getPermanence(commune);if(!perm)return[];
+  var perm=getPermanence(commune,dateStr);if(!perm)return[];
   var sh=parseInt(perm.debut),sm=parseInt(perm.debut.split(':')[1]||0);
   var eh=parseInt(perm.fin),em=parseInt(perm.fin.split(':')[1]||0);
   var start=sh*60+sm,end=eh*60+em;
@@ -715,7 +722,7 @@ function renderGenerate(){
   col.appendChild(tel);
 
   /* ── date RDV + heure ── */
-  var perm=getPermanence(S.commune);
+  var perm=getPermanence(S.commune,S.date);
   var row2=el('div',{style:"display:grid;grid-template-columns:1fr 1fr;gap:11px;"});
   var dd=el('div');
   var dateLabel=el('div',{style:"display:flex;align-items:center;gap:6px;margin-bottom:4px;"});
@@ -726,16 +733,37 @@ function renderGenerate(){
   }
   dd.appendChild(dateLabel);
   dd.appendChild(el('input',{class:'gx-in',style:INPUT,type:"date",value:S.date,onChange:function(e){setFieldSave({date:e.target.value});}}));
-  if(perm&&S.date){
-    var agLink=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);margin-top:4px;",onClick:function(){S.activeTab='agenda';showActivePane();renderTabs();renderAgenda();}},"📅 Voir dans l'agenda");
-    dd.appendChild(agLink);
+  if(S.date&&S.commune){
+    if(perm){
+      var agLink=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);margin-top:4px;",onClick:function(){S.activeTab='agenda';showActivePane();renderTabs();renderAgenda();}},"📅 Voir dans l'agenda");
+      dd.appendChild(agLink);
+    } else {
+      /* date hors permanence — proposer ajout exceptionnel */
+      var excBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid oklch(0.72 0.12 38);background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);margin-top:4px;"});
+      excBtn.textContent='➕ Ajouter ce jour à l\'agenda';
+      (function(dateStr,commune){
+        excBtn.addEventListener('click',function(){
+          var d=new Date(dateStr+'T12:00:00');
+          var jour=d.getDay();
+          var existing=S.permanences.find(function(p){return p.commune===commune;});
+          var debut=existing?existing.debut:'09:00';
+          var fin=existing?existing.fin:'15:00';
+          var duree=existing?existing.duree:30;
+          S.permanences=S.permanences.concat([{id:Date.now(),commune:commune,jour:jour,debut:debut,fin:fin,duree:duree,exceptDate:dateStr}]);
+          lsSet('ess-permanences',S.permanences);
+          renderGenerate();
+          showToast('✅ Jour exceptionnel ajouté à l\'agenda');
+        });
+      })(S.date,S.commune);
+      dd.appendChild(excBtn);
+    }
   }
   row2.appendChild(dd);
   var hh=el('div');hh.appendChild(el('label',{style:LABEL},"Heure *"));
   if(perm&&isPermDay(perm,S.date)){
     /* slot picker visuel */
     var slots=getSlots(S.commune,S.date);
-    var grid=el('div',{style:"display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;"});
+    var slotGrid=el('div',{style:"display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;"});
     slots.forEach(function(slot){
       var isSel=S.heure===slot.heure;
       var isTaken=!!slot.taken;
@@ -743,9 +771,9 @@ function renderGenerate(){
       var txtCol=isSel?'#fff':isTaken?'oklch(0.5 0.16 25)':'oklch(0.4 0.12 155)';
       var bord=isSel?'oklch(0.48 0.16 266)':isTaken?'oklch(0.82 0.1 25)':'oklch(0.82 0.08 155)';
       var pill=el('button',{class:'gx-press',title:isTaken?([slot.taken.civilite,slot.taken.prenom,slot.taken.nom].filter(Boolean).join(' ')||'Pris'):'',style:"cursor:"+(isTaken&&!isSel?'not-allowed':'pointer')+";font-family:inherit;font-size:11px;font-weight:700;padding:4px 8px;border-radius:8px;border:1px solid "+bord+";background:"+col2+";color:"+txtCol+";",onClick:function(){if(isTaken&&!isSel)return;setFieldSave({heure:slot.heure});}},slot.heure);
-      grid.appendChild(pill);
+      slotGrid.appendChild(pill);
     });
-    hh.appendChild(grid);
+    hh.appendChild(slotGrid);
   } else {
     var timeSlots=[];for(var h=7;h<=19;h++){timeSlots.push(String(h).padStart(2,'0')+":00");timeSlots.push(String(h).padStart(2,'0')+":30");}
     var timeSel=el('select',{class:'gx-in',style:INPUT+"padding:11px 8px;cursor:pointer;",onChange:function(e){setFieldSave({heure:e.target.value});}});
@@ -1410,12 +1438,13 @@ function renderAgenda(){
   var today=new Date();today.setHours(0,0,0,0);
   var todayStr=toLocalDateStr(today);
   var days=[];
+  /* permanences régulières (sans exceptDate) */
+  var regularPerms=S.permanences.filter(function(p){return !p.exceptDate;});
   for(var w=-4;w<7;w++){
-    S.permanences.forEach(function(perm){
+    regularPerms.forEach(function(perm){
       var base=new Date(today);base.setDate(base.getDate()+w*7);
       var baseDay=base.getDay();
       var fwd=(perm.jour-baseDay+7)%7;
-      /* pour la semaine courante (w=0), si fwd=0 c'est aujourd'hui → on garde */
       var target=new Date(base);target.setDate(base.getDate()+fwd);
       var dateStr=toLocalDateStr(target);
       if(!days.find(function(x){return x.dateStr===dateStr&&x.perm.commune===perm.commune;})){
@@ -1423,6 +1452,13 @@ function renderAgenda(){
       }
     });
   }
+  /* jours exceptionnels : afficher uniquement leur date spécifique */
+  S.permanences.filter(function(p){return p.exceptDate;}).forEach(function(perm){
+    var d=new Date(perm.exceptDate+'T12:00:00');
+    if(!days.find(function(x){return x.dateStr===perm.exceptDate&&x.perm.commune===perm.commune;})){
+      days.push({dateStr:perm.exceptDate,perm:perm,date:d,exceptional:true});
+    }
+  });
   days.sort(function(a,b){return a.dateStr<b.dateStr?-1:a.dateStr>b.dateStr?1:0;});
   /* supprimer les doublons éventuels */
   var seen={};days=days.filter(function(d){var k=d.dateStr+d.perm.commune;if(seen[k])return false;seen[k]=1;return true;});
@@ -1442,6 +1478,7 @@ function renderAgenda(){
     dayHead.appendChild(el('div',{style:"font-weight:800;font-size:15px;"},dateLabel));
     dayHead.appendChild(el('div',{style:"font-weight:700;font-size:13px;color:var(--c-muted);"},day.perm.commune));
     if(isToday)dayHead.appendChild(el('span',{style:"background:oklch(0.5 0.16 266);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;"},"Aujourd'hui"));
+    if(day.exceptional)dayHead.appendChild(el('span',{style:"background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;"},"Exceptionnel"));
     if(isPast&&takenCount>0)dayHead.appendChild(el('span',{style:"background:oklch(0.96 0.04 25);color:oklch(0.5 0.16 25);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;"},takenCount+" RDV passé"+(takenCount>1?"s":"")));
     if(isPast&&takenCount===0)dayHead.appendChild(el('span',{style:"font-size:11px;color:var(--c-muted);font-weight:600;"},"Passé"));
     var freeBadge=el('span',{style:"margin-left:auto;font-size:12px;font-weight:700;color:"+(freeCount>0?'oklch(0.42 0.12 155)':'oklch(0.5 0.16 25)')+";"},freeCount+" libre"+(freeCount!==1?"s":"")+" / "+slots.length);
