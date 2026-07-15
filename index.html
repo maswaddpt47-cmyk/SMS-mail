@@ -1916,7 +1916,17 @@ function renderConfig(){
     var dn=el('input',{class:'gx-in',placeholder:"ex : Demande d'aide exceptionnelle…",style:INPUT,onInput:function(e){S.nd.nom=e.target.value;}});dn.value=S.nd.nom;dc.appendChild(dn);
     var ddta=el('textarea',{class:'gx-in',rows:5,placeholder:"Pièce d'identité\nJustificatif de domicile\nRIB…",style:"width:100%;font-family:inherit;font-size:13px;line-height:1.5;padding:12px;border:1.5px solid var(--c-border-in);border-radius:11px;background:var(--c-card);color:inherit;resize:vertical;",onInput:function(e){S.nd.docs=e.target.value;}});ddta.value=S.nd.docs;dc.appendChild(ddta);
     dc.appendChild(el('button',{class:'gx-press',style:BTNP,onClick:addDem},"+ Ajouter"));
-    df.appendChild(dc);wrap.appendChild(df);
+    df.appendChild(dc);
+    /* bouton export JSON */
+    var expBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.78 0.1 155);background:oklch(0.94 0.06 155);color:oklch(0.35 0.12 155);font-weight:700;font-size:13px;padding:9px 16px;border-radius:11px;margin-top:12px;width:100%;",onClick:function(){
+      var json=JSON.stringify({demarches:S.demarches},null,2);
+      var blob=new Blob([json],{type:'application/json'});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');a.href=url;a.download='demarches-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+      showToast('✅ Démarches exportées');
+    }},"⬇️ Exporter les démarches (JSON)");
+    df.appendChild(expBtn);
+    wrap.appendChild(df);
     /* barre de recherche */
     function normD(s){return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();}
     var srchWrap=el('div',{style:"position:relative;margin-bottom:14px;"});
