@@ -908,10 +908,11 @@ function renderGenerate(){
     if(favList.length&&!q){addSection("⭐ Favoris");favList.forEach(function(d){addItem(d);});}
     if(!q){
       var byTh={};rest.forEach(function(d){var t=d.theme||"📋 Divers";if(!byTh[t])byTh[t]=[];byTh[t].push(d);});
+      Object.keys(byTh).forEach(function(t){byTh[t].sort(function(a,b){return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'});});});
       var ordTh=[];S.demarches.forEach(function(d){var t=d.theme||"📋 Divers";if(byTh[t]&&ordTh.indexOf(t)===-1)ordTh.push(t);});
       ordTh.forEach(function(t){addSection(t);byTh[t].forEach(function(d){addItem(d);});});
     } else {
-      filtered.forEach(function(d){addItem(d,favIds2.indexOf(d.id)!==-1?"⭐":null);});
+      filtered.slice().sort(function(a,b){return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'});}).forEach(function(d){addItem(d,favIds2.indexOf(d.id)!==-1?"⭐":null);});
     }
     /* option Autre */
     var autreItem=el('div',{style:"padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;color:oklch(0.5 0.1 266);border-top:1.5px solid var(--c-border);"});
@@ -1930,7 +1931,9 @@ function renderConfig(){
     /* ordre des thèmes : on respecte l'ordre de première apparition dans S.demarches */
     var themeOrder=[];S.demarches.forEach(function(d){var t=d.theme||"📋 Divers";if(themeOrder.indexOf(t)===-1)themeOrder.push(t);});
     var themeGroups={};
+    var sortAlpha=function(a,b){return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'});};
     (visibleDems||S.demarches).forEach(function(d){var t=d.theme||"📋 Divers";if(!themeGroups[t])themeGroups[t]=[];themeGroups[t].push(d);});
+    Object.keys(themeGroups).forEach(function(t){themeGroups[t].sort(sortAlpha);});
     var orderedThemes=themeOrder.filter(function(t){return themeGroups[t]&&themeGroups[t].length>0;});
     if(sq&&orderedThemes.length===0){wrap.appendChild(el('div',{style:"text-align:center;color:var(--c-muted);padding:24px;font-size:13px;"},"Aucun résultat pour « "+S.demSearch+" »"));}
     orderedThemes.forEach(function(theme){
