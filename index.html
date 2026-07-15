@@ -909,7 +909,7 @@ function renderGenerate(){
     if(!q){
       var byTh={};rest.forEach(function(d){var t=d.theme||"📋 Divers";if(!byTh[t])byTh[t]=[];byTh[t].push(d);});
       Object.keys(byTh).forEach(function(t){byTh[t].sort(function(a,b){return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'});});});
-      var ordTh=[];S.demarches.forEach(function(d){var t=d.theme||"📋 Divers";if(byTh[t]&&ordTh.indexOf(t)===-1)ordTh.push(t);});
+      var ordTh=Object.keys(byTh).sort(function(a,b){return a.localeCompare(b,'fr',{sensitivity:'base'});});
       ordTh.forEach(function(t){addSection(t);byTh[t].forEach(function(d){addItem(d);});});
     } else {
       filtered.slice().sort(function(a,b){return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'});}).forEach(function(d){addItem(d,favIds2.indexOf(d.id)!==-1?"⭐":null);});
@@ -1908,7 +1908,7 @@ function renderConfig(){
     df.appendChild(el('div',{style:"font-weight:700;font-size:14px;margin-bottom:13px;"},"Ajouter une démarche"));
     var dc=el('div',{style:"display:flex;flex-direction:column;gap:11px;"});
     var dThemeSel=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;",onInput:function(e){S.nd.theme=e.target.value;}});
-    var liveThemes=[];S.demarches.forEach(function(d){if(d.theme&&liveThemes.indexOf(d.theme)===-1)liveThemes.push(d.theme);});if(!liveThemes.length)liveThemes=DEM_THEMES.slice();
+    var liveThemes=[];S.demarches.forEach(function(d){if(d.theme&&liveThemes.indexOf(d.theme)===-1)liveThemes.push(d.theme);});if(!liveThemes.length)liveThemes=DEM_THEMES.slice();liveThemes.sort(function(a,b){return a.localeCompare(b,'fr',{sensitivity:'base'});});
     liveThemes.forEach(function(t){dThemeSel.appendChild(el('option',{value:t,selected:S.nd.theme===t},t));});
     dc.appendChild(dThemeSel);
     var dn=el('input',{class:'gx-in',placeholder:"ex : Demande d'aide exceptionnelle…",style:INPUT,onInput:function(e){S.nd.nom=e.target.value;}});dn.value=S.nd.nom;dc.appendChild(dn);
@@ -1934,7 +1934,7 @@ function renderConfig(){
     var sortAlpha=function(a,b){return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'});};
     (visibleDems||S.demarches).forEach(function(d){var t=d.theme||"📋 Divers";if(!themeGroups[t])themeGroups[t]=[];themeGroups[t].push(d);});
     Object.keys(themeGroups).forEach(function(t){themeGroups[t].sort(sortAlpha);});
-    var orderedThemes=themeOrder.filter(function(t){return themeGroups[t]&&themeGroups[t].length>0;});
+    var orderedThemes=themeOrder.filter(function(t){return themeGroups[t]&&themeGroups[t].length>0;}).sort(function(a,b){return a.localeCompare(b,'fr',{sensitivity:'base'});});
     if(sq&&orderedThemes.length===0){wrap.appendChild(el('div',{style:"text-align:center;color:var(--c-muted);padding:24px;font-size:13px;"},"Aucun résultat pour « "+S.demSearch+" »"));}
     orderedThemes.forEach(function(theme){
       var demsInTheme=themeGroups[theme];
@@ -1974,7 +1974,7 @@ function renderConfig(){
           var card=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:14px;padding:13px 15px;margin-bottom:8px;"});
           if(isEditing){
             var eThemeSel=el('select',{class:'gx-in',style:INPUT+"margin-bottom:8px;cursor:pointer;",onInput:function(e){S.editDem.theme=e.target.value;}});
-            var liveThemes2=[];S.demarches.forEach(function(d){if(d.theme&&liveThemes2.indexOf(d.theme)===-1)liveThemes2.push(d.theme);});if(!liveThemes2.length)liveThemes2=DEM_THEMES.slice();
+            var liveThemes2=[];S.demarches.forEach(function(d){if(d.theme&&liveThemes2.indexOf(d.theme)===-1)liveThemes2.push(d.theme);});if(!liveThemes2.length)liveThemes2=DEM_THEMES.slice();liveThemes2.sort(function(a,b){return a.localeCompare(b,'fr',{sensitivity:'base'});});
             liveThemes2.forEach(function(t2){eThemeSel.appendChild(el('option',{value:t2,selected:S.editDem.theme===t2},t2));});
             card.appendChild(eThemeSel);
             var eNom=el('input',{class:'gx-in',style:INPUT+"margin-bottom:8px;",value:S.editDem.nom,onInput:function(e){S.editDem.nom=e.target.value;}});
