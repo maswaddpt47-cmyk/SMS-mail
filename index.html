@@ -881,10 +881,11 @@ function renderGenerate(){
   demClearBtn.textContent="✕";
   function buildDemDropdown(query){
     demDropdown.innerHTML="";
-    var q=(query||"").toLowerCase().trim();
+    function norm(s){return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();}
+    var q=norm(query).trim();
     var favIds2=S.favDemarches||[];
     var all=S.demarches.slice();
-    var filtered=q?all.filter(function(d){return d.nom.toLowerCase().indexOf(q)!==-1||(d.theme||"").toLowerCase().indexOf(q)!==-1;}):all;
+    var filtered=q?all.filter(function(d){return norm(d.nom).indexOf(q)!==-1||norm(d.theme).indexOf(q)!==-1;}):all;
     if(!filtered.length&&!q){/* show nothing when empty and no query */return;}
     /* favoris en tête si pas de recherche */
     var favList=filtered.filter(function(d){return favIds2.indexOf(d.id)!==-1;});
