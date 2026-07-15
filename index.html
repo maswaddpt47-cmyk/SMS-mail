@@ -789,6 +789,7 @@ function renderGenerate(){
   telRow.appendChild(el('button',{class:'gx-press',title:"Formater le numéro",style:btnS,onClick:function(){applyTelFormat(telIn.value);showToast("✓ Numéro formaté");}},"# Fmt"));
   telRow.appendChild(el('button',{class:'gx-press',title:"Copier le numéro",style:btnS,onClick:function(){if(!S.telephone)return;navigator.clipboard.writeText(S.telephone);showToast("✓ Numéro copié");}},"📋"));
   telRow.appendChild(el('button',{class:'gx-press',title:"Ouvrir WhatsApp",style:btnS,onClick:function(){if(!S.telephone)return;var num=S.telephone.replace(/\s/g,'').replace(/^0/,'33');window.open('https://wa.me/'+num,'_blank');}},"💬 WA"));
+  telRow.appendChild(el('a',{class:'gx-press',title:"Appeler",href:"#",style:btnS+"text-decoration:none;",onClick:function(e){e.preventDefault();if(!S.telephone)return;window.location.href='tel:'+S.telephone.replace(/\s/g,'');}},"📞"));
   tel.appendChild(telRow);
   col.appendChild(tel);
 
@@ -1126,7 +1127,10 @@ function renderHistoryCard(h,realIdx,container){
   meta.appendChild(actWrap);
   card.appendChild(meta);
   card.appendChild(el('div',{style:"font-weight:700;font-size:14px;"},h.demarche));
-  card.appendChild(el('div',{style:"font-size:12.5px;color:var(--c-subtle);margin-top:2px;"},who+(h.telephone?(who?" · ":"")+h.telephone:"")));
+  var whoTelRow=el('div',{style:"display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px;"});
+  whoTelRow.appendChild(el('span',{style:"font-size:12.5px;color:var(--c-subtle);"},who+(h.telephone?(who?" · ":"")+h.telephone:"")));
+  if(h.telephone){whoTelRow.appendChild(el('a',{href:"tel:"+h.telephone.replace(/\s/g,''),class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.72 0.12 155);background:oklch(0.95 0.05 155);color:oklch(0.38 0.13 155);font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;text-decoration:none;"},"📞 Appeler"));}
+  card.appendChild(whoTelRow);
   if(isEditing){
     var ta=el('textarea',{class:'gx-in',rows:8,style:"width:100%;font-family:inherit;font-size:13px;line-height:1.6;padding:12px;border:1.5px solid oklch(0.7 0.1 266);border-radius:11px;background:var(--c-card);color:inherit;resize:vertical;margin-top:10px;",onInput:function(e){S.editHistBody=e.target.value;}});
     ta.value=S.editHistBody;card.appendChild(ta);
@@ -1233,6 +1237,50 @@ function renderStats(){
   }
 
   var hist=S.history.filter(function(h){return inPeriod(h)&&(!S.statsCMS||h.commune===S.statsCMS);});
+
+  /* ── Tableau de bord KPI ── */
+  (function(){
+    var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    var weekStart=new Date(now);weekStart.setDate(now.getDate()-((now.getDay()+6)%7));
+    var weekEnd=new Date(weekStart);weekEnd.setDate(weekStart.getDate()+6);
+    function toDateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+    var weekStartStr=toDateStr(weekStart);var weekEndStr=toDateStr(weekEnd);
+    var monthStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    var countToday=S.history.filter(function(h){return h.date&&h.date===todayStr;}).length;
+    var countWeek=S.history.filter(function(h){return h.date&&h.date>=weekStartStr&&h.date<=weekEndStr;}).length;
+    var countMonth=S.history.filter(function(h){return h.date&&h.date.substring(0,7)===monthStr;}).length;
+    /* taux d'occupation sur 30 jours */
+    var occStr='—';
+    if(S.permanences&&S.permanences.length){
+      var totalSlots=0,takenSlots=0;
+      for(var di=0;di<30;di++){
+        var dd2=new Date(now);dd2.setDate(now.getDate()+di);
+        var ds=toDateStr(dd2);
+        S.permanences.forEach(function(p){
+          if(isPermDay(p,ds)){
+            var sls=getSlots(p.commune,ds);
+            totalSlots+=sls.length;
+            takenSlots+=sls.filter(function(sl){return sl.taken;}).length;
+          }
+        });
+      }
+      if(totalSlots>0)occStr=Math.round(takenSlots/totalSlots*100)+'%';
+    }
+    var kpiStyle="background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px 16px;box-shadow:0 1px 3px oklch(0.5 0.05 264 / .06);text-align:center;";
+    var kpiNumStyle="font-size:32px;font-weight:900;color:oklch(0.45 0.18 266);line-height:1.1;margin-bottom:6px;";
+    var kpiLblStyle="font-size:12px;font-weight:700;color:var(--c-muted);letter-spacing:.04em;text-transform:uppercase;";
+    var dashboard=el('div',{style:"margin-bottom:22px;"});
+    dashboard.appendChild(el('div',{style:"font-size:14px;font-weight:800;color:var(--c-dim);margin-bottom:10px;letter-spacing:-.01em;"},"Tableau de bord"));
+    var grid=el('div',{style:"display:grid;grid-template-columns:1fr 1fr;gap:10px;"});
+    [[countToday,"RDV aujourd'hui"],[countWeek,"RDV cette semaine"],[countMonth,"RDV ce mois"],[occStr,"Taux d'occupation (30j)"]].forEach(function(kpi){
+      var tile=el('div',{style:kpiStyle});
+      tile.appendChild(el('div',{style:kpiNumStyle},String(kpi[0])));
+      tile.appendChild(el('div',{style:kpiLblStyle},kpi[1]));
+      grid.appendChild(tile);
+    });
+    dashboard.appendChild(grid);
+    wrap.appendChild(dashboard);
+  })();
 
   if(!hist.length){
     wrap.appendChild(el('div',{style:"text-align:center;padding:60px 20px;color:var(--c-muted);font-size:15px;"},"Aucune donnée sur cette période."));
@@ -1633,6 +1681,24 @@ function renderAgenda(){
             renderModal();
           }
         });
+        if(s.taken){
+          var swipeStartX=0,swipeStartY=0;
+          pill.addEventListener('touchstart',function(e){swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;},{passive:true});
+          pill.addEventListener('touchend',function(e){
+            var dx=swipeStartX-e.changedTouches[0].clientX;
+            var dy=Math.abs(swipeStartY-e.changedTouches[0].clientY);
+            if(dx>60&&dy<40){
+              pill.style.transition='transform 200ms ease';pill.style.transform='translateX(-100%)';
+              setTimeout(function(){
+                if(confirm('Supprimer ce RDV ?')){
+                  var idx=S.history.findIndex(function(h){return h===s.taken;});
+                  if(idx!==-1){S.history.splice(idx,1);lsSet('ess-history',S.history);}
+                  renderAgenda();showToast('🗑 RDV supprimé');
+                } else {pill.style.transition='transform 200ms ease';pill.style.transform='';}
+              },200);
+            }
+          },{passive:true});
+        }
       })(slot,day);
       sg.appendChild(pill);
     });
@@ -2586,8 +2652,14 @@ function renderModal(){
         row.appendChild(el('div',{style:"font-size:13px;color:var(--c-dim);font-weight:600;flex:1;word-break:break-all;"},r[1]));
         box.appendChild(row);
       });
-      var btnRow=el('div',{style:"display:flex;gap:8px;margin-top:12px;"});
+      var btnRow=el('div',{style:"display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;"});
       btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){S.modal=null;renderModal();}},'Fermer'));
+      btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid oklch(0.72 0.12 100);background:oklch(0.95 0.05 100);color:oklch(0.38 0.13 100);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
+        S.agendaNew={heure:'',dateStr:'',commune:d.perm?d.perm.commune:(d.dateStr?'':''),
+          civilite:t.civilite||'',prenom:t.prenom||'',nom:t.nom||'',telephone:t.telephone||'',
+          selectedDemarche:t.demarche||'',demarcheAutre:'',selectedCMS:t.commune||S.selectedCMS||'',channel:t.channel||S.channel||'sms'};
+        S.modal='agenda-new';renderModal();
+      }},'⧉ Dupliquer'));
       btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.96 0.025 266);color:oklch(0.4 0.14 266);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){ar.editing=true;ar.edit={civilite:t.civilite||'',prenom:t.prenom||'',nom:t.nom||'',telephone:t.telephone||'',demarche:t.demarche||'',notes:t.notes||''};renderModal();}},'✏️ Modifier'));
       btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.96 0.03 25);color:oklch(0.48 0.15 25);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
         if(!confirm('Supprimer ce RDV ?'))return;
