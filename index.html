@@ -212,61 +212,62 @@ var DEFAULT_CMS=[
   {id:4,nom:"Villeneuve-Sur-Lot",adresse:"Centre Médico-Social de Villeneuve-Sur-Lot - 1 Place d'Aquitaine, 47300 VILLENEUVE-SUR-LOT"},
   {id:5,nom:"Agen Montanou",adresse:"Centre Médico-Social Agen Montanou - Rue Blaise de Monluc, Place de quartier, 47000 AGEN"},
 ];
+var DEM_THEMES=["🪪 Identité","👨‍👩‍👧 CAF / Aides sociales","♿ MDPH","🏖 Retraite","💼 France Travail / Emploi","🏥 Santé","💰 Impôts","🏠 Logement","🚗 Transport","🌍 Étrangers","💻 Numérique","📋 Divers"];
 var DEFAULT_DEMARCHES=[
   /* --- Identité --- */
-  {id:101,nom:"Demande de Carte Nationale d'Identité",documents:["Pièce d'identité en cours de validité ou périmée depuis moins de 5 ans (en cas de renouvellement)","Justificatif de domicile de moins de 3 mois (facture EDF, eau, téléphone fixe, avis d'imposition…)","Photo d'identité récente et conforme aux normes","Acte de naissance (si première demande ou si le nom/prénom a changé)","Date et lieu de naissance des deux parents","Timbre fiscal (gratuit pour une première demande ou perte/vol avec dépôt de plainte)","Un accès à votre compte mail."]},
-  {id:102,nom:"Demande de Passeport",documents:["Justificatif de domicile de moins de 3 mois","Photo d'identité récente et conforme aux normes","Acte de naissance de moins de 3 mois (si première demande)","Ancienne carte d'identité ou passeport périmé (en cas de renouvellement)","Timbre fiscal (86 € pour un adulte, 42 € pour un mineur de 15 ans et plus, 17 € pour un mineur de moins de 15 ans)","Un accès à votre compte mail."]},
-  {id:103,nom:"Demande d'inscription sur les listes électorales",documents:["Pièce d'identité en cours de validité (CNI ou passeport)","Justificatif de domicile de moins de 3 mois","Un accès à votre compte mail."]},
-  {id:104,nom:"Demande d'acte d'état civil (naissance, mariage, décès)",documents:["Pièce d'identité du demandeur","Lien de parenté avec la personne concernée (si acte d'un tiers)","Informations sur la personne concernée : nom, prénom, date et lieu de l'événement","Un accès à votre compte mail."]},
-  {id:105,nom:"Demande de recensement citoyen",documents:["Carte Nationale d'Identité ou passeport en cours de validité","Livret de famille des parents","Justificatif de domicile","Un accès à votre compte mail."]},
+  {id:101,theme:"🪪 Identité",nom:"Demande de Carte Nationale d'Identité",documents:["Pièce d'identité en cours de validité ou périmée depuis moins de 5 ans (en cas de renouvellement)","Justificatif de domicile de moins de 3 mois (facture EDF, eau, téléphone fixe, avis d'imposition…)","Photo d'identité récente et conforme aux normes","Acte de naissance (si première demande ou si le nom/prénom a changé)","Date et lieu de naissance des deux parents","Timbre fiscal (gratuit pour une première demande ou perte/vol avec dépôt de plainte)","Un accès à votre compte mail."]},
+  {id:102,theme:"🪪 Identité",nom:"Demande de Passeport",documents:["Justificatif de domicile de moins de 3 mois","Photo d'identité récente et conforme aux normes","Acte de naissance de moins de 3 mois (si première demande)","Ancienne carte d'identité ou passeport périmé (en cas de renouvellement)","Timbre fiscal (86 € pour un adulte, 42 € pour un mineur de 15 ans et plus, 17 € pour un mineur de moins de 15 ans)","Un accès à votre compte mail."]},
+  {id:103,theme:"🪪 Identité",nom:"Demande d'inscription sur les listes électorales",documents:["Pièce d'identité en cours de validité (CNI ou passeport)","Justificatif de domicile de moins de 3 mois","Un accès à votre compte mail."]},
+  {id:104,theme:"🪪 Identité",nom:"Demande d'acte d'état civil (naissance, mariage, décès)",documents:["Pièce d'identité du demandeur","Lien de parenté avec la personne concernée (si acte d'un tiers)","Informations sur la personne concernée : nom, prénom, date et lieu de l'événement","Un accès à votre compte mail."]},
+  {id:105,theme:"🪪 Identité",nom:"Demande de recensement citoyen",documents:["Carte Nationale d'Identité ou passeport en cours de validité","Livret de famille des parents","Justificatif de domicile","Un accès à votre compte mail."]},
   /* --- CAF / Aides sociales --- */
-  {id:201,nom:"Demande d'allocations familiales (CAF)",documents:["Pièce d'identité","Actes de naissance des enfants","Livret de famille","Relevé d'identité bancaire (RIB)","Justificatif de domicile de moins de 3 mois","Dernier avis d'imposition","Un accès à votre compte mail."]},
-  {id:202,nom:"Demande de RSA (Revenu de Solidarité Active)",documents:["Pièce d'identité","Justificatif de domicile de moins de 3 mois","Relevé d'identité bancaire (RIB)","Dernier avis d'imposition (ou déclaration de ressources)","Bulletins de salaire des 3 derniers mois (si salarié)","Attestation Pôle Emploi / France Travail (si demandeur d'emploi)","Numéro d'allocataire CAF (si déjà connu)","Un accès à votre compte mail."]},
-  {id:203,nom:"Demande d'APL (Aide Personnalisée au Logement)",documents:["Pièce d'identité","Contrat de location (bail) en cours","Coordonnées du propriétaire ou de l'agence","Relevé d'identité bancaire (RIB)","Dernier avis d'imposition","Attestation de loyer ou quittances récentes","Un accès à votre compte mail."]},
-  {id:204,nom:"Demande de Prime d'Activité",documents:["Pièce d'identité","Relevé d'identité bancaire (RIB)","Bulletins de salaire des 3 derniers mois","Dernier avis d'imposition","Justificatif de domicile de moins de 3 mois","Un accès à votre compte mail."]},
-  {id:205,nom:"Demande de pension alimentaire (ARIPA / CAF)",documents:["Pièce d'identité","Jugement de divorce ou convention de divorce fixant la pension","Coordonnées bancaires (RIB)","Justificatif de domicile","Un accès à votre compte mail."]},
+  {id:201,theme:"👨‍👩‍👧 CAF / Aides sociales",nom:"Demande d'allocations familiales (CAF)",documents:["Pièce d'identité","Actes de naissance des enfants","Livret de famille","Relevé d'identité bancaire (RIB)","Justificatif de domicile de moins de 3 mois","Dernier avis d'imposition","Un accès à votre compte mail."]},
+  {id:202,theme:"👨‍👩‍👧 CAF / Aides sociales",nom:"Demande de RSA (Revenu de Solidarité Active)",documents:["Pièce d'identité","Justificatif de domicile de moins de 3 mois","Relevé d'identité bancaire (RIB)","Dernier avis d'imposition (ou déclaration de ressources)","Bulletins de salaire des 3 derniers mois (si salarié)","Attestation Pôle Emploi / France Travail (si demandeur d'emploi)","Numéro d'allocataire CAF (si déjà connu)","Un accès à votre compte mail."]},
+  {id:203,theme:"👨‍👩‍👧 CAF / Aides sociales",nom:"Demande d'APL (Aide Personnalisée au Logement)",documents:["Pièce d'identité","Contrat de location (bail) en cours","Coordonnées du propriétaire ou de l'agence","Relevé d'identité bancaire (RIB)","Dernier avis d'imposition","Attestation de loyer ou quittances récentes","Un accès à votre compte mail."]},
+  {id:204,theme:"👨‍👩‍👧 CAF / Aides sociales",nom:"Demande de Prime d'Activité",documents:["Pièce d'identité","Relevé d'identité bancaire (RIB)","Bulletins de salaire des 3 derniers mois","Dernier avis d'imposition","Justificatif de domicile de moins de 3 mois","Un accès à votre compte mail."]},
+  {id:205,theme:"👨‍👩‍👧 CAF / Aides sociales",nom:"Demande de pension alimentaire (ARIPA / CAF)",documents:["Pièce d'identité","Jugement de divorce ou convention de divorce fixant la pension","Coordonnées bancaires (RIB)","Justificatif de domicile","Un accès à votre compte mail."]},
   /* --- MDPH --- */
-  {id:301,nom:"Demande de dossier MDPH",documents:["Certificat médical Cerfa N° 15695* rempli par un médecin (moins de 3 mois)","Photocopie d'une pièce d'identité en cours de validité","Photocopie d'un justificatif de domicile de moins de 6 mois","Photo d'identité récente","Un accès à votre compte mail."]},
+  {id:301,theme:"♿ MDPH",nom:"Demande de dossier MDPH",documents:["Certificat médical Cerfa N° 15695* rempli par un médecin (moins de 3 mois)","Photocopie d'une pièce d'identité en cours de validité","Photocopie d'un justificatif de domicile de moins de 6 mois","Photo d'identité récente","Un accès à votre compte mail."]},
   /* --- Retraite --- */
-  {id:401,nom:"Demande de retraite",documents:["Copie de l'acte de naissance avec mention marginale (moins de 3 mois)","Relevé d'identité bancaire (RIB/IBAN)","Deux derniers avis d'imposition","Copie intégrale du livret de famille","Relevé de carrière (disponible sur Info Retraite)","Notification d'invalidité ou carte d'invalidité (si concerné)","Décomptes d'indemnités journalières maladie des 12 derniers mois (si concerné)","Attestation France Travail des 12 derniers mois (si concerné)","Un accès à votre compte mail."]},
+  {id:401,theme:"🏖 Retraite",nom:"Demande de retraite",documents:["Copie de l'acte de naissance avec mention marginale (moins de 3 mois)","Relevé d'identité bancaire (RIB/IBAN)","Deux derniers avis d'imposition","Copie intégrale du livret de famille","Relevé de carrière (disponible sur Info Retraite)","Notification d'invalidité ou carte d'invalidité (si concerné)","Décomptes d'indemnités journalières maladie des 12 derniers mois (si concerné)","Attestation France Travail des 12 derniers mois (si concerné)","Un accès à votre compte mail."]},
   /* --- France Travail / Emploi --- */
-  {id:501,nom:"Demande d'inscription à France Travail",documents:["Pièce d'identité","Justificatif de domicile de moins de 3 mois","Relevé d'identité bancaire (RIB)","Attestation employeur ou contrat de travail","Bulletins de salaire des derniers mois","Numéro de Sécurité Sociale","Un accès à votre compte mail."]},
-  {id:502,nom:"Demande d'actualisation mensuelle France Travail",documents:["Vos codes de connexion à France Travail (identifiant et mot de passe)","Informations sur les heures travaillées et les revenus du mois concerné","Un accès à votre compte mail (pour recevoir le code de sécurité)."]},
-  {id:503,nom:"Demande de formation via le CPF (Compte Personnel de Formation)",documents:["Numéro de Sécurité Sociale","Pièce d'identité","Un accès à votre compte mail","Téléphone portable (pour la double authentification sur Mon Compte Formation)."]},
-  {id:504,nom:"Demande de création ou mise à jour de CV (France Travail)",documents:["Pièce d'identité","Liste de vos expériences professionnelles (postes, dates, employeurs)","Diplômes et formations obtenus","Compétences et langues","Un accès à votre compte mail."]},
+  {id:501,theme:"💼 France Travail / Emploi",nom:"Demande d'inscription à France Travail",documents:["Pièce d'identité","Justificatif de domicile de moins de 3 mois","Relevé d'identité bancaire (RIB)","Attestation employeur ou contrat de travail","Bulletins de salaire des derniers mois","Numéro de Sécurité Sociale","Un accès à votre compte mail."]},
+  {id:502,theme:"💼 France Travail / Emploi",nom:"Demande d'actualisation mensuelle France Travail",documents:["Vos codes de connexion à France Travail (identifiant et mot de passe)","Informations sur les heures travaillées et les revenus du mois concerné","Un accès à votre compte mail (pour recevoir le code de sécurité)."]},
+  {id:503,theme:"💼 France Travail / Emploi",nom:"Demande de formation via le CPF (Compte Personnel de Formation)",documents:["Numéro de Sécurité Sociale","Pièce d'identité","Un accès à votre compte mail","Téléphone portable (pour la double authentification sur Mon Compte Formation)."]},
+  {id:504,theme:"💼 France Travail / Emploi",nom:"Demande de création ou mise à jour de CV (France Travail)",documents:["Pièce d'identité","Liste de vos expériences professionnelles (postes, dates, employeurs)","Diplômes et formations obtenus","Compétences et langues","Un accès à votre compte mail."]},
   /* --- Santé --- */
-  {id:601,nom:"Demande de Carte Vitale",documents:["Pièce d'identité","Justificatif de domicile de moins de 3 mois","Photo d'identité récente (si carte avec photo)","Relevé d'identité bancaire (RIB) si besoin de remboursements","Un accès à votre compte mail."]},
-  {id:602,nom:"Demande de déclaration de médecin traitant",documents:["Carte Vitale","Pièce d'identité","Formulaire Cerfa de désignation du médecin traitant (rempli avec votre médecin)","Un accès à votre compte mail (pour suivi AMELI)."]},
-  {id:603,nom:"Demande de Complémentaire Santé Solidaire (CSS)",documents:["Carte Vitale","Dernier avis d'imposition","Numéro d'allocataire CAF ou MSA (si bénéficiaire)","Justificatif de domicile de moins de 3 mois","Un accès à votre compte mail."]},
-  {id:604,nom:"Demande d'APA (Allocation Personnalisée d'Autonomie)",documents:["Pièce d'identité","Justificatif de domicile de moins de 3 mois","Dernier avis d'imposition","Relevé d'identité bancaire (RIB)","Certificat médical récent","Un accès à votre compte mail."]},
-  {id:605,nom:"Demande d'ouverture de compte Mon Espace Santé",documents:["Numéro de Sécurité Sociale","Carte Vitale","Pièce d'identité","Adresse mail","Numéro de téléphone portable."]},
+  {id:601,theme:"🏥 Santé",nom:"Demande de Carte Vitale",documents:["Pièce d'identité","Justificatif de domicile de moins de 3 mois","Photo d'identité récente (si carte avec photo)","Relevé d'identité bancaire (RIB) si besoin de remboursements","Un accès à votre compte mail."]},
+  {id:602,theme:"🏥 Santé",nom:"Demande de déclaration de médecin traitant",documents:["Carte Vitale","Pièce d'identité","Formulaire Cerfa de désignation du médecin traitant (rempli avec votre médecin)","Un accès à votre compte mail (pour suivi AMELI)."]},
+  {id:603,theme:"🏥 Santé",nom:"Demande de Complémentaire Santé Solidaire (CSS)",documents:["Carte Vitale","Dernier avis d'imposition","Numéro d'allocataire CAF ou MSA (si bénéficiaire)","Justificatif de domicile de moins de 3 mois","Un accès à votre compte mail."]},
+  {id:604,theme:"🏥 Santé",nom:"Demande d'APA (Allocation Personnalisée d'Autonomie)",documents:["Pièce d'identité","Justificatif de domicile de moins de 3 mois","Dernier avis d'imposition","Relevé d'identité bancaire (RIB)","Certificat médical récent","Un accès à votre compte mail."]},
+  {id:605,theme:"🏥 Santé",nom:"Demande d'ouverture de compte Mon Espace Santé",documents:["Numéro de Sécurité Sociale","Carte Vitale","Pièce d'identité","Adresse mail","Numéro de téléphone portable."]},
   /* --- Impôts --- */
-  {id:701,nom:"Demande de déclaration de revenus (impôts en ligne)",documents:["Numéro fiscal (sur ancien avis d'imposition ou courrier des impôts)","Numéro de télédéclarant","Bulletins de salaire ou attestations de revenus de l'année concernée","Justificatifs de charges déductibles (frais réels, dons, pensions…)","RIB si remboursement attendu","Un accès à votre compte mail."]},
-  {id:702,nom:"Demande de modification du taux de prélèvement à la source",documents:["Numéro fiscal","Numéro de télédéclarant","Estimation des revenus de l'année en cours","Un accès à votre compte mail."]},
-  {id:703,nom:"Demande de paiement ou mensualisation des impôts",documents:["Numéro fiscal","RIB (pour prélèvement automatique)","Avis d'imposition","Un accès à votre compte mail."]},
-  {id:704,nom:"Demande de consultation de la taxe foncière / taxe d'habitation",documents:["Numéro fiscal","Numéro de télédéclarant","Un accès à votre compte mail."]},
+  {id:701,theme:"💰 Impôts",nom:"Demande de déclaration de revenus (impôts en ligne)",documents:["Numéro fiscal (sur ancien avis d'imposition ou courrier des impôts)","Numéro de télédéclarant","Bulletins de salaire ou attestations de revenus de l'année concernée","Justificatifs de charges déductibles (frais réels, dons, pensions…)","RIB si remboursement attendu","Un accès à votre compte mail."]},
+  {id:702,theme:"💰 Impôts",nom:"Demande de modification du taux de prélèvement à la source",documents:["Numéro fiscal","Numéro de télédéclarant","Estimation des revenus de l'année en cours","Un accès à votre compte mail."]},
+  {id:703,theme:"💰 Impôts",nom:"Demande de paiement ou mensualisation des impôts",documents:["Numéro fiscal","RIB (pour prélèvement automatique)","Avis d'imposition","Un accès à votre compte mail."]},
+  {id:704,theme:"💰 Impôts",nom:"Demande de consultation de la taxe foncière / taxe d'habitation",documents:["Numéro fiscal","Numéro de télédéclarant","Un accès à votre compte mail."]},
   /* --- Logement --- */
-  {id:801,nom:"Demande de logement social (SNE / Numéro unique)",documents:["Pièce d'identité de tous les membres du foyer","Carte Vitale","Livret de famille","2 derniers avis d'imposition","Attestation CAF, MSA ou CARSAT (allocations, retraite…)","Contrat de travail + 3 derniers bulletins de salaire (si salarié)","Contrat de location + quittances de loyer (si locataire)","Attestation d'hébergement + justificatif de domicile de l'hébergeur (si hébergé)","Arrêté d'insalubrité ou diagnostic (si logement insalubre)","Décision de justice (en cas de divorce ou violences)","Un accès à votre compte mail."]},
-  {id:802,nom:"Demande de FSL (Fonds de Solidarité Logement)",documents:["Pièce d'identité","Justificatif de domicile (contrat de location, quittances)","Relevé d'identité bancaire (RIB)","Dernier avis d'imposition","Justificatifs de ressources (bulletins de salaire, attestations CAF…)","Factures impayées (eau, énergie, loyer) si demande pour dettes","Un accès à votre compte mail."]},
-  {id:803,nom:"Demande de dossier DossierFacile (garant numérique)",documents:["Pièce d'identité","Justificatif de domicile actuel","3 derniers bulletins de salaire ou justificatifs de revenus","Dernier avis d'imposition","Contrat de travail (si salarié)","Un accès à votre compte mail."]},
-  {id:804,nom:"Demande de la Carte Solidaire (transport)",documents:["Photo d'identité récente et conforme","Pièce d'identité recto-verso (photocopie)","Justificatif de domicile de moins de 3 mois","Dernier avis d'imposition complet","Un accès à votre compte mail.","Pour les enfants : livret de famille + pièce d'identité de l'enfant."]},
-  {id:805,nom:"Demande de Chèque Énergie",documents:["Numéro fiscal","Attestation de contrat d'électricité au nom du demandeur (moins de 3 mois) mentionnant le numéro de point de livraison (PDL)","Un accès à votre compte mail."]},
-  {id:806,nom:"Demande de Garantie Visale (caution logement)",documents:["Pièce d'identité","Justificatifs de situation professionnelle (contrat de travail, convention de stage, attestation d'inscription…)","Bulletins de salaire ou justificatifs de ressources","Un accès à votre compte mail."]},
+  {id:801,theme:"🏠 Logement",nom:"Demande de logement social (SNE / Numéro unique)",documents:["Pièce d'identité de tous les membres du foyer","Carte Vitale","Livret de famille","2 derniers avis d'imposition","Attestation CAF, MSA ou CARSAT (allocations, retraite…)","Contrat de travail + 3 derniers bulletins de salaire (si salarié)","Contrat de location + quittances de loyer (si locataire)","Attestation d'hébergement + justificatif de domicile de l'hébergeur (si hébergé)","Arrêté d'insalubrité ou diagnostic (si logement insalubre)","Décision de justice (en cas de divorce ou violences)","Un accès à votre compte mail."]},
+  {id:802,theme:"🏠 Logement",nom:"Demande de FSL (Fonds de Solidarité Logement)",documents:["Pièce d'identité","Justificatif de domicile (contrat de location, quittances)","Relevé d'identité bancaire (RIB)","Dernier avis d'imposition","Justificatifs de ressources (bulletins de salaire, attestations CAF…)","Factures impayées (eau, énergie, loyer) si demande pour dettes","Un accès à votre compte mail."]},
+  {id:803,theme:"🏠 Logement",nom:"Demande de dossier DossierFacile (garant numérique)",documents:["Pièce d'identité","Justificatif de domicile actuel","3 derniers bulletins de salaire ou justificatifs de revenus","Dernier avis d'imposition","Contrat de travail (si salarié)","Un accès à votre compte mail."]},
+  {id:804,theme:"🏠 Logement",nom:"Demande de la Carte Solidaire (transport)",documents:["Photo d'identité récente et conforme","Pièce d'identité recto-verso (photocopie)","Justificatif de domicile de moins de 3 mois","Dernier avis d'imposition complet","Un accès à votre compte mail.","Pour les enfants : livret de famille + pièce d'identité de l'enfant."]},
+  {id:805,theme:"🏠 Logement",nom:"Demande de Chèque Énergie",documents:["Numéro fiscal","Attestation de contrat d'électricité au nom du demandeur (moins de 3 mois) mentionnant le numéro de point de livraison (PDL)","Un accès à votre compte mail."]},
+  {id:806,theme:"🏠 Logement",nom:"Demande de Garantie Visale (caution logement)",documents:["Pièce d'identité","Justificatifs de situation professionnelle (contrat de travail, convention de stage, attestation d'inscription…)","Bulletins de salaire ou justificatifs de ressources","Un accès à votre compte mail."]},
   /* --- Transport --- */
-  {id:901,nom:"Demande de permis de conduire (ANTS)",documents:["Pièce d'identité en cours de validité","Photo d'identité récente et conforme","Justificatif de domicile de moins de 6 mois","NEPH (numéro d'enregistrement préfectoral harmonisé) si déjà inscrit","Avis médical (si conduite accompagnée ou obligation médicale)","Timbre fiscal (si applicable)","Un accès à votre compte mail."]},
-  {id:902,nom:"Demande de carte grise (certificat d'immatriculation)",documents:["Pièce d'identité","Justificatif de domicile de moins de 6 mois","Certificat de cession (en cas d'achat d'occasion)","Contrôle technique valide (pour véhicule de plus de 4 ans)","Relevé d'identité bancaire (RIB) pour le paiement en ligne","Un accès à votre compte mail."]},
+  {id:901,theme:"🚗 Transport",nom:"Demande de permis de conduire (ANTS)",documents:["Pièce d'identité en cours de validité","Photo d'identité récente et conforme","Justificatif de domicile de moins de 6 mois","NEPH (numéro d'enregistrement préfectoral harmonisé) si déjà inscrit","Avis médical (si conduite accompagnée ou obligation médicale)","Timbre fiscal (si applicable)","Un accès à votre compte mail."]},
+  {id:902,theme:"🚗 Transport",nom:"Demande de carte grise (certificat d'immatriculation)",documents:["Pièce d'identité","Justificatif de domicile de moins de 6 mois","Certificat de cession (en cas d'achat d'occasion)","Contrôle technique valide (pour véhicule de plus de 4 ans)","Relevé d'identité bancaire (RIB) pour le paiement en ligne","Un accès à votre compte mail."]},
   /* --- Étrangers --- */
-  {id:1001,nom:"Demande de titre de séjour",documents:["Passeport en cours de validité","Photos d'identité récentes et conformes","Justificatif de domicile de moins de 3 mois","Acte de naissance traduit si nécessaire","Justificatif de ressources (bulletins de salaire, avis d'imposition…)","Timbre fiscal (montant variable selon le titre)","Un accès à votre compte mail.","Vos codes de connexion à votre mail ou votre téléphone."]},
-  {id:1002,nom:"Demande de regroupement familial",documents:["Titre de séjour valide de plus d'un an","Justificatif de ressources stables et suffisantes","Justificatif de logement décent (surface habitable suffisante)","Actes d'état civil des membres de la famille (traduits)","Casier judiciaire des membres concernés","Photos d'identité récentes","Un accès à votre compte mail."]},
-  {id:1003,nom:"Demande de naturalisation française",documents:["Passeport et titre de séjour en cours de validité","Acte de naissance traduit et légalisé","Justificatif de domicile (5 dernières années)","Justificatifs de ressources (3 dernières années)","Casier judiciaire du pays d'origine","Preuves d'assimilation à la culture française (diplômes, TCF…)","Photos d'identité récentes","Un accès à votre compte mail."]},
-  {id:1004,nom:"Demande de DCEM (Document de Circulation pour Étranger Mineur)",documents:["Justificatif de régularité du séjour du demandeur (carte de séjour)","Passeport du demandeur et de l'enfant","Livret de famille ou acte de naissance de l'enfant","Justificatif d'autorité parentale (jugement de divorce, reconnaissance…)","Certificat de scolarité ou document prouvant la résidence en France","Timbre fiscal de 50 € (gratuit pour enfant de ressortissant UE)","e-photo de l'enfant."]},
+  {id:1001,theme:"🌍 Étrangers",nom:"Demande de titre de séjour",documents:["Passeport en cours de validité","Photos d'identité récentes et conformes","Justificatif de domicile de moins de 3 mois","Acte de naissance traduit si nécessaire","Justificatif de ressources (bulletins de salaire, avis d'imposition…)","Timbre fiscal (montant variable selon le titre)","Un accès à votre compte mail.","Vos codes de connexion à votre mail ou votre téléphone."]},
+  {id:1002,theme:"🌍 Étrangers",nom:"Demande de regroupement familial",documents:["Titre de séjour valide de plus d'un an","Justificatif de ressources stables et suffisantes","Justificatif de logement décent (surface habitable suffisante)","Actes d'état civil des membres de la famille (traduits)","Casier judiciaire des membres concernés","Photos d'identité récentes","Un accès à votre compte mail."]},
+  {id:1003,theme:"🌍 Étrangers",nom:"Demande de naturalisation française",documents:["Passeport et titre de séjour en cours de validité","Acte de naissance traduit et légalisé","Justificatif de domicile (5 dernières années)","Justificatifs de ressources (3 dernières années)","Casier judiciaire du pays d'origine","Preuves d'assimilation à la culture française (diplômes, TCF…)","Photos d'identité récentes","Un accès à votre compte mail."]},
+  {id:1004,theme:"🌍 Étrangers",nom:"Demande de DCEM (Document de Circulation pour Étranger Mineur)",documents:["Justificatif de régularité du séjour du demandeur (carte de séjour)","Passeport du demandeur et de l'enfant","Livret de famille ou acte de naissance de l'enfant","Justificatif d'autorité parentale (jugement de divorce, reconnaissance…)","Certificat de scolarité ou document prouvant la résidence en France","Timbre fiscal de 50 € (gratuit pour enfant de ressortissant UE)","e-photo de l'enfant."]},
   /* --- Numérique --- */
-  {id:1101,nom:"Demande de création d'une boîte mail",documents:["Pièce d'identité (pour vérification de l'identité)","Numéro de téléphone portable (pour la vérification du compte)","Un nom d'utilisateur souhaité."]},
-  {id:1102,nom:"Demande d'accès à France Connect",documents:["Identifiant et mot de passe d'un compte partenaire France Connect (Ameli, impôts, MSA, La Poste…)","Numéro de téléphone portable (pour la double authentification)","Un accès à votre compte mail."]},
-  {id:1103,nom:"Demande d'Identité Numérique La Poste",documents:["Pièce d'identité en cours de validité (CNI ou passeport)","Numéro de téléphone portable","Un accès à votre compte mail","Se rendre en bureau de poste avec la pièce d'identité originale pour validation."]},
+  {id:1101,theme:"💻 Numérique",nom:"Demande de création d'une boîte mail",documents:["Pièce d'identité (pour vérification de l'identité)","Numéro de téléphone portable (pour la vérification du compte)","Un nom d'utilisateur souhaité."]},
+  {id:1102,theme:"💻 Numérique",nom:"Demande d'accès à France Connect",documents:["Identifiant et mot de passe d'un compte partenaire France Connect (Ameli, impôts, MSA, La Poste…)","Numéro de téléphone portable (pour la double authentification)","Un accès à votre compte mail."]},
+  {id:1103,theme:"💻 Numérique",nom:"Demande d'Identité Numérique La Poste",documents:["Pièce d'identité en cours de validité (CNI ou passeport)","Numéro de téléphone portable","Un accès à votre compte mail","Se rendre en bureau de poste avec la pièce d'identité originale pour validation."]},
   /* --- Divers --- */
-  {id:1201,nom:"Demande d'immatriculation INPI (auto-entrepreneur)",documents:["Identité Numérique de la Poste pour la signature électronique","Pièce d'identité (CNI ou passeport)","Justificatif de domicile de moins de 3 mois","RIB professionnel (ou personnel si début d'activité)","Accès à votre boîte mail."]},
-  {id:1202,nom:"Utilisation des outils numériques (accompagnement général)",documents:[]},
+  {id:1201,theme:"📋 Divers",nom:"Demande d'immatriculation INPI (auto-entrepreneur)",documents:["Identité Numérique de la Poste pour la signature électronique","Pièce d'identité (CNI ou passeport)","Justificatif de domicile de moins de 3 mois","RIB professionnel (ou personnel si début d'activité)","Accès à votre boîte mail."]},
+  {id:1202,theme:"📋 Divers",nom:"Utilisation des outils numériques (accompagnement général)",documents:[]},
 ];
 var DEFAULT_SECTEURS=["Fumel","Marmande","Saint-Pardoux-d'Isaac","Villeneuve-Sur-Lot","Agen Montanou"];
 var DEFAULT_CUSTOM=[
@@ -314,14 +315,14 @@ var S={
   generatedBody:"", generatedSubject:"",
   activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all", historySearch:"", historyGrouped:false,
   statsCMS:"", calendarType:"google",
-  cmsList:[], demarches:[], secteurs:[], templates:{}, customTemplates:[], customVars:[], hiddenBuiltinKeys:[], history:[], mandats:[], favDemarches:[], permanences:[],
+  cmsList:[], demarches:[], secteurs:[], templates:{}, customTemplates:[], customVars:[], hiddenBuiltinKeys:[], history:[], mandats:[], favDemarches:[], permanences:[], collapsedThemes:{},
   editPerm:null, np:{commune:'',jour:4,debut:'09:00',fin:'15:00',duree:30}, agendaRdv:null,
   saveStatus:"Données chargées",
   modal:null, histItem:null,
   editBuiltin:null, editBuiltinText:"",
   nt:{nom:"",canal:"sms",type:"proposition",sujet:"",body:""},
   nv:{nom:"",valeur:""},
-  nc:{nom:"",adresse:""}, ns:"", nd:{nom:"",docs:""}, editDem:null, editHistIdx:null, editHistBody:"", editHistNotes:"", editHistDateDemande:"",
+  nc:{nom:"",adresse:""}, ns:"", nd:{nom:"",docs:"",theme:""}, editDem:null, editHistIdx:null, editHistBody:"", editHistNotes:"", editHistDateDemande:"",
   editCms:null, editSect:null, editVar:null, editTpl:null,
   exportText:"", importText:"", importError:"",
   copied:{}, toast:null,
@@ -564,12 +565,12 @@ function deleteSect(i){var a=S.secteurs.slice();a.splice(i,1);S.secteurs=a;persi
 function moveSect(i,dir){var j=i+dir;var a=S.secteurs.slice();if(j<0||j>=a.length)return;var tmp=a[i];a[i]=a[j];a[j]=tmp;S.secteurs=a;persist();renderConfig();}
 function saveSect(i){if(!S.editSect||!S.editSect.val.trim())return;var a=S.secteurs.slice();a[i]=S.editSect.val.trim();S.secteurs=a;S.editSect=null;persist();renderConfig();}
 /* demarches */
-function addDem(){var nom=S.nd.nom,docs=S.nd.docs;if(!nom.trim())return;var documents=docs.split("\n").map(function(s){return s.trim();}).filter(Boolean);S.demarches=S.demarches.concat([{id:Date.now(),nom:nom.trim(),documents:documents}]);S.nd={nom:"",docs:""};persist();renderConfig();}
+function addDem(){var nom=S.nd.nom,docs=S.nd.docs,theme=S.nd.theme||"📋 Divers";if(!nom.trim())return;var documents=docs.split("\n").map(function(s){return s.trim();}).filter(Boolean);S.demarches=S.demarches.concat([{id:Date.now(),theme:theme,nom:nom.trim(),documents:documents}]);S.nd={nom:"",docs:"",theme:""};persist();renderConfig();}
 function deleteDem(id){S.demarches=S.demarches.filter(function(d){return d.id!==id;});S.favDemarches=(S.favDemarches||[]).filter(function(x){return x!==id;});persist();renderConfig();}
 function duplicateDem(id){var d=S.demarches.find(function(x){return x.id===id;});if(!d)return;S.demarches=S.demarches.concat([{id:Date.now(),nom:d.nom+" (copie)",documents:(d.documents||[]).slice()}]);persist();renderConfig();showToast("Démarche dupliquée");}
 function moveDem(i,dir){var j=i+dir;var a=S.demarches.slice();if(j<0||j>=a.length)return;var tmp=a[i];a[i]=a[j];a[j]=tmp;S.demarches=a;persist();renderConfig();}
 function toggleFavDem(id){var f=S.favDemarches||[];S.favDemarches=f.indexOf(id)!==-1?f.filter(function(x){return x!==id;}):f.concat([id]);persist();renderConfig();renderGenerate();}
-function saveDem(id){var nom=(S.editDem&&S.editDem.nom)||"";var docs=(S.editDem&&S.editDem.docs)||"";if(!nom.trim())return;var documents=docs.split("\n").map(function(s){return s.trim();}).filter(Boolean);S.demarches=S.demarches.map(function(d){return d.id===id?{id:d.id,nom:nom.trim(),documents:documents}:d;});S.editDem=null;persist();renderConfig();}
+function saveDem(id){var nom=(S.editDem&&S.editDem.nom)||"";var docs=(S.editDem&&S.editDem.docs)||"";var theme=(S.editDem&&S.editDem.theme)||"📋 Divers";if(!nom.trim())return;var documents=docs.split("\n").map(function(s){return s.trim();}).filter(Boolean);S.demarches=S.demarches.map(function(d){return d.id===id?{id:d.id,theme:theme,nom:nom.trim(),documents:documents}:d;});S.editDem=null;persist();renderConfig();}
 
 /* permanences */
 function toLocalDateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -874,17 +875,22 @@ function renderGenerate(){
   demSel.appendChild(el('option',{value:"",selected:S.selectedDemarche===""},"— Sélectionner une démarche —"));
   var favIds=S.favDemarches||[];
   var favDems=S.demarches.filter(function(d){return favIds.indexOf(d.id)!==-1;});
-  var otherDems=S.demarches.filter(function(d){return favIds.indexOf(d.id)===-1;});
+  var nonFavDems=S.demarches.filter(function(d){return favIds.indexOf(d.id)===-1;});
   if(favDems.length>0){
-    var og1=document.createElement('optgroup');og1.label="⭐ Favoris";
-    favDems.forEach(function(d){og1.appendChild(el('option',{value:String(d.id),selected:S.selectedDemarche===String(d.id)},d.nom));});
-    demSel.appendChild(og1);
-    var og2=document.createElement('optgroup');og2.label="Toutes les démarches";
-    otherDems.forEach(function(d){og2.appendChild(el('option',{value:String(d.id),selected:S.selectedDemarche===String(d.id)},d.nom));});
-    demSel.appendChild(og2);
-  }else{
-    selectOpts(demSel,S.demarches.map(function(d){return{value:String(d.id),label:d.nom};}),S.selectedDemarche);
+    var ogFav=document.createElement('optgroup');ogFav.label="⭐ Favoris";
+    favDems.forEach(function(d){ogFav.appendChild(el('option',{value:String(d.id),selected:S.selectedDemarche===String(d.id)},d.nom));});
+    demSel.appendChild(ogFav);
   }
+  /* grouper les non-favoris par thème */
+  var demByTheme={};
+  nonFavDems.forEach(function(d){var t=d.theme||"📋 Divers";if(!demByTheme[t])demByTheme[t]=[];demByTheme[t].push(d);});
+  var orderedDemThemes=DEM_THEMES.filter(function(t){return demByTheme[t]&&demByTheme[t].length>0;});
+  Object.keys(demByTheme).forEach(function(t){if(orderedDemThemes.indexOf(t)===-1)orderedDemThemes.push(t);});
+  orderedDemThemes.forEach(function(t){
+    var og=document.createElement('optgroup');og.label=t;
+    demByTheme[t].forEach(function(d){og.appendChild(el('option',{value:String(d.id),selected:S.selectedDemarche===String(d.id)},d.nom));});
+    demSel.appendChild(og);
+  });
   demSel.appendChild(el('option',{value:"__autre__",selected:S.selectedDemarche==="__autre__"},"✏️ Autre…"));
   demDiv.appendChild(demSel);col.appendChild(demDiv);
 
@@ -1864,39 +1870,64 @@ function renderConfig(){
     var df=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px;box-shadow:0 1px 2px oklch(0.5 0.05 264 / .04);margin-bottom:14px;"});
     df.appendChild(el('div',{style:"font-weight:700;font-size:14px;margin-bottom:13px;"},"Ajouter une démarche"));
     var dc=el('div',{style:"display:flex;flex-direction:column;gap:11px;"});
-    var dn=el('input',{class:'gx-in',placeholder:"ex : RSA — Instruction",style:INPUT,onInput:function(e){S.nd.nom=e.target.value;}});dn.value=S.nd.nom;dc.appendChild(dn);
-    var dd=el('textarea',{class:'gx-in',rows:5,placeholder:"Pièce d'identité\nJustificatif de domicile\nRIB…",style:"width:100%;font-family:inherit;font-size:13px;line-height:1.5;padding:12px;border:1.5px solid var(--c-border-in);border-radius:11px;background:var(--c-card);color:inherit;resize:vertical;",onInput:function(e){S.nd.docs=e.target.value;}});dd.value=S.nd.docs;dc.appendChild(dd);
+    var dThemeSel=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;",onInput:function(e){S.nd.theme=e.target.value;}});
+    DEM_THEMES.forEach(function(t){dThemeSel.appendChild(el('option',{value:t,selected:S.nd.theme===t},t));});
+    dc.appendChild(dThemeSel);
+    var dn=el('input',{class:'gx-in',placeholder:"ex : Demande d'aide exceptionnelle…",style:INPUT,onInput:function(e){S.nd.nom=e.target.value;}});dn.value=S.nd.nom;dc.appendChild(dn);
+    var ddta=el('textarea',{class:'gx-in',rows:5,placeholder:"Pièce d'identité\nJustificatif de domicile\nRIB…",style:"width:100%;font-family:inherit;font-size:13px;line-height:1.5;padding:12px;border:1.5px solid var(--c-border-in);border-radius:11px;background:var(--c-card);color:inherit;resize:vertical;",onInput:function(e){S.nd.docs=e.target.value;}});ddta.value=S.nd.docs;dc.appendChild(ddta);
     dc.appendChild(el('button',{class:'gx-press',style:BTNP,onClick:addDem},"+ Ajouter"));
     df.appendChild(dc);wrap.appendChild(df);
-    S.demarches.forEach(function(d){
-      var isEditing=S.editDem&&S.editDem.id===d.id;
-      var card=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:14px;padding:13px 15px;margin-bottom:9px;"});
-      if(isEditing){
-        var eNom=el('input',{class:'gx-in',style:INPUT+"margin-bottom:8px;",value:S.editDem.nom,onInput:function(e){S.editDem.nom=e.target.value;}});
-        card.appendChild(eNom);
-        var eDocs=el('textarea',{class:'gx-in',rows:5,style:"width:100%;font-family:inherit;font-size:13px;line-height:1.5;padding:12px;border:1.5px solid var(--c-border-in);border-radius:11px;background:var(--c-card);color:inherit;resize:vertical;margin-bottom:10px;",onInput:function(e){S.editDem.docs=e.target.value;}});
-        eDocs.value=S.editDem.docs;card.appendChild(eDocs);
-        var eBtns=el('div',{style:"display:flex;gap:8px;"});
-        eBtns.appendChild(el('button',{class:'gx-press',style:BTNP+"flex:1;",onClick:function(){saveDem(d.id);}},"✓ Enregistrer"));
-        eBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.02 256);background:var(--c-card);color:var(--c-dim);font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;",onClick:function(){S.editDem=null;renderConfig();}},"Annuler"));
-        card.appendChild(eBtns);
-      } else {
-        var hd=el('div',{style:"display:flex;align-items:center;gap:8px;"});
-        hd.appendChild(el('span',{style:"flex:1;font-weight:700;font-size:13.5px;"},d.nom));
-        (function(did,di){
-          var isFav=(S.favDemarches||[]).indexOf(did)!==-1;
-          var mv="cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);font-size:12px;font-weight:700;padding:4px 7px;border-radius:8px;";
-          hd.appendChild(el('button',{class:'gx-press',style:mv,title:"Monter",onClick:function(){moveDem(di,-1);}},"↑"));
-          hd.appendChild(el('button',{class:'gx-press',style:mv,title:"Descendre",onClick:function(){moveDem(di,1);}},"↓"));
-          hd.appendChild(el('button',{class:'gx-press',title:isFav?"Retirer des favoris":"Épingler en favori",style:"cursor:pointer;font-family:inherit;border:none;background:none;font-size:17px;padding:3px 6px;border-radius:8px;line-height:1;",onClick:function(){toggleFavDem(did);}},isFav?"⭐":"☆"));
-          hd.appendChild(el('button',{class:'gx-press',title:"Dupliquer",style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-card);color:oklch(0.5 0.03 264);font-size:12px;font-weight:600;padding:4px 8px;border-radius:8px;",onClick:function(){duplicateDem(did);}},"⧉"));
-          hd.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:oklch(0.4 0.1 264);font-size:13px;font-weight:600;padding:5px 9px;border-radius:9px;",onClick:function(){S.editDem={id:did,nom:S.demarches.find(function(x){return x.id===did;}).nom,docs:(S.demarches.find(function(x){return x.id===did;}).documents||[]).join("\n")};renderConfig();}},"✏️"));
-          hd.appendChild(el('button',{class:'gx-press',style:BTNDEL,onClick:function(){deleteDem(did);}},"🗑"));
-        })(d.id, S.demarches.indexOf(d));
-        card.appendChild(hd);
-        card.appendChild(el('div',{style:"margin-top:6px;font-size:11.5px;color:var(--c-muted);line-height:1.5;"},(d.documents||[]).length?(d.documents||[]).map(function(x){return "• "+x;}).join("   "):"Aucun document"));
+    /* grouper par thème */
+    var themeGroups={};
+    S.demarches.forEach(function(d){var t=d.theme||"📋 Divers";if(!themeGroups[t])themeGroups[t]=[];themeGroups[t].push(d);});
+    var orderedThemes=DEM_THEMES.filter(function(t){return themeGroups[t]&&themeGroups[t].length>0;});
+    Object.keys(themeGroups).forEach(function(t){if(orderedThemes.indexOf(t)===-1)orderedThemes.push(t);});
+    orderedThemes.forEach(function(theme){
+      var demsInTheme=themeGroups[theme];
+      var isCollapsed=!!S.collapsedThemes[theme];
+      var themeBlock=el('div',{style:"margin-bottom:10px;"});
+      var themeHdr=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;width:100%;text-align:left;display:flex;align-items:center;gap:8px;background:oklch(0.94 0.04 266);border:1px solid oklch(0.84 0.08 266);border-radius:12px;padding:9px 13px;font-weight:700;font-size:13px;color:oklch(0.35 0.12 266);margin-bottom:6px;"});
+      themeHdr.appendChild(el('span',{style:"flex:1;"},theme));
+      themeHdr.appendChild(el('span',{style:"font-size:11px;font-weight:600;background:oklch(0.88 0.06 266);border-radius:20px;padding:2px 8px;color:oklch(0.42 0.13 266);"},String(demsInTheme.length)));
+      themeHdr.appendChild(el('span',{style:"font-size:14px;"},isCollapsed?"▶":"▼"));
+      (function(t){themeHdr.addEventListener('click',function(){S.collapsedThemes[t]=!S.collapsedThemes[t];renderConfig();});})(theme);
+      themeBlock.appendChild(themeHdr);
+      if(!isCollapsed){
+        var themeContent=el('div',{style:"padding-left:4px;"});
+        demsInTheme.forEach(function(d){
+          var isEditing=S.editDem&&S.editDem.id===d.id;
+          var card=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:14px;padding:13px 15px;margin-bottom:8px;"});
+          if(isEditing){
+            var eThemeSel=el('select',{class:'gx-in',style:INPUT+"margin-bottom:8px;cursor:pointer;",onInput:function(e){S.editDem.theme=e.target.value;}});
+            DEM_THEMES.forEach(function(t2){eThemeSel.appendChild(el('option',{value:t2,selected:S.editDem.theme===t2},t2));});
+            card.appendChild(eThemeSel);
+            var eNom=el('input',{class:'gx-in',style:INPUT+"margin-bottom:8px;",value:S.editDem.nom,onInput:function(e){S.editDem.nom=e.target.value;}});
+            card.appendChild(eNom);
+            var eDocs=el('textarea',{class:'gx-in',rows:5,style:"width:100%;font-family:inherit;font-size:13px;line-height:1.5;padding:12px;border:1.5px solid var(--c-border-in);border-radius:11px;background:var(--c-card);color:inherit;resize:vertical;margin-bottom:10px;",onInput:function(e){S.editDem.docs=e.target.value;}});
+            eDocs.value=S.editDem.docs;card.appendChild(eDocs);
+            var eBtns=el('div',{style:"display:flex;gap:8px;"});
+            eBtns.appendChild(el('button',{class:'gx-press',style:BTNP+"flex:1;",onClick:function(){saveDem(d.id);}},"✓ Enregistrer"));
+            eBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.02 256);background:var(--c-card);color:var(--c-dim);font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;",onClick:function(){S.editDem=null;renderConfig();}},"Annuler"));
+            card.appendChild(eBtns);
+          } else {
+            var hd=el('div',{style:"display:flex;align-items:center;gap:8px;"});
+            hd.appendChild(el('span',{style:"flex:1;font-weight:700;font-size:13.5px;"},d.nom));
+            (function(did,di){
+              var isFav=(S.favDemarches||[]).indexOf(did)!==-1;
+              var mv="cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);font-size:12px;font-weight:700;padding:4px 7px;border-radius:8px;";
+              hd.appendChild(el('button',{class:'gx-press',title:isFav?"Retirer des favoris":"Épingler en favori",style:"cursor:pointer;font-family:inherit;border:none;background:none;font-size:17px;padding:3px 6px;border-radius:8px;line-height:1;",onClick:function(){toggleFavDem(did);}},isFav?"⭐":"☆"));
+              hd.appendChild(el('button',{class:'gx-press',title:"Dupliquer",style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-card);color:oklch(0.5 0.03 264);font-size:12px;font-weight:600;padding:4px 8px;border-radius:8px;",onClick:function(){duplicateDem(did);}},"⧉"));
+              hd.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:oklch(0.4 0.1 264);font-size:13px;font-weight:600;padding:5px 9px;border-radius:9px;",onClick:function(){var dx=S.demarches.find(function(x){return x.id===did;});S.editDem={id:did,theme:dx.theme||"📋 Divers",nom:dx.nom,docs:(dx.documents||[]).join("\n")};renderConfig();}},"✏️"));
+              hd.appendChild(el('button',{class:'gx-press',style:BTNDEL,onClick:function(){deleteDem(did);}},"🗑"));
+            })(d.id, S.demarches.indexOf(d));
+            card.appendChild(hd);
+            card.appendChild(el('div',{style:"margin-top:6px;font-size:11.5px;color:var(--c-muted);line-height:1.5;"},(d.documents||[]).length?(d.documents||[]).map(function(x){return "• "+x;}).join("   "):"Aucun document"));
+          }
+          themeContent.appendChild(card);
+        });
+        themeBlock.appendChild(themeContent);
       }
-      wrap.appendChild(card);
+      wrap.appendChild(themeBlock);
     });
   }
   else if(S.configTab==="permanences"){
@@ -2556,7 +2587,7 @@ function init(){
   S.cmsList=ls('ess-cms',DEFAULT_CMS);
   S.demarches=ls('ess-demarches',DEFAULT_DEMARCHES);
   /* migration : forcer les démarches builtin à la dernière version */
-  var _demV='v2-full';
+  var _demV='v3-themes';
   if(ls('ess-dem-version','')!==_demV){
     S.demarches=DEFAULT_DEMARCHES.slice();
     lsSet('ess-demarches',S.demarches);
