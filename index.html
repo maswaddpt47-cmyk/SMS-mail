@@ -330,6 +330,7 @@ var S={
   copied:{}, toast:null,
   mandatSource:"",
   mandatCivilite:"", mandatPrenom:"", mandatNom:"", mandatCommune:"", mandatNum:"",  helpMandatOpen:false,
+  anthropicKey:"", planningPreview:null,
 };
 
 /* ============================== PERSISTENCE ============================== */
@@ -1602,6 +1603,96 @@ function importICSText(text){
   });
   return added;
 }
+/* ============================== ANALYSE PLANNING PAR IMAGE ============================== */
+async function analyzeCalendarImage(file){
+  var apiKey=S.anthropicKey||ls('ess-anthropic-key','');
+  if(!apiKey){showToast('⚠️ Clé API Claude non configurée — allez dans Configuration → Général','warn');return;}
+
+  var base64=await new Promise(function(res,rej){
+    var fr=new FileReader();
+    fr.onload=function(e){res(e.target.result.split(',')[1]);};
+    fr.onerror=rej;
+    fr.readAsDataURL(file);
+  });
+  var mediaType=file.type||'image/png';
+
+  showToast('⏳ Analyse de l\'image en cours…');
+
+  var prompt='Analyse ce planning GDIN (outil de gestion de dossiers d\'inclusion numérique). '
+    +'Extrais UNIQUEMENT les RDV de couleur BLEUE (Accompagnement = confirmés) et FUCHSIA/VIOLET/ROSE (Prise de contact = propositions). '
+    +'Ignore tout le reste (gris, orange, rouge, vert, violet foncé de type Réservation).\n\n'
+    +'Pour chaque RDV retourne un objet JSON avec :\n'
+    +'- nom : NOM de famille en majuscules\n'
+    +'- prenom : prénom\n'
+    +'- date : format YYYY-MM-DD (déduis depuis les jours affichés dans le calendrier)\n'
+    +'- heure : format HH:MM\n'
+    +'- demarche : motif/démarche visible dans la case (texte sous le nom)\n'
+    +'- msgType : "confirmation" si bleu, "proposition" si fuchsia/violet/rose\n'
+    +'- commune : ville du CMS (Fumel, Marmande, Villeneuve-Sur-Lot, Agen, Saint-Pardoux-d\'Isaac…) déduite de la colonne ou du contexte visible\n\n'
+    +'Retourne UNIQUEMENT un tableau JSON valide, sans markdown ni texte autour.';
+
+  var resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-haiku-4-5-20251001',
+      max_tokens:2048,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+        {type:'text',text:prompt}
+      ]}]
+    })
+  });
+
+  if(!resp.ok){
+    var err=await resp.json().catch(function(){return {};});
+    var msg=(err.error&&err.error.message)||('Erreur API '+resp.status);
+    showToast('⚠️ '+msg,'warn');return;
+  }
+
+  var data=await resp.json();
+  var text=(data.content&&data.content[0]&&data.content[0].text)||'';
+  /* extraire le JSON même si entouré de backticks */
+  var m=text.match(/\[[\s\S]*\]/);
+  if(!m){showToast('⚠️ Réponse inattendue de l\'API','warn');return;}
+  var entries;
+  try{entries=JSON.parse(m[0]);}catch(ex){showToast('⚠️ JSON invalide retourné par l\'API','warn');return;}
+
+  /* convertir en format history */
+  var mapped=entries.map(function(e){
+    var communeKey=(e.commune||'').toLowerCase();
+    var cmsMatch=S.cmsList.find(function(c){var cn=c.nom.toLowerCase();return cn===communeKey||communeKey.indexOf(cn)!==-1||cn.indexOf(communeKey)!==-1;});
+    var sectMatch=S.secteurs.find(function(s){var sn=s.toLowerCase();return sn===communeKey||communeKey.indexOf(sn)!==-1||sn.indexOf(communeKey)!==-1;});
+    if(!sectMatch&&cmsMatch){var cmsnorm=cmsMatch.nom.toLowerCase();sectMatch=S.secteurs.find(function(s){var sn=s.toLowerCase();return sn.indexOf(cmsnorm)!==-1||cmsnorm.indexOf(sn)!==-1;});}
+    var demNorm=function(s){return(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();};
+    var mLow=demNorm(e.demarche||'');
+    var demMatch=mLow?S.demarches.find(function(d){return demNorm(d.nom).indexOf(mLow)!==-1||mLow.indexOf(demNorm(d.nom))!==-1;}):null;
+    return {
+      channel:'sms',
+      msgType:e.msgType==='proposition'?'proposition':'confirmation',
+      body:'',subject:'',
+      civilite:'',prenom:e.prenom||'',nom:(e.nom||'').toUpperCase(),telephone:'',
+      demarche:demMatch?demMatch.nom:(e.demarche||''),
+      selectedDemarche:demMatch?String(demMatch.id):'',demarcheAutre:'',
+      commune:sectMatch||e.commune||'',
+      selectedCMS:cmsMatch?String(cmsMatch.id):'',
+      date:e.date||'',heure:e.heure||'',
+      dateDemande:new Date().toISOString().slice(0,10),
+      ts:new Date().toLocaleString('fr-FR')
+    };
+  });
+
+  if(!mapped.length){showToast('⚠️ Aucun RDV bleu ou fuchsia détecté dans l\'image','warn');return;}
+  S.planningPreview=mapped;
+  S.modal='planning-preview';
+  renderModal();
+}
+
 function importPlanningJson(){
   var inp=document.createElement('input');inp.type='file';inp.accept='.json';
   inp.onchange=function(){
@@ -1636,9 +1727,37 @@ function renderAgenda(){
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);",onClick:function(){S.activeTab='config';S.configTab='permanences';showActivePane();renderTabs();renderConfig();}},'⚙️ Gérer les permanences'));
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);",onClick:exportICS},'⬇️ Export ICS'));
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 38);background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);",onClick:function(){S.modal='import-ics';renderModal();}},'⬆️ Import ICS'));
-  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 310);background:oklch(0.94 0.04 310);color:oklch(0.42 0.12 310);",onClick:importPlanningJson},'⬆️ Import planning JSON'));
+  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 310);background:oklch(0.94 0.04 310);color:oklch(0.42 0.12 310);",onClick:importPlanningJson},'⬆️ Import JSON'));
   head.appendChild(headBtns);
   wrap.appendChild(head);
+
+  /* ---- Drop zone analyse planning ---- */
+  var hasKey=!!(S.anthropicKey||ls('ess-anthropic-key',''));
+  var dzColor=hasKey?'oklch(0.55 0.16 266)':'oklch(0.7 0.05 266)';
+  var dz=el('div',{style:"border:2px dashed "+(hasKey?'oklch(0.75 0.1 266)':'oklch(0.85 0.04 256)')+";border-radius:16px;padding:28px 20px;text-align:center;margin-bottom:22px;background:"+(hasKey?'oklch(0.97 0.015 266)':'oklch(0.97 0.005 256)')+";transition:background .15s,border-color .15s;"});
+  dz.appendChild(el('div',{style:"font-size:32px;margin-bottom:8px;"},hasKey?'📷':'🔑'));
+  dz.appendChild(el('div',{style:"font-weight:800;font-size:14px;color:"+dzColor+";margin-bottom:4px;"},hasKey?'Déposer une capture du planning GDIN':'Clé API Claude requise'));
+  dz.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);line-height:1.5;"},hasKey?'Glissez-déposez ou cliquez • Les RDV bleus (confirmés) et fuchsia (propositions) seront extraits automatiquement':'Configurez votre clé API dans Configuration → Général pour activer l\'analyse automatique'));
+  if(hasKey){
+    dz.style.cursor='pointer';
+    dz.addEventListener('click',function(){
+      var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+      inp.onchange=function(){if(inp.files[0])analyzeCalendarImage(inp.files[0]);};
+      inp.click();
+    });
+    dz.addEventListener('dragover',function(e){e.preventDefault();dz.style.background='oklch(0.94 0.04 266)';dz.style.borderColor='oklch(0.6 0.15 266)';});
+    dz.addEventListener('dragleave',function(){dz.style.background='oklch(0.97 0.015 266)';dz.style.borderColor='oklch(0.75 0.1 266)';});
+    dz.addEventListener('drop',function(e){
+      e.preventDefault();dz.style.background='oklch(0.97 0.015 266)';dz.style.borderColor='oklch(0.75 0.1 266)';
+      var file=e.dataTransfer.files[0];
+      if(file&&file.type.startsWith('image/'))analyzeCalendarImage(file);
+      else showToast('⚠️ Veuillez déposer une image','warn');
+    });
+  } else {
+    dz.style.cursor='pointer';
+    dz.addEventListener('click',function(){S.activeTab='config';S.configTab='general';showActivePane();renderTabs();renderConfig();});
+  }
+  wrap.appendChild(dz);
 
   if(S.permanences.length===0){
     wrap.appendChild(el('div',{style:"text-align:center;padding:60px 20px;color:var(--c-muted);font-size:14px;"},"Aucune permanence configurée — ajoutez-en dans Configuration → Permanences."));
@@ -2175,6 +2294,19 @@ function renderConfig(){
     });
     card3.appendChild(calSel);
     wrap.appendChild(card3);
+
+    /* clé API Anthropic pour analyse planning */
+    var card4=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px 20px;margin-bottom:14px;"});
+    card4.appendChild(el('div',{style:"font-weight:800;font-size:14px;margin-bottom:6px;"},"🤖 Clé API Claude (analyse planning)"));
+    card4.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:10px;line-height:1.5;"},"Permet d'analyser une photo du planning GDIN pour importer les RDV automatiquement. Obtenez une clé sur console.anthropic.com. Elle est stockée localement sur votre appareil."));
+    var keyWrap=el('div',{style:"display:flex;gap:8px;"});
+    var keyIn=el('input',{type:'password',style:INS3+"flex:1;",placeholder:"sk-ant-…",value:S.anthropicKey||''});
+    keyIn.addEventListener('input',function(e){S.anthropicKey=e.target.value;lsSet('ess-anthropic-key',e.target.value);});
+    keyWrap.appendChild(keyIn);
+    keyWrap.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);font-weight:600;font-size:12px;padding:8px 12px;border-radius:10px;white-space:nowrap;",onClick:function(){keyIn.type=keyIn.type==='password'?'text':'password';}},"👁"));
+    card4.appendChild(keyWrap);
+    if(S.anthropicKey){card4.appendChild(el('div',{style:"font-size:11px;color:oklch(0.42 0.12 155);margin-top:6px;font-weight:600;"},"✓ Clé configurée"));}
+    wrap.appendChild(card4);
   }
   pane.appendChild(wrap);
 }
@@ -3093,6 +3225,39 @@ function renderModal(){
       box.appendChild(btnRow2);
     }
   }
+  else if(S.modal==='planning-preview'){
+    var pp=S.planningPreview||[];
+    box.appendChild(header('📷 RDV extraits du planning ('+pp.length+')'));
+    box.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin:-4px 0 8px;"},"Vérifiez les entrées avant d'importer. Les doublons existants seront ignorés."));
+    var ppScroll=el('div',{class:'gx-scroll',style:"overflow-y:auto;max-height:320px;display:flex;flex-direction:column;gap:6px;"});
+    pp.forEach(function(e,idx){
+      var row=el('div',{style:"display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:11px;background:"+(e.msgType==='confirmation'?'oklch(0.95 0.04 266)':'oklch(0.96 0.03 310)')+";border:1px solid "+(e.msgType==='confirmation'?'oklch(0.85 0.06 266)':'oklch(0.87 0.05 310)')+";"});
+      var badge=el('span',{style:"font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:"+(e.msgType==='confirmation'?'oklch(0.5 0.16 266)':'oklch(0.52 0.15 310)')+";color:#fff;flex-shrink:0;"},e.msgType==='confirmation'?'✅':'🔵');
+      var info=el('div',{style:"flex:1;min-width:0;"});
+      info.appendChild(el('div',{style:"font-weight:700;font-size:12.5px;"},[e.prenom,e.nom].filter(Boolean).join(' ')||'—'));
+      info.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);"},(e.date?e.date.split('-').reverse().join('/'):'?')+' '+e.heure+(e.commune?' · '+e.commune:'')+(e.demarche?' · '+e.demarche.slice(0,35)+(e.demarche.length>35?'…':''):'')));
+      var del=el('button',{style:"cursor:pointer;border:none;background:none;font-size:14px;color:var(--c-muted);padding:2px 4px;flex-shrink:0;",onClick:function(){pp.splice(idx,1);S.planningPreview=pp;renderModal();}});del.textContent='✕';
+      row.appendChild(badge);row.appendChild(info);row.appendChild(del);
+      ppScroll.appendChild(row);
+    });
+    box.appendChild(ppScroll);
+    if(pp.length===0){box.appendChild(el('div',{style:"text-align:center;padding:20px;color:var(--c-muted);font-size:13px;"},"Aucun RDV à importer."));}
+    var ppBtns=el('div',{style:"display:flex;gap:10px;margin-top:4px;"});
+    ppBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:11px;border-radius:12px;",onClick:closeModal},'Annuler'));
+    ppBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13px;padding:11px;border-radius:12px;",onClick:function(){
+      var added=0;
+      pp.forEach(function(entry){
+        var dup=S.history.find(function(h){return h.date===entry.date&&h.heure===entry.heure&&(h.nom||'').toLowerCase()===(entry.nom||'').toLowerCase();});
+        if(dup)return;
+        addHistory(entry);added++;
+      });
+      lsSet('ess-history',S.history);
+      S.modal=null;S.planningPreview=null;
+      renderModal();renderAgenda();renderTabs();
+      showToast('✅ '+added+' RDV importé(s)'+(pp.length-added>0?' · '+(pp.length-added)+' doublon(s) ignoré(s)':''));
+    }},'Importer ('+pp.length+')'));
+    box.appendChild(ppBtns);
+  }
   else if(S.modal==='hist'){
     var hi=S.histItem;
     box.appendChild(header(hi?((hi.channel==="sms"?"💬 SMS — ":"✉️ Mail — ")+hi.demarche):""));
@@ -3159,6 +3324,7 @@ function init(){
   S.orientations=ls('ess-orientations',[]);
   S.permanences=ls('ess-permanences',DEFAULT_PERMANENCES);
   S.calendarType=ls('ess-caltype','google');
+  S.anthropicKey=ls('ess-anthropic-key','');
   S.selectedCMS=last.selectedCMS||"";
   S.selectedDemarche=last.selectedDemarche||"";
   S.commune=last.commune||"";
