@@ -2613,7 +2613,18 @@ function parseXlsxOrientationsAsync(arrayBuffer){
       return rows;
     }
     function excelDate(v){var n=parseFloat(v);if(isNaN(n))return v;return new Date((n-25569)*86400000).toISOString().slice(0,10);}
-    function findCol(hdr,kws){for(var col in hdr){var v=(hdr[col]||'').toLowerCase();for(var k=0;k<kws.length;k++){if(v.indexOf(kws[k])!==-1)return col;}}return null;}
+    function findCol(hdr,kws){for(var col in hdr){var v=(hdr[col]||'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').toLowerCase();for(var k=0;k<kws.length;k++){if(v.indexOf(kws[k])!==-1)return col;}}return null;}
+    /* split "NOM Prénom" → {nom, prenom} : uppercase words = nom, first mixed-case word onwards = prenom */
+    function splitNomPrenom(full){
+      var parts=(full||'').trim().replace(/\s+/g,' ').split(' ');
+      var nomParts=[],prenomParts=[],inPrenom=false;
+      for(var pi=0;pi<parts.length;pi++){
+        var p=parts[pi];
+        if(!inPrenom&&p.length>0&&p===p.toUpperCase()){nomParts.push(p);}
+        else{inPrenom=true;prenomParts.push(p);}
+      }
+      return {nom:nomParts.join(' '),prenom:prenomParts.join(' ')};
+    }
 
     /* 4. find sheet (may be sheet1 or sheet with any number) */
     var sheetKey=Object.keys(entries).find(function(k){return /xl\/worksheets\/sheet\d+\.xml/.test(k);})||'xl/worksheets/sheet1.xml';
@@ -2625,26 +2636,45 @@ function parseXlsxOrientationsAsync(arrayBuffer){
       var rows=parseSheet(shXml,ss);
       if(rows.length<2){resolve([]);return;}
       var hdr=rows[0].cells;
-      var colNom=findCol(hdr,['nom']);
-      var colPrenom=findCol(hdr,['prénom','prenom','prénom']);
-      var colCommune=findCol(hdr,['commune','cms','structure orient']);
-      var colMotif=findCol(hdr,['motif','demande','objet','démarche','demarche','thématique','thematique']);
-      var colDate=findCol(hdr,['date']);
-      var colEtat=findCol(hdr,['état','etat','statut']);
-      var colOrienteur=findCol(hdr,['orient','agent','travailleur']);
+      /* colonne B = "Nom & prénom bénéficiaire" (nom+prénom ensemble) */
+      var colNomPrenom=findCol(hdr,['nom']);
+      /* si colonnes séparées : chercher prénom seulement si différent de colNomPrenom */
+      var colPrenom=findCol(hdr,['prénom','prenom']);
+      if(colPrenom===colNomPrenom)colPrenom=null; /* même colonne → pas de colonne prénom séparée */
+      var colCommune=findCol(hdr,['commune']);
+      var colStructure=findCol(hdr,['structure']);
+      var colMotif=findCol(hdr,['motif']);
+      var colDate=findCol(hdr,['date de la demande','date demande']);
+      if(!colDate)colDate=findCol(hdr,['date']);
+      var colEtat=findCol(hdr,['etat de la demande','état de la demande','etat','état','statut']);
+      var colOrienteur=findCol(hdr,['prénom de l\'orient','orienteur','orient']);
       var results=[];
       for(var ri=1;ri<rows.length;ri++){
         var c=rows[ri].cells;
+        /* filtre : commune bénéficiaire OU structure d'orientation doit contenir fumel ou marmande */
         var commune=(colCommune?c[colCommune]||'':'').trim();
-        var cl=commune.toLowerCase();
-        if(cl.indexOf('fumel')===-1&&cl.indexOf('marmande')===-1)continue;
-        var nom=(colNom?c[colNom]||'':'').trim();
-        var prenom=(colPrenom?c[colPrenom]||'':'').trim();
+        var structure=(colStructure?c[colStructure]||'':'').trim();
+        var cl=commune.toLowerCase();var sl=structure.toLowerCase();
+        var isFumelMarmande=(cl.indexOf('fumel')!==-1||sl.indexOf('fumel')!==-1||cl.indexOf('marmande')!==-1||sl.indexOf('marmande')!==-1);
+        if(!isFumelMarmande)continue;
+        /* nom + prénom */
+        var nomPrenom=(colNomPrenom?c[colNomPrenom]||'':'').trim();
+        var nom='',prenom='';
+        if(colPrenom){
+          /* colonnes séparées */
+          nom=nomPrenom;prenom=(c[colPrenom]||'').trim();
+        } else {
+          /* tout dans une colonne → split sur la casse */
+          var sp=splitNomPrenom(nomPrenom);nom=sp.nom;prenom=sp.prenom;
+        }
         if(!nom&&!prenom)continue;
+        /* commune affichée = structure si commune bénéficiaire ne contient pas fumel/marmande */
+        var communeAff=(cl.indexOf('fumel')!==-1||cl.indexOf('marmande')!==-1)?commune:structure;
         var dateRaw=colDate?c[colDate]||'':'';
         results.push({
           id:String(Date.now())+'_'+ri,
-          nom:nom,prenom:prenom,commune:commune,
+          nom:nom,prenom:prenom,commune:communeAff,
+          communeBenef:commune,
           motif:(colMotif?c[colMotif]||'':'').trim(),
           orienteur:(colOrienteur?c[colOrienteur]||'':'').trim(),
           date:dateRaw?excelDate(dateRaw):'',
@@ -2808,7 +2838,8 @@ function renderOrientations(){
     nameLine.appendChild(document.createTextNode(fullName));
     if(o.done){var doneBadge=el('span',{style:"font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:oklch(0.92 0.07 155);color:oklch(0.38 0.12 155);"},"✓ Traité");nameLine.appendChild(doneBadge);}
     info.appendChild(nameLine);
-    if(o.commune){info.appendChild(el('div',{style:"font-size:12.5px;color:var(--c-subtle);margin-top:3px;font-weight:600;"},o.commune+(o.orienteur?' · '+o.orienteur:'')));}
+    var communeDisplay=o.commune+(o.communeBenef&&o.communeBenef!==o.commune?' (hab. '+o.communeBenef+')':'');
+    if(o.commune){info.appendChild(el('div',{style:"font-size:12.5px;color:var(--c-subtle);margin-top:3px;font-weight:600;"},communeDisplay+(o.orienteur?' · '+o.orienteur:'')));}
     if(o.motif){info.appendChild(el('div',{style:"font-size:12.5px;color:var(--c-dim);margin-top:4px;font-weight:500;line-height:1.4;"},o.motif));}
     if(o.date){var d=o.date.split('-').reverse().join('/');info.appendChild(el('div',{style:"font-size:11.5px;color:var(--c-muted);margin-top:4px;"},'📅 '+d));}
     card.appendChild(info);
