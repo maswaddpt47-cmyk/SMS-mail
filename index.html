@@ -322,7 +322,7 @@ var S={
   editBuiltin:null, editBuiltinText:"",
   nt:{nom:"",canal:"sms",type:"proposition",sujet:"",body:""},
   nv:{nom:"",valeur:""},
-  nc:{nom:"",adresse:""}, ns:"", nd:{nom:"",docs:"",theme:""}, editTheme:null, editDem:null, editHistIdx:null, editHistBody:"", editHistNotes:"", editHistDateDemande:"",
+  nc:{nom:"",adresse:""}, ns:"", nd:{nom:"",docs:"",theme:""}, editTheme:null, demSearch:"", editDem:null, editHistIdx:null, editHistBody:"", editHistNotes:"", editHistDateDemande:"",
   editCms:null, editSect:null, editVar:null, editTpl:null,
   exportText:"", importText:"", importError:"",
   copied:{}, toast:null,
@@ -1915,14 +1915,26 @@ function renderConfig(){
     var ddta=el('textarea',{class:'gx-in',rows:5,placeholder:"Pièce d'identité\nJustificatif de domicile\nRIB…",style:"width:100%;font-family:inherit;font-size:13px;line-height:1.5;padding:12px;border:1.5px solid var(--c-border-in);border-radius:11px;background:var(--c-card);color:inherit;resize:vertical;",onInput:function(e){S.nd.docs=e.target.value;}});ddta.value=S.nd.docs;dc.appendChild(ddta);
     dc.appendChild(el('button',{class:'gx-press',style:BTNP,onClick:addDem},"+ Ajouter"));
     df.appendChild(dc);wrap.appendChild(df);
+    /* barre de recherche */
+    function normD(s){return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();}
+    var srchWrap=el('div',{style:"position:relative;margin-bottom:14px;"});
+    var srchIn=el('input',{class:'gx-in',style:INPUT+"padding-right:34px;",placeholder:"🔍 Rechercher dans les démarches…",value:S.demSearch||""});
+    var srchClear=el('button',{style:"position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;font-family:inherit;border:none;background:none;font-size:16px;color:var(--c-muted);padding:4px;line-height:1;display:"+(S.demSearch?"flex":"none")+";align-items:center;",onClick:function(){S.demSearch="";srchIn.value="";srchClear.style.display="none";renderConfig();}});
+    srchClear.textContent="✕";
+    srchIn.addEventListener('input',function(e){S.demSearch=e.target.value;srchClear.style.display=e.target.value?"flex":"none";renderConfig();});
+    srchWrap.appendChild(srchIn);srchWrap.appendChild(srchClear);wrap.appendChild(srchWrap);
+    /* filtrage */
+    var sq=normD(S.demSearch);
+    var visibleDems=sq?S.demarches.filter(function(d){return normD(d.nom).indexOf(sq)!==-1||normD(d.theme).indexOf(sq)!==-1;}):null;
     /* grouper par thème */
     var themeGroups={};
-    S.demarches.forEach(function(d){var t=d.theme||"📋 Divers";if(!themeGroups[t])themeGroups[t]=[];themeGroups[t].push(d);});
+    (visibleDems||S.demarches).forEach(function(d){var t=d.theme||"📋 Divers";if(!themeGroups[t])themeGroups[t]=[];themeGroups[t].push(d);});
     var orderedThemes=DEM_THEMES.filter(function(t){return themeGroups[t]&&themeGroups[t].length>0;});
     Object.keys(themeGroups).forEach(function(t){if(orderedThemes.indexOf(t)===-1)orderedThemes.push(t);});
+    if(sq&&orderedThemes.length===0){wrap.appendChild(el('div',{style:"text-align:center;color:var(--c-muted);padding:24px;font-size:13px;"},"Aucun résultat pour « "+S.demSearch+" »"));}
     orderedThemes.forEach(function(theme){
       var demsInTheme=themeGroups[theme];
-      var isCollapsed=!!S.collapsedThemes[theme];
+      var isCollapsed=sq?false:!!S.collapsedThemes[theme];
       var isEditingTheme=S.editTheme&&S.editTheme.old===theme;
       var themeBlock=el('div',{style:"margin-bottom:10px;"});
       if(isEditingTheme){
