@@ -1918,14 +1918,42 @@ function renderConfig(){
     dc.appendChild(el('button',{class:'gx-press',style:BTNP,onClick:addDem},"+ Ajouter"));
     df.appendChild(dc);
     /* bouton export JSON */
-    var expBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.78 0.1 155);background:oklch(0.94 0.06 155);color:oklch(0.35 0.12 155);font-weight:700;font-size:13px;padding:9px 16px;border-radius:11px;margin-top:12px;width:100%;",onClick:function(){
+    var impExpRow=el('div',{style:"display:flex;gap:9px;margin-top:12px;"});
+    var expBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.78 0.1 155);background:oklch(0.94 0.06 155);color:oklch(0.35 0.12 155);font-weight:700;font-size:13px;padding:9px 14px;border-radius:11px;flex:1;",onClick:function(){
       var json=JSON.stringify({demarches:S.demarches},null,2);
       var blob=new Blob([json],{type:'application/json'});
       var url=URL.createObjectURL(blob);
       var a=document.createElement('a');a.href=url;a.download='demarches-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
       showToast('✅ Démarches exportées');
-    }},"⬇️ Exporter les démarches (JSON)");
-    df.appendChild(expBtn);
+    }},"⬇️ Exporter");
+    var demFileIn=el('input',{type:'file',accept:'.json,application/json',style:"display:none;"});
+    demFileIn.addEventListener('change',function(e){
+      var f=e.target.files&&e.target.files[0];if(!f)return;
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        try{
+          var data=JSON.parse(ev.target.result);
+          var imported=Array.isArray(data)?data:(data.demarches||[]);
+          if(!imported.length){showToast('⚠️ Aucune démarche trouvée','warn');return;}
+          var existingIds=S.demarches.map(function(d){return d.id;});
+          var added=0,updated=0;
+          imported.forEach(function(d){
+            if(!d.nom)return;
+            if(!d.id)d.id=Date.now()+Math.random();
+            var idx=existingIds.indexOf(d.id);
+            if(idx===-1){S.demarches=S.demarches.concat([d]);added++;}
+            else{S.demarches=S.demarches.map(function(x){return x.id===d.id?d:x;});updated++;}
+          });
+          persist();renderConfig();
+          showToast('✅ '+added+' ajoutée(s), '+updated+' mise(s) à jour');
+        }catch(err){showToast('⚠️ Fichier JSON invalide','warn');}
+        demFileIn.value='';
+      };
+      reader.readAsText(f);
+    });
+    var impBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.78 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.35 0.12 266);font-weight:700;font-size:13px;padding:9px 14px;border-radius:11px;flex:1;",onClick:function(){demFileIn.click();}},"⬆️ Importer");
+    impExpRow.appendChild(expBtn);impExpRow.appendChild(impBtn);impExpRow.appendChild(demFileIn);
+    df.appendChild(impExpRow);
     wrap.appendChild(df);
     /* barre de recherche */
     function normD(s){return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();}
