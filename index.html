@@ -1602,6 +1602,31 @@ function importICSText(text){
   });
   return added;
 }
+function importPlanningJson(){
+  var inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=function(){
+    var file=inp.files[0];if(!file)return;
+    var fr=new FileReader();fr.onload=function(e){
+      try{
+        var entries=JSON.parse(e.target.result);
+        if(!Array.isArray(entries))throw new Error();
+        var added=0;
+        entries.forEach(function(entry){
+          /* dédup : même date + heure + nom (insensible casse) */
+          var dup=S.history.find(function(h){
+            return h.date===entry.date&&h.heure===entry.heure&&(h.nom||'').toLowerCase()===(entry.nom||'').toLowerCase();
+          });
+          if(dup)return;
+          addHistory(Object.assign({channel:'sms',msgType:'confirmation',body:'',subject:'',civilite:'',prenom:'',nom:'',telephone:'',demarche:'',selectedDemarche:'',demarcheAutre:'',commune:'',selectedCMS:'',date:'',heure:'',dateDemande:'',ts:new Date().toLocaleString('fr-FR')},entry));
+          added++;
+        });
+        lsSet('ess-history',S.history);
+        renderAgenda();renderTabs();
+        showToast('✅ '+added+' RDV importé(s)'+(entries.length-added>0?' · '+(entries.length-added)+' doublon(s) ignoré(s)':''));
+      }catch(ex){showToast('⚠️ Fichier JSON invalide','warn');}
+    };fr.readAsText(file);
+  };inp.click();
+}
 function renderAgenda(){
   var pane=document.getElementById('pane-agenda');if(!pane)return;clear(pane);
   var wrap=el('div',{style:"max-width:860px;margin:0 auto;padding:clamp(14px,3vw,32px) clamp(12px,4vw,40px);"});
@@ -1611,6 +1636,7 @@ function renderAgenda(){
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);",onClick:function(){S.activeTab='config';S.configTab='permanences';showActivePane();renderTabs();renderConfig();}},'⚙️ Gérer les permanences'));
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);",onClick:exportICS},'⬇️ Export ICS'));
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 38);background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);",onClick:function(){S.modal='import-ics';renderModal();}},'⬆️ Import ICS'));
+  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 310);background:oklch(0.94 0.04 310);color:oklch(0.42 0.12 310);",onClick:importPlanningJson},'⬆️ Import planning JSON'));
   head.appendChild(headBtns);
   wrap.appendChild(head);
 
