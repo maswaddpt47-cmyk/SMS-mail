@@ -322,7 +322,7 @@ var S={
   editBuiltin:null, editBuiltinText:"",
   nt:{nom:"",canal:"sms",type:"proposition",sujet:"",body:""},
   nv:{nom:"",valeur:""},
-  nc:{nom:"",adresse:""}, ns:"", nd:{nom:"",docs:"",theme:""}, editDem:null, editHistIdx:null, editHistBody:"", editHistNotes:"", editHistDateDemande:"",
+  nc:{nom:"",adresse:""}, ns:"", nd:{nom:"",docs:"",theme:""}, editTheme:null, editDem:null, editHistIdx:null, editHistBody:"", editHistNotes:"", editHistDateDemande:"",
   editCms:null, editSect:null, editVar:null, editTpl:null,
   exportText:"", importText:"", importError:"",
   copied:{}, toast:null,
@@ -1922,13 +1922,34 @@ function renderConfig(){
     orderedThemes.forEach(function(theme){
       var demsInTheme=themeGroups[theme];
       var isCollapsed=!!S.collapsedThemes[theme];
+      var isEditingTheme=S.editTheme&&S.editTheme.old===theme;
       var themeBlock=el('div',{style:"margin-bottom:10px;"});
-      var themeHdr=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;width:100%;text-align:left;display:flex;align-items:center;gap:8px;background:oklch(0.94 0.04 266);border:1px solid oklch(0.84 0.08 266);border-radius:12px;padding:9px 13px;font-weight:700;font-size:13px;color:oklch(0.35 0.12 266);margin-bottom:6px;"});
-      themeHdr.appendChild(el('span',{style:"flex:1;"},theme));
-      themeHdr.appendChild(el('span',{style:"font-size:11px;font-weight:600;background:oklch(0.88 0.06 266);border-radius:20px;padding:2px 8px;color:oklch(0.42 0.13 266);"},String(demsInTheme.length)));
-      themeHdr.appendChild(el('span',{style:"font-size:14px;"},isCollapsed?"▶":"▼"));
-      (function(t){themeHdr.addEventListener('click',function(){S.collapsedThemes[t]=!S.collapsedThemes[t];renderConfig();});})(theme);
-      themeBlock.appendChild(themeHdr);
+      if(isEditingTheme){
+        /* renommage inline */
+        var renameRow=el('div',{style:"display:flex;align-items:center;gap:8px;margin-bottom:6px;"});
+        var renameIn=el('input',{class:'gx-in',style:"flex:1;"+INPUT,value:S.editTheme.val,onInput:function(e){S.editTheme.val=e.target.value;}});
+        renameRow.appendChild(renameIn);
+        renameRow.appendChild(el('button',{class:'gx-press',style:BTNP+"padding:8px 14px;white-space:nowrap;",onClick:function(){
+          var oldT=S.editTheme.old,newT=(S.editTheme.val||"").trim();
+          if(!newT){S.editTheme=null;renderConfig();return;}
+          S.demarches=S.demarches.map(function(d){return d.theme===oldT?Object.assign({},d,{theme:newT}):d;});
+          /* mettre à jour collapsedThemes */
+          if(S.collapsedThemes[oldT]!==undefined){S.collapsedThemes[newT]=S.collapsedThemes[oldT];delete S.collapsedThemes[oldT];}
+          S.editTheme=null;persist();renderConfig();
+        }},"✓"));
+        renameRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);font-size:13px;font-weight:600;padding:8px 12px;border-radius:10px;",onClick:function(){S.editTheme=null;renderConfig();}},"✕"));
+        themeBlock.appendChild(renameRow);
+      } else {
+        var themeHdr=el('div',{style:"display:flex;align-items:center;gap:6px;background:oklch(0.94 0.04 266);border:1px solid oklch(0.84 0.08 266);border-radius:12px;padding:7px 10px;margin-bottom:6px;"});
+        var themeToggle=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;text-align:left;display:flex;align-items:center;gap:8px;border:none;background:none;font-weight:700;font-size:13px;color:oklch(0.35 0.12 266);padding:2px 3px;"});
+        themeToggle.appendChild(el('span',{style:"flex:1;"},theme));
+        themeToggle.appendChild(el('span',{style:"font-size:11px;font-weight:600;background:oklch(0.88 0.06 266);border-radius:20px;padding:2px 8px;color:oklch(0.42 0.13 266);"},String(demsInTheme.length)));
+        themeToggle.appendChild(el('span',{style:"font-size:13px;"},isCollapsed?"▶":"▼"));
+        (function(t){themeToggle.addEventListener('click',function(){S.collapsedThemes[t]=!S.collapsedThemes[t];renderConfig();});})(theme);
+        themeHdr.appendChild(themeToggle);
+        (function(t){themeHdr.appendChild(el('button',{class:'gx-press',title:"Renommer ce thème",style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.84 0.08 266);background:oklch(0.88 0.06 266);color:oklch(0.38 0.12 266);font-size:12px;font-weight:600;padding:4px 8px;border-radius:8px;flex-shrink:0;",onClick:function(e){e.stopPropagation();S.editTheme={old:t,val:t};S.collapsedThemes[t]=false;renderConfig();}},"✏️"));})(theme);
+        themeBlock.appendChild(themeHdr);
+      }
       if(!isCollapsed){
         var themeContent=el('div',{style:"padding-left:4px;"});
         demsInTheme.forEach(function(d){
