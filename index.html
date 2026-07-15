@@ -871,28 +871,64 @@ function renderGenerate(){
   adr.appendChild(adrSel);col.appendChild(adr);
 
   var demDiv=el('div');demDiv.appendChild(el('label',{style:LABEL},"Démarche *"));
-  var demSel=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;",onChange:function(e){setFieldSave({selectedDemarche:e.target.value,demarcheAutre:e.target.value==="__autre__"?S.demarcheAutre:""});}});
-  demSel.appendChild(el('option',{value:"",selected:S.selectedDemarche===""},"— Sélectionner une démarche —"));
-  var favIds=S.favDemarches||[];
-  var favDems=S.demarches.filter(function(d){return favIds.indexOf(d.id)!==-1;});
-  var nonFavDems=S.demarches.filter(function(d){return favIds.indexOf(d.id)===-1;});
-  if(favDems.length>0){
-    var ogFav=document.createElement('optgroup');ogFav.label="⭐ Favoris";
-    favDems.forEach(function(d){ogFav.appendChild(el('option',{value:String(d.id),selected:S.selectedDemarche===String(d.id)},d.nom));});
-    demSel.appendChild(ogFav);
+  /* --- moteur de recherche démarche --- */
+  var curDem=S.selectedDemarche&&S.selectedDemarche!=="__autre__"?S.demarches.find(function(d){return String(d.id)===String(S.selectedDemarche);}):null;
+  var demSearchWrap=el('div',{style:"position:relative;"});
+  var demSearchVal=curDem?curDem.nom:(S.selectedDemarche==="__autre__"?"✏️ Autre…":"");
+  var demSearchIn=el('input',{class:'gx-in',style:INPUT+"padding-right:34px;",placeholder:"🔍 Rechercher une démarche…",value:demSearchVal});
+  var demDropdown=el('div',{style:"display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:120;background:var(--c-card);border:1.5px solid oklch(0.78 0.1 266);border-radius:13px;box-shadow:0 8px 24px oklch(0.3 0.08 266 / .18);max-height:260px;overflow-y:auto;"});
+  var demClearBtn=el('button',{style:"position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;font-family:inherit;border:none;background:none;font-size:16px;color:var(--c-muted);padding:4px;line-height:1;display:"+(demSearchVal?"flex":"none")+";align-items:center;",onClick:function(e){e.stopPropagation();setFieldSave({selectedDemarche:"",demarcheAutre:""});demSearchIn.value="";demClearBtn.style.display="none";demDropdown.style.display="none";}});
+  demClearBtn.textContent="✕";
+  function buildDemDropdown(query){
+    demDropdown.innerHTML="";
+    var q=(query||"").toLowerCase().trim();
+    var favIds2=S.favDemarches||[];
+    var all=S.demarches.slice();
+    var filtered=q?all.filter(function(d){return d.nom.toLowerCase().indexOf(q)!==-1||(d.theme||"").toLowerCase().indexOf(q)!==-1;}):all;
+    if(!filtered.length&&!q){/* show nothing when empty and no query */return;}
+    /* favoris en tête si pas de recherche */
+    var favList=filtered.filter(function(d){return favIds2.indexOf(d.id)!==-1;});
+    var rest=filtered.filter(function(d){return favIds2.indexOf(d.id)===-1;});
+    function addItem(d,badge){
+      var item=el('div',{style:"padding:9px 13px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid oklch(0.94 0.01 256);"});
+      if(badge)item.appendChild(el('span',{style:"font-size:11px;"},badge));
+      var nameSpan=el('span',{style:"flex:1;font-size:13px;font-weight:600;"},d.nom);
+      item.appendChild(nameSpan);
+      if(d.theme&&!q)item.appendChild(el('span',{style:"font-size:10px;color:var(--c-muted);white-space:nowrap;"},d.theme));
+      item.addEventListener('mousedown',function(e){e.preventDefault();});
+      item.addEventListener('click',function(){setFieldSave({selectedDemarche:String(d.id),demarcheAutre:""});demSearchIn.value=d.nom;demDropdown.style.display="none";demClearBtn.style.display="flex";});
+      item.addEventListener('mouseenter',function(){item.style.background="oklch(0.94 0.04 266)";});
+      item.addEventListener('mouseleave',function(){item.style.background="";});
+      demDropdown.appendChild(item);
+    }
+    function addSection(title){
+      demDropdown.appendChild(el('div',{style:"padding:5px 13px 3px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:oklch(0.55 0.1 266);background:oklch(0.97 0.02 266);"},title));
+    }
+    if(favList.length&&!q){addSection("⭐ Favoris");favList.forEach(function(d){addItem(d);});}
+    if(!q){
+      var byTh={};rest.forEach(function(d){var t=d.theme||"📋 Divers";if(!byTh[t])byTh[t]=[];byTh[t].push(d);});
+      var ordTh=DEM_THEMES.filter(function(t){return byTh[t];});
+      Object.keys(byTh).forEach(function(t){if(ordTh.indexOf(t)===-1)ordTh.push(t);});
+      ordTh.forEach(function(t){addSection(t);byTh[t].forEach(function(d){addItem(d);});});
+    } else {
+      filtered.forEach(function(d){addItem(d,favIds2.indexOf(d.id)!==-1?"⭐":null);});
+    }
+    /* option Autre */
+    var autreItem=el('div',{style:"padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;color:oklch(0.5 0.1 266);border-top:1.5px solid var(--c-border);"});
+    autreItem.textContent="✏️ Autre (saisie libre)";
+    autreItem.addEventListener('mousedown',function(e){e.preventDefault();});
+    autreItem.addEventListener('click',function(){setFieldSave({selectedDemarche:"__autre__",demarcheAutre:""});demSearchIn.value="✏️ Autre…";demDropdown.style.display="none";demClearBtn.style.display="flex";});
+    autreItem.addEventListener('mouseenter',function(){autreItem.style.background="oklch(0.94 0.04 266)";});
+    autreItem.addEventListener('mouseleave',function(){autreItem.style.background="";});
+    demDropdown.appendChild(autreItem);
   }
-  /* grouper les non-favoris par thème */
-  var demByTheme={};
-  nonFavDems.forEach(function(d){var t=d.theme||"📋 Divers";if(!demByTheme[t])demByTheme[t]=[];demByTheme[t].push(d);});
-  var orderedDemThemes=DEM_THEMES.filter(function(t){return demByTheme[t]&&demByTheme[t].length>0;});
-  Object.keys(demByTheme).forEach(function(t){if(orderedDemThemes.indexOf(t)===-1)orderedDemThemes.push(t);});
-  orderedDemThemes.forEach(function(t){
-    var og=document.createElement('optgroup');og.label=t;
-    demByTheme[t].forEach(function(d){og.appendChild(el('option',{value:String(d.id),selected:S.selectedDemarche===String(d.id)},d.nom));});
-    demSel.appendChild(og);
-  });
-  demSel.appendChild(el('option',{value:"__autre__",selected:S.selectedDemarche==="__autre__"},"✏️ Autre…"));
-  demDiv.appendChild(demSel);col.appendChild(demDiv);
+  demSearchIn.addEventListener('focus',function(){buildDemDropdown(demSearchIn.value===demSearchVal||!demSearchIn.value?"":(demSearchIn.value));demDropdown.style.display="block";});
+  demSearchIn.addEventListener('input',function(){demClearBtn.style.display=demSearchIn.value?"flex":"none";buildDemDropdown(demSearchIn.value);demDropdown.style.display="block";});
+  demSearchIn.addEventListener('blur',function(){setTimeout(function(){demDropdown.style.display="none";},150);});
+  demSearchWrap.appendChild(demSearchIn);
+  demSearchWrap.appendChild(demClearBtn);
+  demSearchWrap.appendChild(demDropdown);
+  demDiv.appendChild(demSearchWrap);col.appendChild(demDiv);
 
   if(S.selectedDemarche==="__autre__"){
     var da=el('div');da.appendChild(el('label',{style:LABEL},"Préciser la démarche *"));
