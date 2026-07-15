@@ -2644,13 +2644,10 @@ function init(){
   var lastSave=ls('ess-lastSave',null);
   S.cmsList=ls('ess-cms',DEFAULT_CMS);
   S.demarches=ls('ess-demarches',DEFAULT_DEMARCHES);
-  /* migration : forcer les démarches builtin à la dernière version */
-  var _demV='v3-themes';
-  if(ls('ess-dem-version','')!==_demV){
-    S.demarches=DEFAULT_DEMARCHES.slice();
-    lsSet('ess-demarches',S.demarches);
-    lsSet('ess-dem-version',_demV);
-  }
+  /* fusion : ajouter les démarches par défaut manquantes sans écraser les personnalisations */
+  var existingIds=S.demarches.map(function(d){return d.id;});
+  var toAdd=DEFAULT_DEMARCHES.filter(function(d){return existingIds.indexOf(d.id)===-1;});
+  if(toAdd.length){S.demarches=S.demarches.concat(toAdd);lsSet('ess-demarches',S.demarches);}
   S.secteurs=ls('ess-secteurs',DEFAULT_SECTEURS);
   S.templates=ls('ess-templates',DEFAULT_TEMPLATES);
   /* migration : forcer les templates builtin à la dernière version par défaut */
