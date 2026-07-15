@@ -324,7 +324,7 @@ var S={
   editBuiltin:null, editBuiltinText:"",
   nt:{nom:"",canal:"sms",type:"proposition",sujet:"",body:""},
   nv:{nom:"",valeur:""},
-  nc:{nom:"",adresse:""}, ns:"", nd:{nom:"",docs:"",theme:""}, editTheme:null, demSearch:"", editDem:null, editHistIdx:null, editHistBody:"", editHistNotes:"", editHistDateDemande:"",
+  nc:{nom:"",adresse:""}, ns:"", nd:{nom:"",docs:"",theme:""}, editTheme:null, demSearch:"", editDem:null, editHistIdx:null, editHistBody:"", editHistNotes:"", editHistDateDemande:"", genNotes:"",
   editCms:null, editSect:null, editVar:null, editTpl:null,
   exportText:"", importText:"", importError:"",
   copied:{}, toast:null,
@@ -468,7 +468,7 @@ function handleGenerate(){
   renderGenerate();renderHistory();renderMandat();
 }
 function onReset(){
-  Object.assign(S,{civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",demarcheAutre:"",selectedCMS:"",selectedDemarche:"",commune:"",dateDemande:new Date().toISOString().slice(0,10)});
+  Object.assign(S,{civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",demarcheAutre:"",selectedCMS:"",selectedDemarche:"",commune:"",dateDemande:new Date().toISOString().slice(0,10),genNotes:""});
   regen();renderGenerate();
 }
 function addHistory(item){
@@ -942,6 +942,15 @@ function renderGenerate(){
     da.appendChild(autreIn);
     col.appendChild(da);
   }
+  /* champ notes perso — non inclus dans le SMS/mail */
+  var notesDiv=el('div');
+  notesDiv.appendChild(el('label',{style:LABEL},"📝 Notes (usage interne uniquement)"));
+  var notesIn=el('textarea',{class:'gx-in',style:INPUT+"height:64px;resize:none;font-size:13px;",placeholder:"Informations personnelles, contexte, remarques… non envoyées dans le message."});
+  notesIn.value=S.genNotes||'';
+  notesIn.addEventListener('input',function(e){S.genNotes=e.target.value;});
+  notesDiv.appendChild(notesIn);
+  col.appendChild(notesDiv);
+
   c2.appendChild(col);
 
   var canGen=canGenerate();
@@ -2851,16 +2860,32 @@ function renderOrientations(){
       /* find matching demarche by motif */
       var mLow=normO(o.motif);
       var matched=S.demarches.find(function(d){return normO(d.nom).indexOf(mLow)!==-1||mLow.indexOf(normO(d.nom))!==-1;});
-      /* find matching CMS */
-      var cmsMatch=S.cmsList.find(function(c){return normO(c.nom).indexOf(normO(o.commune))!==-1||normO(o.commune).indexOf(normO(c.nom))!==-1;});
+      /* find CMS : chercher dans cmsList par nom avec fallback sur commune et structure */
+      var communeKey=normO(o.commune);
+      var cmsMatch=S.cmsList.find(function(c){
+        var cn=normO(c.nom);
+        return cn===communeKey||communeKey.indexOf(cn)!==-1||cn.indexOf(communeKey)!==-1;
+      });
+      /* find secteur : chercher dans secteurs par nom (correspondance avec commune bénéf ou commune affichée) */
+      var secteurKeys=[normO(o.commune),normO(o.communeBenef||'')];
+      var sectMatch=S.secteurs.find(function(s){
+        var sn=normO(s);
+        return secteurKeys.some(function(k){return k&&(sn===k||k.indexOf(sn)!==-1||sn.indexOf(k)!==-1);});
+      });
+      /* si pas trouvé par commune bénéf, essayer via nom du CMS trouvé */
+      if(!sectMatch&&cmsMatch){
+        var cmsnorm=normO(cmsMatch.nom);
+        sectMatch=S.secteurs.find(function(s){var sn=normO(s);return sn.indexOf(cmsnorm)!==-1||cmsnorm.indexOf(sn)!==-1;});
+      }
       S.civilite=o.civilite||'';
       S.prenom=o.prenom||'';
       S.nom=o.nom||'';
       S.telephone=o.telephone||'';
-      S.commune=o.commune||'';
+      S.commune=sectMatch||'';
       S.selectedCMS=cmsMatch?String(cmsMatch.id):'';
       S.selectedDemarche=matched?String(matched.id):'';
       S.demarcheAutre=matched?'':o.motif;
+      S.genNotes=o.motif||(o.orienteur?'Orienté par '+o.orienteur:'');
       S.msgType='sans_appel';
       S.activeTab='generate';
       showActivePane();renderTabs();renderGenerate();
