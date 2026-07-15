@@ -1920,7 +1920,8 @@ function renderConfig(){
     var srchIn=el('input',{class:'gx-in',style:INPUT+"padding-right:34px;",placeholder:"🔍 Rechercher dans les démarches…",value:S.demSearch||""});
     var srchClear=el('button',{style:"position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;font-family:inherit;border:none;background:none;font-size:16px;color:var(--c-muted);padding:4px;line-height:1;display:"+(S.demSearch?"flex":"none")+";align-items:center;",onClick:function(){S.demSearch="";srchIn.value="";srchClear.style.display="none";renderConfig();}});
     srchClear.textContent="✕";
-    srchIn.addEventListener('input',function(e){S.demSearch=e.target.value;srchClear.style.display=e.target.value?"flex":"none";renderConfig();});
+    srchIn.setAttribute('id','dem-config-search');
+    srchIn.addEventListener('input',function(e){S.demSearch=e.target.value;srchClear.style.display=e.target.value?"flex":"none";var pos=e.target.selectionStart;renderConfig();var el2=document.getElementById('dem-config-search');if(el2){el2.focus();try{el2.setSelectionRange(pos,pos);}catch(x){}}});
     srchWrap.appendChild(srchIn);srchWrap.appendChild(srchClear);wrap.appendChild(srchWrap);
     /* filtrage */
     var sq=normD(S.demSearch);
