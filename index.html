@@ -612,7 +612,7 @@ function getSlots(commune,dateStr){
     var propositions=matches.filter(function(x){return x.msgType==='proposition';});
     var taken=confirmations[0]||propositions[0]||null;
     var multiPropo=confirmations.length===0&&propositions.length>1;
-    slots.push({heure:heure,taken:taken||null,multiPropo:multiPropo});
+    slots.push({heure:heure,taken:taken||null,multiPropo:multiPropo,allPropo:propositions});
   }
   return slots;
 }
@@ -1713,7 +1713,7 @@ function renderAgenda(){
       var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;overflow:hidden;font-family:inherit;"});
       pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
       if(slot.taken&&slot.multiPropo){
-        pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé"));
+        pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé ("+slot.allPropo.length+")"));
       } else if(slot.taken&&who){
         var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.48 0.15 25);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"});
         nameEl.textContent=who;
@@ -3057,6 +3057,20 @@ function renderModal(){
     var INS2="width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);box-sizing:border-box;";
     var LBL2="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:3px;display:block;";
     if(!isEditing){
+      var slot=ar.slot||{};
+      if(slot.multiPropo&&slot.allPropo&&slot.allPropo.length>1){
+        /* plusieurs propositions — afficher la liste */
+        var dateAff=(d.dateStr||'').split('-').reverse().join('/');
+        box.appendChild(el('div',{style:"font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:6px;"},slot.allPropo.length+' propositions en attente'));
+        slot.allPropo.forEach(function(p){
+          var card=el('div',{style:"padding:8px 10px;border-radius:10px;border:1px solid oklch(0.75 0.18 330);background:oklch(0.97 0.03 330);margin-bottom:6px;"});
+          var nm=[p.civilite,p.prenom,p.nom].filter(Boolean).join(' ')||'—';
+          card.appendChild(el('div',{style:"font-size:13px;font-weight:700;color:oklch(0.38 0.18 330);"},nm));
+          if(p.demarche)card.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);margin-top:2px;"},p.demarche));
+          box.appendChild(card);
+        });
+        box.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);text-align:center;padding:4px 0;"},dateAff));
+      } else {
       var fullName=[t.civilite,t.prenom,t.nom].filter(Boolean).join(' ')||'—';
       [['Bénéficiaire',fullName],['Téléphone',t.telephone||'—'],['Démarche',t.demarche||'—'],['Date',(d.dateStr||'').split('-').reverse().join('/')],['Notes',t.notes||'—']].forEach(function(r){
         var row=el('div',{style:"display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--c-border);"});
@@ -3064,6 +3078,7 @@ function renderModal(){
         row.appendChild(el('div',{style:"font-size:13px;color:var(--c-dim);font-weight:600;flex:1;word-break:break-all;"},r[1]));
         box.appendChild(row);
       });
+      }
       var btnRow=el('div',{style:"display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;"});
       btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){S.modal=null;renderModal();}},'Fermer'));
       btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid oklch(0.72 0.12 100);background:oklch(0.95 0.05 100);color:oklch(0.38 0.13 100);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
