@@ -1700,9 +1700,15 @@ function renderAgenda(){
     var sg=el('div',{style:"display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;"});
     slots.forEach(function(slot){
       var who=slot.taken?[slot.taken.civilite,slot.taken.prenom,slot.taken.nom].filter(Boolean).join(' '):'';
-      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+(slot.taken?'oklch(0.82 0.08 25)':'oklch(0.82 0.08 155)')+";background:"+(slot.taken?'oklch(0.96 0.03 25)':'oklch(0.95 0.04 155)')+";cursor:pointer;overflow:hidden;font-family:inherit;"});
-      pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+(slot.taken?'oklch(0.48 0.15 25)':'oklch(0.42 0.12 155)')},slot.heure));
-      if(slot.taken&&who){
+      var isPropo=slot.taken&&slot.taken.msgType==='proposition';
+      var pillBorder=slot.taken?(isPropo?'oklch(0.75 0.18 330)':'oklch(0.82 0.08 25)'):'oklch(0.82 0.08 155)';
+      var pillBg=slot.taken?(isPropo?'oklch(0.95 0.06 330)':'oklch(0.96 0.03 25)'):'oklch(0.95 0.04 155)';
+      var pillTxt=slot.taken?(isPropo?'oklch(0.42 0.18 330)':'oklch(0.48 0.15 25)'):'oklch(0.42 0.12 155)';
+      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;overflow:hidden;font-family:inherit;"});
+      pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
+      if(slot.taken&&isPropo){
+        pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé"));
+      } else if(slot.taken&&who){
         var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.48 0.15 25);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"});
         nameEl.textContent=who;
         pill.appendChild(nameEl);
