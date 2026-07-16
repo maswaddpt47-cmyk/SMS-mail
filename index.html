@@ -605,8 +605,11 @@ function getSlots(commune,dateStr){
     var hh=String(Math.floor(t/60)).padStart(2,'0'),mm=String(t%60).padStart(2,'0');
     var heure=hh+':'+mm;
     var matches=S.history.filter(function(x){return x.date===dateStr&&x.heure===heure&&(x.commune===commune||!x.commune);});
-    var taken=matches.find(function(x){return x.msgType==='confirmation';})||matches[0]||null;
-    slots.push({heure:heure,taken:taken||null});
+    var confirmations=matches.filter(function(x){return x.msgType==='confirmation';});
+    var propositions=matches.filter(function(x){return x.msgType==='proposition';});
+    var taken=confirmations[0]||propositions[0]||null;
+    var multiPropo=confirmations.length===0&&propositions.length>1;
+    slots.push({heure:heure,taken:taken||null,multiPropo:multiPropo});
   }
   return slots;
 }
@@ -1706,7 +1709,7 @@ function renderAgenda(){
       var pillTxt=slot.taken?(isPropo?'oklch(0.42 0.18 330)':'oklch(0.48 0.15 25)'):'oklch(0.42 0.12 155)';
       var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;overflow:hidden;font-family:inherit;"});
       pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
-      if(slot.taken&&isPropo){
+      if(slot.taken&&slot.multiPropo){
         pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé"));
       } else if(slot.taken&&who){
         var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.48 0.15 25);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"});
