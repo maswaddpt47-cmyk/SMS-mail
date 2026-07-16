@@ -1621,9 +1621,9 @@ function importPlanningJson(){
         entries.forEach(function(entry){
           /* dédup : même date + heure + nom (insensible casse) */
           var dup=S.history.find(function(h){
-            return h.date===entry.date&&h.heure===entry.heure&&(h.nom||'').toLowerCase()===(entry.nom||'').toLowerCase();
+            return h.date===entry.date&&(h.nom||'').toLowerCase()===(entry.nom||'').toLowerCase();
           });
-          if(dup)return;
+          if(dup){S.history.splice(S.history.indexOf(dup),1,Object.assign({},dup,entry));return;};
           addHistory(Object.assign({channel:'sms',msgType:'confirmation',body:'',subject:'',civilite:'',prenom:'',nom:'',telephone:'',demarche:'',selectedDemarche:'',demarcheAutre:'',commune:'',selectedCMS:'',date:'',heure:'',dateDemande:'',ts:new Date().toLocaleString('fr-FR')},entry));
           added++;
         });
