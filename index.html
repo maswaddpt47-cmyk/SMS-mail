@@ -604,7 +604,8 @@ function getSlots(commune,dateStr){
   for(var t=start;t<=end;t+=perm.duree){
     var hh=String(Math.floor(t/60)).padStart(2,'0'),mm=String(t%60).padStart(2,'0');
     var heure=hh+':'+mm;
-    var taken=S.history.find(function(x){return x.date===dateStr&&x.heure===heure&&(x.commune===commune||!x.commune);});
+    var matches=S.history.filter(function(x){return x.date===dateStr&&x.heure===heure&&(x.commune===commune||!x.commune);});
+    var taken=matches.find(function(x){return x.msgType==='confirmation';})||matches[0]||null;
     slots.push({heure:heure,taken:taken||null});
   }
   return slots;
