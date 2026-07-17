@@ -344,6 +344,16 @@ function persist(){
 function saveLast(){lsSet('ess-last',{selectedCMS:S.selectedCMS,selectedDemarche:S.selectedDemarche,commune:S.commune});}
 
 /* ============================== TOAST ============================== */
+function rdvCountdown(dateStr,heure){
+  if(!dateStr||!heure)return'';
+  var parts=heure.split(':');
+  var rdv=new Date(dateStr+'T'+parts[0]+':'+parts[1]+':00');
+  var diff=Math.floor((rdv.getTime()-Date.now())/1000);
+  if(diff<0)return'';
+  if(diff<3600){var mn=Math.floor(diff/60);return'dans '+mn+' min';}
+  if(diff<86400){var h=Math.floor(diff/3600);return'dans '+h+'h';}
+  var j=Math.floor(diff/86400);return'dans '+j+' j';
+}
 function timeAgo(tsStr){
   if(!tsStr)return'';
   /* parse "dd/mm/yyyy hh:mm:ss" ou "dd/mm/yyyy hh:mm" */
@@ -1733,6 +1743,8 @@ function renderAgenda(){
         nameEl.textContent=who;
         pill.appendChild(nameEl);
       }
+      var cdown=rdvCountdown(day.dateStr,slot.heure);
+      if(cdown)pill.appendChild(el('div',{style:"font-size:8px;font-weight:600;color:"+pillTxt+";opacity:0.75;"},cdown));
       (function(s,d){
         pill.addEventListener('click',function(){
           if(s.taken){
@@ -3094,6 +3106,19 @@ function renderModal(){
       });
       }
       var btnRow=el('div',{style:"display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;"});
+      if(!slot.multiPropo){
+        btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.5 0.16 155);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
+          var cmsMatch=S.cmsList.find(function(c){return String(c.id)===String(t.selectedCMS);});
+          var demMatch=S.demarches.find(function(dm){return dm.nom===t.demarche;});
+          Object.assign(S,{civilite:t.civilite||'',prenom:t.prenom||'',nom:t.nom||'',telephone:t.telephone||'',
+            commune:t.commune||'',selectedCMS:t.selectedCMS||'',
+            selectedDemarche:demMatch?String(demMatch.id):(t.selectedDemarche||''),
+            demarcheAutre:t.demarcheAutre||'',
+            date:t.date||d.dateStr||'',heure:t.heure||slot.heure||'',
+            channel:t.channel||'sms',msgType:t.msgType||'confirmation'});
+          S.modal=null;S.activeTab='generate';showActivePane();renderTabs();renderGenerate();
+        }},'💬 Générer SMS/Mail'));
+      }
       btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){S.modal=null;renderModal();}},'Fermer'));
       btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid oklch(0.72 0.12 100);background:oklch(0.95 0.05 100);color:oklch(0.38 0.13 100);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
         S.agendaNew={heure:'',dateStr:'',commune:d.perm?d.perm.commune:(d.dateStr?'':''),
