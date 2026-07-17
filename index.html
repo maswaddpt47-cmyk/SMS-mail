@@ -357,7 +357,7 @@ function rdvCountdown(dateStr,heure){
 function timeAgo(tsStr){
   if(!tsStr)return'';
   /* parse "dd/mm/yyyy hh:mm:ss" ou "dd/mm/yyyy hh:mm" */
-  var m=tsStr.match(/(\d{2})\/(\d{2})\/(\d{4})[,\s]+(\d{2}):(\d{2})/);
+  var m=tsStr.match(/(\d{2})\/(\d{2})\/(\d{4})[^\d]+(\d{2}):(\d{2})/);
   if(!m)return'';
   var d=new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5]);
   var diff=Math.floor((Date.now()-d.getTime())/1000);
@@ -1734,7 +1734,7 @@ function renderAgenda(){
       var pillBorder=slot.taken?(isPropo?'oklch(0.75 0.18 330)':'oklch(0.82 0.08 25)'):'oklch(0.82 0.08 155)';
       var pillBg=slot.taken?(isPropo?'oklch(0.95 0.06 330)':'oklch(0.96 0.03 25)'):'oklch(0.95 0.04 155)';
       var pillTxt=slot.taken?(isPropo?'oklch(0.42 0.18 330)':'oklch(0.48 0.15 25)'):'oklch(0.42 0.12 155)';
-      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;overflow:hidden;font-family:inherit;"});
+      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;font-family:inherit;min-height:52px;"});
       pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
       if(slot.taken&&slot.multiPropo){
         pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé ("+slot.allPropo.length+")"));
