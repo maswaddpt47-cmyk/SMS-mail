@@ -1739,9 +1739,18 @@ function renderAgenda(){
     slots.forEach(function(slot){
       var who=slot.taken?[slot.taken.civilite,slot.taken.prenom,slot.taken.nom].filter(Boolean).join(' '):'';
       var isPropo=slot.taken&&slot.taken.msgType==='proposition';
-      var pillBorder=slot.taken?(isPropo?'oklch(0.75 0.18 330)':'oklch(0.82 0.08 25)'):'oklch(0.82 0.08 155)';
-      var pillBg=slot.taken?(isPropo?'oklch(0.95 0.06 330)':'oklch(0.96 0.03 25)'):'oklch(0.95 0.04 155)';
-      var pillTxt=slot.taken?(isPropo?'oklch(0.42 0.18 330)':'oklch(0.48 0.15 25)'):'oklch(0.42 0.12 155)';
+      var _st=slot.taken&&slot.taken.statut;
+      /* couleurs selon statut : rose=en_attente, bleu=confirmé, vert=vide/sans statut */
+      var pillBorder,pillBg,pillTxt;
+      if(!slot.taken){
+        pillBorder='oklch(0.82 0.08 155)';pillBg='oklch(0.95 0.04 155)';pillTxt='oklch(0.42 0.12 155)';
+      } else if(_st==='confirme'){
+        pillBorder='oklch(0.72 0.12 266)';pillBg='oklch(0.93 0.06 266)';pillTxt='oklch(0.38 0.14 266)';
+      } else if(_st==='en_attente'){
+        pillBorder='oklch(0.78 0.14 350)';pillBg='oklch(0.95 0.06 350)';pillTxt='oklch(0.45 0.18 350)';
+      } else {
+        pillBorder='oklch(0.82 0.08 155)';pillBg='oklch(0.95 0.04 155)';pillTxt='oklch(0.42 0.12 155)';
+      }
       var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;font-family:inherit;min-height:52px;"});
       pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
       if(slot.taken&&slot.multiPropo){
