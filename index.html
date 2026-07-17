@@ -1744,8 +1744,10 @@ function renderAgenda(){
       var pillBorder,pillBg,pillTxt;
       if(!slot.taken){
         pillBorder='oklch(0.82 0.08 155)';pillBg='oklch(0.95 0.04 155)';pillTxt='oklch(0.42 0.12 155)';
+      } else if(slot.multiPropo){
+        pillBorder='oklch(0.62 0.2 25)';pillBg='oklch(0.92 0.08 25)';pillTxt='oklch(0.42 0.2 25)';
       } else if(_st==='confirme'){
-        pillBorder='oklch(0.72 0.12 266)';pillBg='oklch(0.93 0.06 266)';pillTxt='oklch(0.38 0.14 266)';
+        pillBorder='oklch(0.48 0.2 266)';pillBg='oklch(0.82 0.14 266)';pillTxt='oklch(0.2 0.15 266)';
       } else if(_st==='en_attente'){
         pillBorder='oklch(0.78 0.14 350)';pillBg='oklch(0.95 0.06 350)';pillTxt='oklch(0.45 0.18 350)';
       } else {
