@@ -1765,13 +1765,6 @@ function renderAgenda(){
       if(slot.taken&&slot.taken.body){
         var _ago=timeAgo(slot.taken.ts);
         if(_ago)pill.appendChild(el('div',{style:"font-size:9px;font-weight:700;color:"+pillTxt+";background:rgba(0,0,0,0.07);border-radius:4px;padding:1px 4px;margin-top:1px;"},_ago));
-        var _st=slot.taken.statut;
-        if(_st){
-          var _stCol=_st==='confirme'?'oklch(0.42 0.14 155)':'oklch(0.5 0.12 75)';
-          var _stBg=_st==='confirme'?'oklch(0.92 0.07 155)':'oklch(0.95 0.07 85)';
-          var _stLbl=_st==='confirme'?'✓ Confirmé':'⏳ En attente';
-          pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+_stCol+";background:"+_stBg+";border-radius:4px;padding:1px 4px;margin-top:1px;"},_stLbl));
-        }
       }
       (function(s,d){
         pill.addEventListener('click',function(){
