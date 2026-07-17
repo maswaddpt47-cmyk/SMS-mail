@@ -1744,7 +1744,7 @@ function renderAgenda(){
         pill.appendChild(nameEl);
       }
       var ago=slot.taken?timeAgo(slot.taken.ts):'';
-      if(ago)pill.appendChild(el('div',{style:"font-size:8px;font-weight:600;color:"+pillTxt+";opacity:0.75;"},ago));
+      if(ago)pill.appendChild(el('div',{style:"font-size:9px;font-weight:700;color:"+pillTxt+";background:rgba(0,0,0,0.07);border-radius:4px;padding:1px 4px;margin-top:1px;"},ago));
       (function(s,d){
         pill.addEventListener('click',function(){
           if(s.taken){
@@ -3098,7 +3098,7 @@ function renderModal(){
         box.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);text-align:center;padding:4px 0;"},dateAff));
       } else {
       var fullName=[t.civilite,t.prenom,t.nom].filter(Boolean).join(' ')||'—';
-      [['Bénéficiaire',fullName],['Téléphone',t.telephone||'—'],['Démarche',t.demarche||'—'],['Date',(d.dateStr||'').split('-').reverse().join('/')],['Envoyé',t.ts||'—'],['Notes',t.notes||'—']].forEach(function(r){
+      [['Bénéficiaire',fullName],['Téléphone',t.telephone||'—'],['Démarche',t.demarche||'—'],['Date',(d.dateStr||'').split('-').reverse().join('/')],['Notes',t.notes||'—']].forEach(function(r){
         var row=el('div',{style:"display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--c-border);"});
         row.appendChild(el('div',{style:"font-size:12px;font-weight:700;color:var(--c-muted);min-width:100px;"},r[0]));
         row.appendChild(el('div',{style:"font-size:13px;color:var(--c-dim);font-weight:600;flex:1;word-break:break-all;"},r[1]));
