@@ -3115,14 +3115,12 @@ function renderModal(){
         box.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);text-align:center;padding:4px 0;"},dateAff));
       } else {
       var fullName=[t.civilite,t.prenom,t.nom].filter(Boolean).join(' ')||'—';
-      if(t.statut){
-        var stSel=el('select',{style:"width:100%;font-family:inherit;font-size:13px;font-weight:700;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);box-sizing:border-box;margin-bottom:10px;",onChange:function(ev){
-          var idx=S.history.findIndex(function(h){return h===t;});
-          if(idx!==-1){S.history[idx].statut=ev.target.value;t.statut=ev.target.value;lsSet('ess-history',S.history);renderAgenda();}
-        }});
-        [['en_attente','⏳ En attente'],['confirme','✓ Confirmé']].forEach(function(o){var opt=el('option',{value:o[0]},o[1]);if(t.statut===o[0])opt.selected=true;stSel.appendChild(opt);});
-        box.appendChild(stSel);
-      }
+      var stSel=el('select',{style:"width:100%;font-family:inherit;font-size:13px;font-weight:700;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);box-sizing:border-box;margin-bottom:10px;",onChange:function(ev){
+        var idx=S.history.findIndex(function(h){return h===t;});
+        if(idx!==-1){S.history[idx].statut=ev.target.value||null;t.statut=ev.target.value||null;lsSet('ess-history',S.history);renderAgenda();}
+      }});
+      [['','— Statut —'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé']].forEach(function(o){var opt=el('option',{value:o[0]},o[1]);if((t.statut||'')===(o[0]))opt.selected=true;stSel.appendChild(opt);});
+      box.appendChild(stSel);
       [['Bénéficiaire',fullName],['Téléphone',t.telephone||'—'],['Démarche',t.demarche||'—'],['Date',(d.dateStr||'').split('-').reverse().join('/')],['Notes',t.notes||'—']].forEach(function(r){
         var row=el('div',{style:"display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--c-border);"});
         row.appendChild(el('div',{style:"font-size:12px;font-weight:700;color:var(--c-muted);min-width:100px;"},r[0]));
