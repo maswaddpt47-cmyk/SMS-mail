@@ -495,6 +495,13 @@ function onReset(){
   regen();renderGenerate();
 }
 function addHistory(item){
+  /* doublon : même date + heure + commune + nom → remplace l'existant */
+  if(item.date&&item.heure&&item.nom){
+    var di=S.history.findIndex(function(h){
+      return h.date===item.date&&h.heure===item.heure&&h.commune===item.commune&&(h.nom||'').toLowerCase()===(item.nom||'').toLowerCase();
+    });
+    if(di!==-1){S.history.splice(di,1,Object.assign({},S.history[di],item));lsSet('ess-history',S.history);return;}
+  }
   var h=[item].concat(S.history);if(h.length>HISTORY_MAX)h.pop();
   S.history=h;lsSet('ess-history',h);
   /* Rappel export tous les 5 messages */
