@@ -1743,8 +1743,8 @@ function renderAgenda(){
         nameEl.textContent=who;
         pill.appendChild(nameEl);
       }
-      var cdown=rdvCountdown(day.dateStr,slot.heure);
-      if(cdown)pill.appendChild(el('div',{style:"font-size:8px;font-weight:600;color:"+pillTxt+";opacity:0.75;"},cdown));
+      var ago=slot.taken?timeAgo(slot.taken.ts):'';
+      if(ago)pill.appendChild(el('div',{style:"font-size:8px;font-weight:600;color:"+pillTxt+";opacity:0.75;"},ago));
       (function(s,d){
         pill.addEventListener('click',function(){
           if(s.taken){
