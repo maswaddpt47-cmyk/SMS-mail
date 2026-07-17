@@ -1648,7 +1648,7 @@ function importPlanningJson(){
             return h.date===entry.date&&(h.nom||'').toLowerCase()===(entry.nom||'').toLowerCase();
           });
           if(dup){S.history.splice(S.history.indexOf(dup),1,Object.assign({},dup,entry));return;};
-          addHistory(Object.assign({channel:'sms',msgType:'confirmation',body:'',subject:'',civilite:'',prenom:'',nom:'',telephone:'',demarche:'',selectedDemarche:'',demarcheAutre:'',commune:'',selectedCMS:'',date:'',heure:'',dateDemande:'',ts:new Date().toLocaleString('fr-FR')},entry));
+          addHistory(Object.assign({channel:'sms',msgType:'confirmation',body:'',subject:'',civilite:'',prenom:'',nom:'',telephone:'',demarche:'',selectedDemarche:'',demarcheAutre:'',commune:'',selectedCMS:'',date:'',heure:'',dateDemande:''},entry,{ts:new Date().toLocaleString('fr-FR')}));
           added++;
         });
         lsSet('ess-history',S.history);
