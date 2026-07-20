@@ -161,6 +161,7 @@
     <button class="gx-press hdr-btn" id="btnExport" style="border:none;background:oklch(0.26 0.03 264);color:#fff;box-shadow:0 4px 12px oklch(0.26 0.03 264 / .25);">Sauvegarder</button>
   </header>
   <nav id="tabnav" style="background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:0 clamp(16px,4vw,40px);display:flex;gap:4px;overflow-x:auto;"></nav>
+  <div id="agenda-subnav" style="display:none;background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:8px clamp(12px,4vw,40px);box-shadow:0 2px 10px oklch(0.3 0.08 266 / .10);"></div>
   </div>
 
   <main class="gx-scroll" style="flex:1;overflow-y:auto;">
@@ -769,6 +770,8 @@ function showActivePane(){
   ['pane-generate','pane-history','pane-agenda','pane-stats','pane-templates','pane-config','pane-mandat','pane-mandats','pane-orientations'].forEach(function(id){
     document.getElementById(id).style.display=(map[S.activeTab]===id)?'block':'none';
   });
+  var sn=document.getElementById('agenda-subnav');
+  if(sn&&S.activeTab!=='agenda'){sn.style.display='none';sn.innerHTML='';}
 }
 
 /* ============================== RENDER: GENERATE ============================== */
@@ -1726,7 +1729,7 @@ function renderAgenda(){
   /* supprimer les doublons éventuels */
   var seen={};days=days.filter(function(d){var k=d.dateStr+d.perm.commune;if(seen[k])return false;seen[k]=1;return true;});
 
-  /* --- barre de navigation rapide (sticky, accrochée au pane, hors wrap) --- */
+  /* --- barre de navigation rapide — injectée dans le header sticky --- */
   var NBTN="cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:9px;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);";
   function agendaScrollTo(dateStr){
     var best=days.reduce(function(b,d){return(!b||d.dateStr===dateStr||(b.dateStr!==dateStr&&Math.abs(d.dateStr.localeCompare(dateStr))<Math.abs(b.dateStr.localeCompare(dateStr))))?d:b;},null);
@@ -1735,7 +1738,7 @@ function renderAgenda(){
     if(el2)el2.scrollIntoView({behavior:'smooth',block:'start'});
   }
   var agendaJumpIn=el('input',{type:'date',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;margin-left:auto;",value:todayStr,onChange:function(e){if(e.target.value)agendaScrollTo(e.target.value);}});
-  var navBar=el('div',{style:"position:sticky;top:0;z-index:90;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:8px clamp(12px,4vw,40px);box-shadow:0 2px 10px oklch(0.3 0.08 266 / .14);"});
+  var navBar=el('div',{style:"display:flex;align-items:center;gap:8px;flex-wrap:wrap;"});
   navBar.appendChild(el('button',{class:'gx-press',style:NBTN,onClick:function(){agendaScrollTo(todayStr);}},"📍 Aujourd'hui"));
   navBar.appendChild(el('button',{class:'gx-press',style:NBTN,onClick:function(){
     var d=new Date(agendaJumpIn.value||todayStr);d.setDate(d.getDate()-7);
@@ -1746,7 +1749,8 @@ function renderAgenda(){
     var s=toLocalDateStr(d);agendaJumpIn.value=s;agendaScrollTo(s);
   }},"Semaine suiv. →"));
   navBar.appendChild(agendaJumpIn);
-  pane.appendChild(navBar);
+  var sn=document.getElementById('agenda-subnav');
+  if(sn){sn.innerHTML='';sn.appendChild(navBar);sn.style.display='block';}
 
   var MONTHS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
   days.forEach(function(day){
