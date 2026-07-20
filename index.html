@@ -677,7 +677,7 @@ function doImport(){
     var data=JSON.parse(S.importText.trim());
     if(data.cmsList)S.cmsList=data.cmsList;if(data.demarches)S.demarches=data.demarches;if(data.secteurs)S.secteurs=data.secteurs;
     if(data.customTemplates)S.customTemplates=data.customTemplates;if(data.customVars)S.customVars=data.customVars;
-    if(data.templates)S.templates=Object.assign({},DEFAULT_TEMPLATES,data.templates);
+    /* on n'importe pas les templates builtin — ils sont définis dans le code */
     if(data.mandats){S.mandats=data.mandats;lsSet('ess-mandats',S.mandats);}
     if(data.history){S.history=data.history;lsSet('ess-history',S.history);}
     if(data.permanences){S.permanences=data.permanences;lsSet('ess-permanences',S.permanences);}
@@ -3242,7 +3242,7 @@ function init(){
   S.secteurs=ls('ess-secteurs',DEFAULT_SECTEURS);
   S.templates=ls('ess-templates',DEFAULT_TEMPLATES);
   /* migration : forcer les templates builtin à la dernière version par défaut */
-  var _tplV='v3-cal';
+  var _tplV='v3-cal-2';
   if(ls('ess-tpl-version','')!==_tplV){
     S.templates=Object.assign({},DEFAULT_TEMPLATES);
     lsSet('ess-templates',S.templates);
