@@ -653,7 +653,8 @@ function getSlots(commune,dateStr){
     var matches=S.history.filter(function(x){return x.date===dateStr&&x.heure===heure&&x.commune===commune;});
     var confirmations=matches.filter(function(x){return x.msgType==='confirmation';});
     var propositions=matches.filter(function(x){return x.msgType==='proposition';});
-    var taken=confirmations[0]||propositions[0]||null;
+    var sansAppels=matches.filter(function(x){return x.msgType==='sans_appel';});
+    var taken=confirmations[0]||propositions[0]||sansAppels[0]||null;
     var multiPropo=confirmations.length===0&&propositions.length>1;
     slots.push({heure:heure,taken:taken||null,multiPropo:multiPropo,allPropo:propositions});
   }
