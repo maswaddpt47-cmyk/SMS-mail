@@ -531,19 +531,31 @@ function isDuplicate(nom,demarche,date){
   });
 }
 function copyBody(){
-  doCopy(S.generatedBody).then(function(ok){
+  var text=S.generatedBody;
+  function afterCopy(ok){
     if(!ok)return;
-    if(S.generatedBody&&(!S.history.length||S.history[0].body!==S.generatedBody)){
+    if(text&&(!S.history.length||S.history[0].body!==text)){
       var r=compute();var cms=S.cmsList.find(function(c){return String(c.id)===String(S.selectedCMS);});
       if(cms&&r.dem){
-        if(isDuplicate(S.nom,r.dem.nom,S.date)){
-          showToast('⚠️ Doublon détecté : '+S.nom+' / '+r.dem.nom+' déjà dans l\'historique','warn');
-        }
-        addHistory({channel:S.channel,msgType:S.msgType,body:S.generatedBody,subject:S.generatedSubject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:r.dem.nom,date:S.date,heure:S.heure,ts:new Date().toLocaleString('fr-FR')});
+        if(isDuplicate(S.nom,r.dem.nom,S.date))showToast('⚠️ Doublon détecté : '+S.nom+' / '+r.dem.nom+' déjà dans l\'historique','warn');
+        addHistory({channel:S.channel,msgType:S.msgType,body:text,subject:S.generatedSubject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:r.dem.nom,date:S.date,heure:S.heure,ts:new Date().toLocaleString('fr-FR')});
       }
     }
     flashCopied('body');showToast("✓ Copié !");
-  });
+  }
+  /* copie enrichie : HTML avec "cliquer sur ce lien" + fallback texte brut */
+  if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write&&window.isSecureContext){
+    var html=text
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\n/g,'<br>')
+      .replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1">cliquer sur ce lien</a>');
+    navigator.clipboard.write([new ClipboardItem({
+      'text/plain':new Blob([text],{type:'text/plain'}),
+      'text/html':new Blob([html],{type:'text/html'})
+    })]).then(function(){afterCopy(true);},function(){doCopy(text).then(afterCopy);});
+  } else {
+    doCopy(text).then(afterCopy);
+  }
 }
 function copySubject(){doCopy(S.generatedSubject).then(function(ok){if(ok){flashCopied('subject');showToast("✓ Objet copié !");}});}
 function formatTel(val){var d=(val||"").replace(/\D/g,'').substring(0,10);return d.replace(/(\d{2})(?=\d)/g,'$1 ').trim();}
