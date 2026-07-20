@@ -488,7 +488,7 @@ function handleGenerate(){
   S.generatedBody=body;S.generatedSubject=subject;
   addHistory({channel:S.channel,msgType:S.msgType,body:body,subject:subject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:dem?dem.nom:"",selectedDemarche:S.selectedDemarche,demarcheAutre:S.demarcheAutre,commune:S.commune,selectedCMS:S.selectedCMS,date:S.date,heure:S.heure,dateDemande:S.dateDemande||"",ts:new Date().toLocaleString('fr-FR')});
   showToast("✓ Message généré et enregistré");
-  renderGenerate();renderHistory();renderMandat();
+  renderGenerate();renderHistory();renderMandat();renderAgenda();
 }
 function onReset(){
   Object.assign(S,{civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",demarcheAutre:"",selectedCMS:"",selectedDemarche:"",commune:"",dateDemande:new Date().toISOString().slice(0,10),genNotes:""});
