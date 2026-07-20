@@ -1726,6 +1726,32 @@ function renderAgenda(){
   /* supprimer les doublons éventuels */
   var seen={};days=days.filter(function(d){var k=d.dateStr+d.perm.commune;if(seen[k])return false;seen[k]=1;return true;});
 
+  /* --- barre de navigation rapide --- */
+  var navBar=el('div',{style:"display:flex;align-items:center;gap:8px;margin-bottom:18px;background:var(--c-card);border:1px solid var(--c-border);border-radius:14px;padding:10px 14px;flex-wrap:wrap;"});
+  var NBTN="cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:9px;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);";
+  function agendaScrollTo(dateStr){
+    /* trouver la carte dont la date est la plus proche */
+    var best=days.reduce(function(b,d){return(!b||d.dateStr===dateStr||(b.dateStr!==dateStr&&Math.abs(d.dateStr.localeCompare(dateStr))<Math.abs(b.dateStr.localeCompare(dateStr))))?d:b;},null);
+    if(!best)return;
+    var el2=document.getElementById('agenda-day-'+best.dateStr+'-'+best.perm.commune);
+    if(el2)el2.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  /* bouton Aujourd'hui */
+  navBar.appendChild(el('button',{class:'gx-press',style:NBTN,onClick:function(){agendaScrollTo(todayStr);}},"📍 Aujourd'hui"));
+  /* semaine précédente / suivante */
+  navBar.appendChild(el('button',{class:'gx-press',style:NBTN,onClick:function(){
+    var d=new Date(agendaJumpIn.value||todayStr);d.setDate(d.getDate()-7);
+    var s=toLocalDateStr(d);agendaJumpIn.value=s;agendaScrollTo(s);
+  }},"← Semaine préc."));
+  navBar.appendChild(el('button',{class:'gx-press',style:NBTN,onClick:function(){
+    var d=new Date(agendaJumpIn.value||todayStr);d.setDate(d.getDate()+7);
+    var s=toLocalDateStr(d);agendaJumpIn.value=s;agendaScrollTo(s);
+  }},"Semaine suiv. →"));
+  /* saut direct à une date */
+  var agendaJumpIn=el('input',{type:'date',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;margin-left:auto;",value:todayStr,onChange:function(e){if(e.target.value)agendaScrollTo(e.target.value);}});
+  navBar.appendChild(agendaJumpIn);
+  wrap.appendChild(navBar);
+
   var MONTHS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
   days.forEach(function(day){
     var slots=getSlots(day.perm.commune,day.dateStr);
