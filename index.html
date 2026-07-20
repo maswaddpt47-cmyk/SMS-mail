@@ -3088,11 +3088,36 @@ function renderModal(){
     cmsSel.appendChild(el('option',{value:''},'— Adresse CMS —'));
     S.cmsList.forEach(function(c){var o=el('option',{value:String(c.id)},c.nom);if(String(an.selectedCMS)===String(c.id))o.selected=true;cmsSel.appendChild(o);});
     box.appendChild(inField('Adresse CMS *',cmsSel));
-    /* démarche */
-    var demSel=el('select',{style:INS,onChange:function(e){an.selectedDemarche=e.target.value;}});
-    demSel.appendChild(el('option',{value:''},'— Démarche —'));
-    S.demarches.forEach(function(d){var o=el('option',{value:String(d.id)},d.nom);if(String(an.selectedDemarche)===String(d.id))o.selected=true;demSel.appendChild(o);});
-    box.appendChild(inField('Démarche *',demSel));
+    /* démarche — moteur de recherche */
+    var anDemDiv=el('div',{style:"position:relative;"});
+    var anCurDem=an.selectedDemarche?S.demarches.find(function(d){return String(d.id)===String(an.selectedDemarche);}):null;
+    var anDemVal=anCurDem?anCurDem.nom:"";
+    var anDemIn=el('input',{class:'gx-in',style:INS+"padding-right:34px;",placeholder:"🔍 Rechercher une démarche…",value:anDemVal});
+    var anDemDrop=el('div',{style:"display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;background:var(--c-card);border:1.5px solid oklch(0.78 0.1 266);border-radius:13px;box-shadow:0 8px 24px oklch(0.3 0.08 266 / .18);max-height:240px;overflow-y:auto;"});
+    var anDemClear=el('button',{style:"position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;font-family:inherit;border:none;background:none;font-size:16px;color:var(--c-muted);padding:4px;line-height:1;display:"+(anDemVal?"flex":"none")+";align-items:center;",onClick:function(e){e.stopPropagation();an.selectedDemarche="";anDemIn.value="";anDemClear.style.display="none";anDemDrop.style.display="none";}});
+    anDemClear.textContent="✕";
+    function buildAnDemDrop(query){
+      anDemDrop.innerHTML="";
+      var q=(query||"").trim().toLowerCase();
+      var list=q?S.demarches.filter(function(d){return d.nom.toLowerCase().indexOf(q)>=0||(d.theme&&d.theme.toLowerCase().indexOf(q)>=0);}):S.demarches;
+      if(!list.length){var empty=el('div',{style:"padding:10px 13px;font-size:13px;color:var(--c-muted);"});empty.textContent="Aucune démarche trouvée";anDemDrop.appendChild(empty);return;}
+      list.forEach(function(d){
+        var item=el('div',{style:"padding:9px 13px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;"});
+        var nameSpan=el('span');nameSpan.textContent=d.nom;
+        item.appendChild(nameSpan);
+        if(d.theme&&!q)item.appendChild(el('span',{style:"font-size:10px;color:var(--c-muted);white-space:nowrap;"},d.theme));
+        item.addEventListener('mousedown',function(e){e.preventDefault();});
+        item.addEventListener('click',function(){an.selectedDemarche=String(d.id);anDemIn.value=d.nom;anDemDrop.style.display="none";anDemClear.style.display="flex";});
+        item.addEventListener('mouseenter',function(){item.style.background="oklch(0.94 0.04 266)";});
+        item.addEventListener('mouseleave',function(){item.style.background="";});
+        anDemDrop.appendChild(item);
+      });
+    }
+    anDemIn.addEventListener('focus',function(){buildAnDemDrop(anDemIn.value);anDemDrop.style.display="block";});
+    anDemIn.addEventListener('input',function(){buildAnDemDrop(anDemIn.value);anDemDrop.style.display="block";anDemClear.style.display=anDemIn.value?"flex":"none";if(!anDemIn.value)an.selectedDemarche="";});
+    anDemIn.addEventListener('blur',function(){setTimeout(function(){anDemDrop.style.display="none";},150);});
+    anDemDiv.appendChild(anDemIn);anDemDiv.appendChild(anDemClear);anDemDiv.appendChild(anDemDrop);
+    box.appendChild(inField('Démarche *',anDemDiv));
     /* canal */
     var chanRow=el('div',{style:"display:flex;gap:8px;margin-top:2px;"});
     ['sms','mail'].forEach(function(ch){
