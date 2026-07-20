@@ -538,7 +538,7 @@ function copyBody(){
       var r=compute();var cms=S.cmsList.find(function(c){return String(c.id)===String(S.selectedCMS);});
       if(cms&&r.dem){
         if(isDuplicate(S.nom,r.dem.nom,S.date))showToast('⚠️ Doublon détecté : '+S.nom+' / '+r.dem.nom+' déjà dans l\'historique','warn');
-        addHistory({channel:S.channel,msgType:S.msgType,body:text,subject:S.generatedSubject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:r.dem.nom,date:S.date,heure:S.heure,ts:new Date().toLocaleString('fr-FR')});
+        addHistory({channel:S.channel,msgType:S.msgType,body:text,subject:S.generatedSubject,civilite:S.civilite,prenom:S.prenom,nom:S.nom,telephone:S.telephone,demarche:r.dem.nom,selectedDemarche:S.selectedDemarche,demarcheAutre:S.demarcheAutre,commune:S.commune,selectedCMS:S.selectedCMS,date:S.date,heure:S.heure,dateDemande:S.dateDemande||'',ts:new Date().toLocaleString('fr-FR')});
       }
     }
     flashCopied('body');showToast("✓ Copié !");
