@@ -1816,7 +1816,22 @@ function renderAgenda(){
         pillBorder='oklch(0.82 0.08 155)';pillBg='oklch(0.95 0.04 155)';pillTxt='oklch(0.42 0.12 155)';
       }
       var _pillStatut=!slot.taken?'libre':(_st||'pris');
-      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;font-family:inherit;min-height:52px;",'data-nom':who.toLowerCase(),'data-statut':_pillStatut});
+      var _ttLines=[];
+      if(slot.taken){
+        var _t=slot.taken;
+        if(_t.civilite||_t.prenom||_t.nom)_ttLines.push((_t.civilite?_t.civilite+' ':'')+(_t.prenom?_t.prenom+' ':'')+(_t.nom||''));
+        if(_t.telephone)_ttLines.push('📞 '+_t.telephone);
+        if(_t.commune)_ttLines.push('📍 '+_t.commune);
+        var _demLabel=_t.demarcheAutre||(_t.selectedDemarche&&S.demarches?((S.demarches.find(function(d){return String(d.id)===String(_t.selectedDemarche);})||{}).nom||''):'');
+        if(_demLabel)_ttLines.push('📋 '+_demLabel);
+        if(_t.date)_ttLines.push('📅 '+_t.date+(_t.heure?' à '+_t.heure:''));
+        var _stLabel={'confirme':'✓ Confirmé','en_attente':'⏳ En attente','libre':'🟢 Libre'}[_st]||'';
+        if(_stLabel)_ttLines.push(_stLabel);
+        if(_t.body)_ttLines.push('💬 '+_t.body.slice(0,80)+(_t.body.length>80?'…':''));
+      } else {
+        _ttLines.push('🟢 Créneau libre — '+slot.heure);
+      }
+      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;font-family:inherit;min-height:52px;",'data-nom':who.toLowerCase(),'data-statut':_pillStatut,title:_ttLines.join('\n')});
       pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
       if(slot.taken&&slot.multiPropo){
         pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé ("+slot.allPropo.length+")"));
