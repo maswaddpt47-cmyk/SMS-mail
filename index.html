@@ -161,7 +161,6 @@
     <button class="gx-press hdr-btn" id="btnExport" style="border:none;background:oklch(0.26 0.03 264);color:#fff;box-shadow:0 4px 12px oklch(0.26 0.03 264 / .25);">Sauvegarder</button>
   </header>
   <nav id="tabnav" style="background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:0 clamp(16px,4vw,40px);display:flex;gap:4px;overflow-x:auto;"></nav>
-  <div id="agenda-subnav" style="display:none;background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:8px clamp(12px,4vw,40px);box-shadow:0 2px 10px oklch(0.3 0.08 266 / .10);"></div>
   </div>
 
   <main class="gx-scroll" style="flex:1;overflow-y:auto;">
@@ -770,8 +769,10 @@ function showActivePane(){
   ['pane-generate','pane-history','pane-agenda','pane-stats','pane-templates','pane-config','pane-mandat','pane-mandats','pane-orientations'].forEach(function(id){
     document.getElementById(id).style.display=(map[S.activeTab]===id)?'block':'none';
   });
-  var sn=document.getElementById('agenda-subnav');
-  if(sn&&S.activeTab!=='agenda'){sn.style.display='none';sn.innerHTML='';}
+  if(S.activeTab!=='agenda'){
+    var old=document.getElementById('agenda-nav-fixed');
+    if(old)old.parentNode.removeChild(old);
+  }
 }
 
 /* ============================== RENDER: GENERATE ============================== */
@@ -1730,7 +1731,7 @@ function renderAgenda(){
   var seen={};days=days.filter(function(d){var k=d.dateStr+d.perm.commune;if(seen[k])return false;seen[k]=1;return true;});
 
   /* --- barre de navigation rapide — injectée dans le header sticky --- */
-  /* fonctions globales pour les boutons de navigation — contourne les problèmes de closure/addEventListener */
+  /* barre de navigation fixe — appendée au body pour éviter tout problème de z-index/overlay */
   window._agendaScrollTo=function(dateStr){
     var allCards=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-"]'));
     if(!allCards.length)return;
@@ -1747,21 +1748,24 @@ function renderAgenda(){
     var inp=document.getElementById('agenda-jump-date');
     var base=inp&&inp.value?inp.value:toLocalDateStr(new Date());
     var d=new Date(base+'T12:00:00');d.setDate(d.getDate()+delta*7);
-    var s=toLocalDateStr(d);
-    if(inp)inp.value=s;
+    var s=toLocalDateStr(d);if(inp)inp.value=s;
     window._agendaScrollTo(s);
   };
+  var oldNav=document.getElementById('agenda-nav-fixed');if(oldNav)oldNav.parentNode.removeChild(oldNav);
+  /* mesurer le bas du header sticky pour positionner la barre juste en dessous */
+  var stickyEl=document.querySelector('div[style*="position:sticky"]');
+  var navTop=stickyEl?Math.round(stickyEl.getBoundingClientRect().bottom):56;
   var NBTN="cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:9px;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);";
-  var sn=document.getElementById('agenda-subnav');
-  if(sn){
-    sn.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-      +'<button class="gx-press" style="'+NBTN+'" onclick="window._agendaToday()">📍 Aujourd\'hui</button>'
-      +'<button class="gx-press" style="'+NBTN+'" onclick="window._agendaWeek(-1)">← Semaine préc.</button>'
-      +'<button class="gx-press" style="'+NBTN+'" onclick="window._agendaWeek(1)">Semaine suiv. →</button>'
-      +'<input id="agenda-jump-date" type="date" value="'+todayStr+'" onchange="window._agendaScrollTo(this.value)" style="font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;margin-left:auto;">'
-      +'</div>';
-    sn.style.display='block';
-  }
+  var navDiv=document.createElement('div');
+  navDiv.id='agenda-nav-fixed';
+  navDiv.style.cssText='position:fixed;top:'+navTop+'px;left:0;right:0;z-index:9999;background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:8px clamp(12px,4vw,40px);display:flex;align-items:center;gap:8px;flex-wrap:wrap;box-shadow:0 2px 10px oklch(0.3 0.08 266 / .14);';
+  navDiv.innerHTML='<button class="gx-press" style="'+NBTN+'" onclick="window._agendaToday()">📍 Aujourd\'hui</button>'
+    +'<button class="gx-press" style="'+NBTN+'" onclick="window._agendaWeek(-1)">← Semaine préc.</button>'
+    +'<button class="gx-press" style="'+NBTN+'" onclick="window._agendaWeek(1)">Semaine suiv. →</button>'
+    +'<input id="agenda-jump-date" type="date" value="'+todayStr+'" onchange="window._agendaScrollTo(this.value)" style="font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;margin-left:auto;">';
+  document.body.appendChild(navDiv);
+  /* ajouter un padding-top au pane pour compenser la barre fixe */
+  pane.style.paddingTop=(navDiv.offsetHeight||48)+'px';
 
   var MONTHS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
   days.forEach(function(day){
