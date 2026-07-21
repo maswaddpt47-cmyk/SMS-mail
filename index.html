@@ -860,7 +860,7 @@ function renderGenerate(){
   dd.appendChild(el('input',{class:'gx-in',style:INPUT,type:"date",value:S.date,onChange:function(e){setFieldSave({date:e.target.value});}}));
   if(S.date&&S.commune){
     if(perm){
-      var agLink=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);margin-top:4px;",onClick:function(){S.activeTab='agenda';showActivePane();renderTabs();renderAgenda();}},"📅 Voir dans l'agenda");
+      var agLink=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);margin-top:4px;",onClick:function(){S.activeTab='agenda';showActivePane();renderTabs();renderAgenda();setTimeout(function(){var all=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-"]'));all.sort(function(a,b){return a.id.slice(11,21).localeCompare(b.id.slice(11,21));});var t=S.date;var anchor=null;for(var i=0;i<all.length;i++){if(all[i].id.slice(11,21)>=t){anchor=all[i];break;}}if(!anchor&&all.length)anchor=all[all.length-1];if(anchor)anchor.scrollIntoView({behavior:'smooth',block:'start'});},80);}},"📅 Voir dans l'agenda");
       dd.appendChild(agLink);
     } else {
       /* date hors permanence — proposer ajout exceptionnel */
@@ -1688,7 +1688,6 @@ function renderAgenda(){
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);",onClick:function(){S.activeTab='config';S.configTab='permanences';showActivePane();renderTabs();renderConfig();}},'⚙️ Gérer les permanences'));
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);",onClick:exportICS},'⬇️ Export ICS'));
   headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 38);background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);",onClick:function(){S.modal='import-ics';renderModal();}},'⬆️ Import ICS'));
-  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 310);background:oklch(0.94 0.04 310);color:oklch(0.42 0.12 310);",onClick:importPlanningJson},'⬆️ Import JSON'));
   head.appendChild(headBtns);
   wrap.appendChild(head);
 
@@ -1867,19 +1866,6 @@ function renderAgenda(){
     wrap.appendChild(card);
   });
   pane.appendChild(wrap);
-  /* auto-scroll vers la prochaine permanence à partir d'aujourd'hui */
-  setTimeout(function(){
-    var all=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-"]'));
-    /* trier par date croissante */
-    all.sort(function(a,b){return a.id.slice(11,21).localeCompare(b.id.slice(11,21));});
-    /* prendre la première carte dont la date >= aujourd'hui */
-    var anchor=null;
-    for(var i=0;i<all.length;i++){
-      if(all[i].id.slice(11,21)>=todayStr){anchor=all[i];break;}
-    }
-    if(!anchor&&all.length)anchor=all[all.length-1];
-    if(anchor)anchor.scrollIntoView({behavior:'instant',block:'start'});
-  },50);
 }
 
 function renderHistory(){
