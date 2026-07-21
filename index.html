@@ -15,6 +15,8 @@
   @keyframes flyUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
   @keyframes popIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
   @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(14px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .ag-depasse{animation:blink 1.4s ease-in-out infinite;}
   @keyframes overlayIn{from{opacity:0;}to{opacity:1;}}
   #stat-tooltip{position:fixed;z-index:300;pointer-events:none;padding:7px 11px;border-radius:10px;font-size:12px;font-weight:600;color:#fff;background:oklch(0.22 0.02 264 / .95);box-shadow:0 4px 18px oklch(0.1 0.02 264 / .35);white-space:nowrap;display:none;max-width:240px;white-space:normal;line-height:1.4;}
   .gx-scroll::-webkit-scrollbar{width:9px;height:9px;}
@@ -1751,7 +1753,8 @@ function renderAgenda(){
         var s=p.getAttribute('data-statut')||'';
         if(norm&&n&&n.indexOf(norm)!==-1){matchNom=true;p.style.outline='2px solid oklch(0.5 0.16 266)';p.style.outlineOffset='1px';}
         else{p.style.outline='';}
-        if(statut&&s===statut)matchSt=true;
+        if(statut==='depasse'){if(p.getAttribute('data-depasse')==='1')matchSt=true;}
+        else if(statut&&s===statut)matchSt=true;
       });
       card.style.display=(matchNom&&matchSt)?'':'none';
     });
@@ -1770,7 +1773,7 @@ function renderAgenda(){
   var btnNext=el('button',{class:'gx-press',style:NBTN},'Semaine suiv. →');
   btnNext.addEventListener('click',function(){var d=new Date((jumpIn.value||todayStr)+'T12:00:00');d.setDate(d.getDate()+7);var s=toLocalDateStr(d);jumpIn.value=s;agScrollTo(s);});
   var statutSel=el('select',{style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;"});
-  [['','Tous statuts'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['libre','🟢 Libre']].forEach(function(o){statutSel.appendChild(el('option',{value:o[0]},o[1]));});
+  [['','Tous statuts'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['libre','🟢 Libre'],['depasse','🚨 Dépassement']].forEach(function(o){statutSel.appendChild(el('option',{value:o[0]},o[1]));});
   statutSel.addEventListener('change',function(e){agFilterStatut(e.target.value);});
   navBar.appendChild(btnToday);navBar.appendChild(btnPrev);navBar.appendChild(btnNext);navBar.appendChild(searchIn);navBar.appendChild(statutSel);navBar.appendChild(jumpIn);
   pane.appendChild(navBar);
@@ -1830,7 +1833,13 @@ function renderAgenda(){
       } else {
         _ttLines.push('🟢 Créneau libre — '+slot.heure);
       }
-      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;font-family:inherit;min-height:52px;",'data-nom':who.toLowerCase(),'data-statut':_pillStatut,title:_ttLines.join('\n')});
+      var _isDepasse=false;
+      if(slot.taken&&_st==='en_attente'&&slot.taken.dateDemande){
+        var _nowD=new Date();
+        var _todayD=_nowD.getFullYear()+'-'+String(_nowD.getMonth()+1).padStart(2,'0')+'-'+String(_nowD.getDate()).padStart(2,'0');
+        _isDepasse=Math.round((new Date(_todayD+'T00:00:00')-new Date(slot.taken.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;
+      }
+      var pill=el('button',{class:_isDepasse?'ag-depasse':'',style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;font-family:inherit;min-height:52px;",'data-nom':who.toLowerCase(),'data-statut':_pillStatut,'data-depasse':_isDepasse?'1':'0',title:_ttLines.join('\n')});
       pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
       if(slot.taken&&slot.multiPropo){
         pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé ("+slot.allPropo.length+")"));
