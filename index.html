@@ -1842,8 +1842,13 @@ function renderAgenda(){
       if(slot.taken){
         var _ago='';
         if(slot.taken.dateDemande){
-          var _dd=new Date(slot.taken.dateDemande+'T12:00:00');
-          var _diffJ=Math.floor((Date.now()-_dd.getTime())/86400000);
+          /* comparaison purement calendaire — pas d'ambiguïté horaire */
+          var _now=new Date();
+          var _todayISO=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0')+'-'+String(_now.getDate()).padStart(2,'0');
+          var _demISO=slot.taken.dateDemande.slice(0,10);
+          var _t0=new Date(_todayISO+'T00:00:00');
+          var _t1=new Date(_demISO+'T00:00:00');
+          var _diffJ=Math.round((_t0-_t1)/86400000);
           if(_diffJ<=0)_ago='aujourd\'hui';
           else if(_diffJ===1)_ago='il y a 1 j';
           else if(_diffJ<30)_ago='il y a '+_diffJ+' j';
