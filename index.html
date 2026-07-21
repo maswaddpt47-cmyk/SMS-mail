@@ -1732,20 +1732,17 @@ function renderAgenda(){
   /* --- barre de navigation rapide — injectée dans le header sticky --- */
   var NBTN="cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:9px;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);";
   function agendaScrollTo(dateStr){
-    /* cherche dans le DOM la carte la plus proche de la date demandée */
-    var allCards=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-"]'));
-    if(!allCards.length)return;
-    var best=allCards.reduce(function(b,c){
-      var cDate=c.id.replace('agenda-day-','').slice(0,10);
-      if(!b)return c;
-      var bDate=b.id.replace('agenda-day-','').slice(0,10);
-      return Math.abs(cDate.localeCompare(dateStr))<Math.abs(bDate.localeCompare(dateStr))?c:b;
-    },null);
-    if(!best)return;
-    var mainEl=document.querySelector('main');
-    if(!mainEl)return;
-    var offset=best.getBoundingClientRect().top - mainEl.getBoundingClientRect().top + mainEl.scrollTop - 12;
-    mainEl.scrollTo({top:offset,behavior:'smooth'});
+    setTimeout(function(){
+      var allCards=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-"]'));
+      if(!allCards.length){alert('Aucune carte agenda trouvée');return;}
+      var best=allCards.reduce(function(b,c){
+        var cDate=c.id.replace('agenda-day-','').slice(0,10);
+        if(!b)return c;
+        var bDate=b.id.replace('agenda-day-','').slice(0,10);
+        return Math.abs(cDate.localeCompare(dateStr))<Math.abs(bDate.localeCompare(dateStr))?c:b;
+      },null);
+      if(best)best.scrollIntoView({behavior:'smooth',block:'center'});
+    },0);
   }
   var agendaJumpIn=el('input',{type:'date',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;margin-left:auto;",value:todayStr,onChange:function(e){if(e.target.value)agendaScrollTo(e.target.value);}});
   var navBar=el('div',{style:"display:flex;align-items:center;gap:8px;flex-wrap:wrap;"});
