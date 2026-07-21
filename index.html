@@ -1827,7 +1827,6 @@ function renderAgenda(){
         if(_t.date)_ttLines.push('📅 '+_t.date+(_t.heure?' à '+_t.heure:''));
         var _stLabel={'confirme':'✓ Confirmé','en_attente':'⏳ En attente','libre':'🟢 Libre'}[_st]||'';
         if(_stLabel)_ttLines.push(_stLabel);
-        if(_t.body)_ttLines.push('💬 '+_t.body.slice(0,80)+(_t.body.length>80?'…':''));
       } else {
         _ttLines.push('🟢 Créneau libre — '+slot.heure);
       }
