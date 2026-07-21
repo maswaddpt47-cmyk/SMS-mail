@@ -3221,7 +3221,7 @@ function renderModal(){
       }});
       [['','— Statut —'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé']].forEach(function(o){var opt=el('option',{value:o[0]},o[1]);if((t.statut||'')===(o[0]))opt.selected=true;stSel.appendChild(opt);});
       box.appendChild(stSel);
-      [['Bénéficiaire',fullName],['Téléphone',t.telephone||'—'],['Démarche',t.demarche||'—'],['Date',(d.dateStr||'').split('-').reverse().join('/')],['Notes',t.notes||'—']].forEach(function(r){
+      [['Bénéficiaire',fullName],['Téléphone',t.telephone||'—'],['Démarche',t.demarche||'—'],['Date RDV',(d.dateStr||'').split('-').reverse().join('/')],['Envoi msg',t.dateDemande?(t.dateDemande.split('-').reverse().join('/')):'—'],['Notes',t.notes||'—']].forEach(function(r){
         var row=el('div',{style:"display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--c-border);"});
         row.appendChild(el('div',{style:"font-size:12px;font-weight:700;color:var(--c-muted);min-width:100px;"},r[0]));
         row.appendChild(el('div',{style:"font-size:13px;color:var(--c-dim);font-weight:600;flex:1;word-break:break-all;"},r[1]));
@@ -3249,7 +3249,7 @@ function renderModal(){
           selectedDemarche:t.demarche||'',demarcheAutre:'',selectedCMS:t.commune||S.selectedCMS||'',channel:t.channel||S.channel||'sms'};
         S.modal='agenda-new';renderModal();
       }},'⧉ Dupliquer'));
-      btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.96 0.025 266);color:oklch(0.4 0.14 266);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){ar.editing=true;ar.edit={civilite:t.civilite||'',prenom:t.prenom||'',nom:t.nom||'',telephone:t.telephone||'',demarche:t.demarche||'',notes:t.notes||'',date:t.date||d.dateStr||'',heure:t.heure||''};renderModal();}},'✏️ Modifier'));
+      btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.96 0.025 266);color:oklch(0.4 0.14 266);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){ar.editing=true;ar.edit={civilite:t.civilite||'',prenom:t.prenom||'',nom:t.nom||'',telephone:t.telephone||'',demarche:t.demarche||'',notes:t.notes||'',date:t.date||d.dateStr||'',heure:t.heure||'',dateDemande:t.dateDemande||''};renderModal();}},'✏️ Modifier'));
       btnRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.96 0.03 25);color:oklch(0.48 0.15 25);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
         if(!confirm('Supprimer ce RDV ?'))return;
         var idx=S.history.findIndex(function(h){return h===t;});
@@ -3270,7 +3270,9 @@ function renderModal(){
       var r2=el('div',{style:INROW2});r2.appendChild(field2('Nom *',nomIn2));r2.appendChild(field2('Téléphone',telIn2));box.appendChild(r2);
       var dateIn2=el('input',{type:'date',style:INS2,value:e2.date||'',onInput:function(ev){e2.date=ev.target.value;}});
       var heureIn2=el('input',{type:'time',style:INS2,value:e2.heure||'',onInput:function(ev){e2.heure=ev.target.value;}});
-      var r3=el('div',{style:INROW2});r3.appendChild(field2('Date',dateIn2));r3.appendChild(field2('Heure',heureIn2));box.appendChild(r3);
+      var r3=el('div',{style:INROW2});r3.appendChild(field2('Date RDV',dateIn2));r3.appendChild(field2('Heure',heureIn2));box.appendChild(r3);
+      var dateDemandeIn2=el('input',{type:'date',style:INS2+"margin-bottom:8px;",value:e2.dateDemande||'',onInput:function(ev){e2.dateDemande=ev.target.value;}});
+      box.appendChild(field2('📤 Date envoi message',dateDemandeIn2));
       var demIn2=el('input',{type:'text',style:INS2+"margin-bottom:8px;",value:e2.demarche||'',onInput:function(ev){e2.demarche=ev.target.value;}});
       box.appendChild(field2('Démarche',demIn2));
       var notesIn2=el('textarea',{style:INS2+"height:70px;resize:none;margin-bottom:8px;",placeholder:'Notes…',onInput:function(ev){e2.notes=ev.target.value;}});
@@ -3280,7 +3282,7 @@ function renderModal(){
       btnRow2.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
         if(!e2.nom.trim()){showToast('⚠️ Nom requis','warn');return;}
         var idx=S.history.findIndex(function(h){return h===t;});
-        if(idx!==-1){Object.assign(S.history[idx],{civilite:e2.civilite,prenom:e2.prenom,nom:e2.nom,telephone:e2.telephone,demarche:e2.demarche,notes:e2.notes,date:e2.date,heure:e2.heure});lsSet('ess-history',S.history);}
+        if(idx!==-1){Object.assign(S.history[idx],{civilite:e2.civilite,prenom:e2.prenom,nom:e2.nom,telephone:e2.telephone,demarche:e2.demarche,notes:e2.notes,date:e2.date,heure:e2.heure,dateDemande:e2.dateDemande});lsSet('ess-history',S.history);}
         ar.editing=false;ar.slot.taken=S.history[idx];renderModal();renderAgenda();showToast('✅ RDV modifié');
       }},'Enregistrer'));
       box.appendChild(btnRow2);
