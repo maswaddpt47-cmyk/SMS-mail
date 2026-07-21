@@ -1742,20 +1742,25 @@ function renderAgenda(){
     if(!best)return;
     best.scrollIntoView({behavior:'smooth',block:'start'});
   }
-  function agFilterNom(q){
-    var norm=(q||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  var _agNomFilter='';var _agStatutFilter='';
+  function agApplyFilters(){
+    var norm=(_agNomFilter||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    var statut=_agStatutFilter||'';
     document.querySelectorAll('[id^="agenda-day-"]').forEach(function(card){
-      if(!norm){card.style.display='';card.querySelectorAll('[data-nom]').forEach(function(p){p.style.outline='';});return;}
       var pills=card.querySelectorAll('[data-nom]');
-      var match=false;
+      var matchNom=!norm;var matchSt=!statut;
       pills.forEach(function(p){
         var n=(p.getAttribute('data-nom')||'').normalize('NFD').replace(/[̀-ͯ]/g,'');
-        if(n&&n.indexOf(norm)!==-1){match=true;p.style.outline='2px solid oklch(0.5 0.16 266)';p.style.outlineOffset='1px';}
+        var s=p.getAttribute('data-statut')||'';
+        if(norm&&n&&n.indexOf(norm)!==-1){matchNom=true;p.style.outline='2px solid oklch(0.5 0.16 266)';p.style.outlineOffset='1px';}
         else{p.style.outline='';}
+        if(statut&&s===statut)matchSt=true;
       });
-      card.style.display=match?'':'none';
+      card.style.display=(matchNom&&matchSt)?'':'none';
     });
   }
+  function agFilterNom(q){_agNomFilter=q;agApplyFilters();}
+  function agFilterStatut(v){_agStatutFilter=v;agApplyFilters();}
   var jumpIn=el('input',{type:'date',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;margin-left:auto;",value:todayStr});
   jumpIn.addEventListener('change',function(e){if(e.target.value)agScrollTo(e.target.value);});
   var searchIn=el('input',{type:'search',placeholder:'🔍 Nom…',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);min-width:120px;flex:1;max-width:220px;"});
@@ -1767,7 +1772,10 @@ function renderAgenda(){
   btnPrev.addEventListener('click',function(){var d=new Date((jumpIn.value||todayStr)+'T12:00:00');d.setDate(d.getDate()-7);var s=toLocalDateStr(d);jumpIn.value=s;agScrollTo(s);});
   var btnNext=el('button',{class:'gx-press',style:NBTN},'Semaine suiv. →');
   btnNext.addEventListener('click',function(){var d=new Date((jumpIn.value||todayStr)+'T12:00:00');d.setDate(d.getDate()+7);var s=toLocalDateStr(d);jumpIn.value=s;agScrollTo(s);});
-  navBar.appendChild(btnToday);navBar.appendChild(btnPrev);navBar.appendChild(btnNext);navBar.appendChild(searchIn);navBar.appendChild(jumpIn);
+  var statutSel=el('select',{style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;"});
+  [['','Tous statuts'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['libre','🟢 Libre']].forEach(function(o){statutSel.appendChild(el('option',{value:o[0]},o[1]));});
+  statutSel.addEventListener('change',function(e){agFilterStatut(e.target.value);});
+  navBar.appendChild(btnToday);navBar.appendChild(btnPrev);navBar.appendChild(btnNext);navBar.appendChild(searchIn);navBar.appendChild(statutSel);navBar.appendChild(jumpIn);
   pane.appendChild(navBar);
 
   var MONTHS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
@@ -1810,7 +1818,8 @@ function renderAgenda(){
       } else {
         pillBorder='oklch(0.82 0.08 155)';pillBg='oklch(0.95 0.04 155)';pillTxt='oklch(0.42 0.12 155)';
       }
-      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;font-family:inherit;min-height:52px;",'data-nom':who.toLowerCase()});
+      var _pillStatut=!slot.taken?'libre':(_st||'pris');
+      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;font-family:inherit;min-height:52px;",'data-nom':who.toLowerCase(),'data-statut':_pillStatut});
       pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
       if(slot.taken&&slot.multiPropo){
         pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé ("+slot.allPropo.length+")"));
