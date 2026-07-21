@@ -779,7 +779,7 @@ function savePerm(id){
 }
 
 /* modals */
-function exportData(){return{cmsList:S.cmsList,demarches:S.demarches,secteurs:S.secteurs,customTemplates:S.customTemplates,customVars:S.customVars,templates:S.templates,mandats:S.mandats,history:S.history,permanences:S.permanences};}
+function exportData(){return{cmsList:S.cmsList,demarches:S.demarches,secteurs:S.secteurs,customTemplates:S.customTemplates,customVars:S.customVars,templates:S.templates,mandats:S.mandats,history:S.history,permanences:S.permanences,orientations:S.orientations};}
 function openExport(){S.exportText=JSON.stringify(exportData(),null,2);S.modal='export';renderModal();}
 function downloadExport(){var blob=new Blob([JSON.stringify(exportData(),null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ess-cms-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);localStorage.setItem('ess-since-export','0');showToast("✓ Fichier téléchargé");}
 function copyExport(){doCopy(S.exportText).then(function(ok){if(ok){flashCopied('export');showToast("Sauvegarde copiée");}});}
@@ -794,6 +794,7 @@ function doImport(){
     if(data.mandats){S.mandats=data.mandats;lsSet('ess-mandats',S.mandats);}
     if(data.history){S.history=data.history;lsSet('ess-history',S.history);}
     if(data.permanences){S.permanences=data.permanences;lsSet('ess-permanences',S.permanences);}
+    if(data.orientations){S.orientations=data.orientations;lsSet('ess-orientations',S.orientations);}
     S.modal=null;S.importText="";S.importError="";
     persist();regen();renderAll();showToast("✅ Import réussi !");
   }catch(e){S.importError="❌ JSON invalide. Vérifiez la sauvegarde complète.";renderModal();}
