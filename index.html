@@ -1869,13 +1869,21 @@ function renderAgenda(){
     wrap.appendChild(card);
   });
   pane.appendChild(wrap);
-  /* auto-scroll vers la date active (saisie dans Générer) */
-  if(S.date&&S.commune){
-    setTimeout(function(){
-      var target=document.getElementById('agenda-day-'+S.date+'-'+S.commune);
-      if(target)target.scrollIntoView({behavior:'smooth',block:'center'});
-    },80);
-  }
+  /* auto-scroll vers aujourd'hui à l'ouverture */
+  setTimeout(function(){
+    var todayCards=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-'+todayStr+'"]'));
+    var anchor=todayCards[0];
+    if(!anchor){
+      /* si aujourd'hui absent (week-end/férié), chercher le plus proche */
+      var all=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-"]'));
+      anchor=all.reduce(function(b,c){
+        if(!b)return c;
+        var bd=b.id.slice(11,21);var cd=c.id.slice(11,21);
+        return Math.abs(cd.localeCompare(todayStr))<Math.abs(bd.localeCompare(todayStr))?c:b;
+      },null);
+    }
+    if(anchor)anchor.scrollIntoView({behavior:'instant',block:'start'});
+  },50);
 }
 
 function renderHistory(){
