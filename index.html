@@ -3189,17 +3189,30 @@ function renderModal(){
         item.appendChild(nameSpan);
         if(d.theme&&!q)item.appendChild(el('span',{style:"font-size:10px;color:var(--c-muted);white-space:nowrap;"},d.theme));
         item.addEventListener('mousedown',function(e){e.preventDefault();});
-        item.addEventListener('click',function(){an.selectedDemarche=String(d.id);anDemIn.value=d.nom;anDemDrop.style.display="none";anDemClear.style.display="flex";});
+        item.addEventListener('click',function(){an.selectedDemarche=String(d.id);an.demarcheAutre='';anDemIn.value=d.nom;anDemDrop.style.display="none";anDemClear.style.display="flex";renderModal();});
         item.addEventListener('mouseenter',function(){item.style.background="oklch(0.94 0.04 266)";});
         item.addEventListener('mouseleave',function(){item.style.background="";});
         anDemDrop.appendChild(item);
       });
+      /* option Autre */
+      var autreItem=el('div',{style:"padding:9px 13px;cursor:pointer;font-size:13px;border-top:1px solid var(--c-border);color:oklch(0.5 0.1 266);font-weight:700;"});
+      autreItem.textContent="✏️ Autre (saisie libre)";
+      autreItem.addEventListener('mousedown',function(e){e.preventDefault();});
+      autreItem.addEventListener('click',function(){an.selectedDemarche="__autre__";an.demarcheAutre='';anDemIn.value="✏️ Autre…";anDemDrop.style.display="none";anDemClear.style.display="flex";renderModal();});
+      autreItem.addEventListener('mouseenter',function(){autreItem.style.background="oklch(0.94 0.04 266)";});
+      autreItem.addEventListener('mouseleave',function(){autreItem.style.background="";});
+      anDemDrop.appendChild(autreItem);
     }
     anDemIn.addEventListener('focus',function(){buildAnDemDrop(anDemIn.value);anDemDrop.style.display="block";});
     anDemIn.addEventListener('input',function(){buildAnDemDrop(anDemIn.value);anDemDrop.style.display="block";anDemClear.style.display=anDemIn.value?"flex":"none";if(!anDemIn.value)an.selectedDemarche="";});
     anDemIn.addEventListener('blur',function(){setTimeout(function(){anDemDrop.style.display="none";},150);});
     anDemDiv.appendChild(anDemIn);anDemDiv.appendChild(anDemClear);anDemDiv.appendChild(anDemDrop);
     box.appendChild(inField('Démarche *',anDemDiv));
+    if(an.selectedDemarche==="__autre__"){
+      var anAutreIn=el('input',{class:'gx-in',style:INS,placeholder:"Préciser la démarche…",value:an.demarcheAutre||""});
+      anAutreIn.addEventListener('input',function(e){an.demarcheAutre=e.target.value;});
+      box.appendChild(inField('Préciser *',anAutreIn));
+    }
     /* canal */
     var chanRow=el('div',{style:"display:flex;gap:8px;margin-top:2px;"});
     ['sms','mail'].forEach(function(ch){
