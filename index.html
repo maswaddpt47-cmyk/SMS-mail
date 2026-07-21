@@ -1744,6 +1744,21 @@ function renderAgenda(){
     if(best)best.scrollIntoView({behavior:'smooth',block:'center'});
   };
   window._agendaToday=function(){window._agendaScrollTo(toLocalDateStr(new Date()));};
+  window._agendaFilterNom=function(q){
+    var norm=q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    var cards=document.querySelectorAll('[id^="agenda-day-"]');
+    cards.forEach(function(card){
+      if(!norm){card.style.display='';return;}
+      var pills=card.querySelectorAll('[data-nom]');
+      var match=false;
+      pills.forEach(function(p){
+        var n=(p.getAttribute('data-nom')||'').normalize('NFD').replace(/[̀-ͯ]/g,'');
+        if(n&&n.indexOf(norm)!==-1){match=true;p.style.outline='2px solid oklch(0.5 0.16 266)';p.style.outlineOffset='1px';}
+        else{p.style.outline='';}
+      });
+      card.style.display=match?'':'none';
+    });
+  };
   window._agendaWeek=function(delta){
     var inp=document.getElementById('agenda-jump-date');
     var base=inp&&inp.value?inp.value:toLocalDateStr(new Date());
@@ -1762,6 +1777,7 @@ function renderAgenda(){
   navDiv.innerHTML='<button class="gx-press" style="'+NBTN+'" onclick="window._agendaToday()">📍 Aujourd\'hui</button>'
     +'<button class="gx-press" style="'+NBTN+'" onclick="window._agendaWeek(-1)">← Semaine préc.</button>'
     +'<button class="gx-press" style="'+NBTN+'" onclick="window._agendaWeek(1)">Semaine suiv. →</button>'
+    +'<input id="agenda-search-nom" type="search" placeholder="🔍 Rechercher un nom…" oninput="window._agendaFilterNom(this.value)" style="font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);min-width:160px;flex:1;max-width:260px;">'
     +'<input id="agenda-jump-date" type="date" value="'+todayStr+'" onchange="window._agendaScrollTo(this.value)" style="font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;margin-left:auto;">';
   document.body.appendChild(navDiv);
   /* ajouter un padding-top au pane pour compenser la barre fixe */
@@ -1807,7 +1823,7 @@ function renderAgenda(){
       } else {
         pillBorder='oklch(0.82 0.08 155)';pillBg='oklch(0.95 0.04 155)';pillTxt='oklch(0.42 0.12 155)';
       }
-      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;font-family:inherit;min-height:52px;"});
+      var pill=el('button',{style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:pointer;font-family:inherit;min-height:52px;",'data-nom':who.toLowerCase()});
       pill.appendChild(el('div',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
       if(slot.taken&&slot.multiPropo){
         pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé ("+slot.allPropo.length+")"));
