@@ -1734,8 +1734,16 @@ function renderAgenda(){
   function agendaScrollTo(dateStr){
     var best=days.reduce(function(b,d){return(!b||d.dateStr===dateStr||(b.dateStr!==dateStr&&Math.abs(d.dateStr.localeCompare(dateStr))<Math.abs(b.dateStr.localeCompare(dateStr))))?d:b;},null);
     if(!best)return;
-    var el2=document.getElementById('agenda-day-'+best.dateStr+'-'+best.perm.commune);
-    if(el2)el2.scrollIntoView({behavior:'smooth',block:'start'});
+    var target=document.getElementById('agenda-day-'+best.dateStr+'-'+best.perm.commune);
+    if(!target)return;
+    var mainEl=document.querySelector('main.gx-scroll');
+    if(mainEl){
+      var targetTop=target.getBoundingClientRect().top;
+      var mainTop=mainEl.getBoundingClientRect().top;
+      mainEl.scrollBy({top:targetTop-mainTop-16,behavior:'smooth'});
+    } else {
+      target.scrollIntoView({behavior:'smooth',block:'start'});
+    }
   }
   var agendaJumpIn=el('input',{type:'date',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;margin-left:auto;",value:todayStr,onChange:function(e){if(e.target.value)agendaScrollTo(e.target.value);}});
   var navBar=el('div',{style:"display:flex;align-items:center;gap:8px;flex-wrap:wrap;"});
