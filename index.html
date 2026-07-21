@@ -1733,13 +1733,11 @@ function renderAgenda(){
   function agScrollTo(dateStr){
     var allCards=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-"]'));
     if(!allCards.length)return;
-    var best=allCards.reduce(function(b,c){
-      var cd=c.id.replace('agenda-day-','').slice(0,10);
-      if(!b)return c;
-      var bd=b.id.replace('agenda-day-','').slice(0,10);
-      return Math.abs(cd.localeCompare(dateStr))<Math.abs(bd.localeCompare(dateStr))?c:b;
-    },null);
-    if(!best)return;
+    /* trier par date, prendre la première carte >= dateStr (prochaine perm à partir de cette date) */
+    allCards.sort(function(a,b){return a.id.slice(11,21).localeCompare(b.id.slice(11,21));});
+    var best=null;
+    for(var i=0;i<allCards.length;i++){if(allCards[i].id.slice(11,21)>=dateStr){best=allCards[i];break;}}
+    if(!best)best=allCards[allCards.length-1];
     best.scrollIntoView({behavior:'smooth',block:'start'});
   }
   var _agNomFilter='';var _agStatutFilter='';
