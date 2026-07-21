@@ -1869,19 +1869,17 @@ function renderAgenda(){
     wrap.appendChild(card);
   });
   pane.appendChild(wrap);
-  /* auto-scroll vers aujourd'hui à l'ouverture */
+  /* auto-scroll vers la prochaine permanence à partir d'aujourd'hui */
   setTimeout(function(){
-    var todayCards=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-'+todayStr+'"]'));
-    var anchor=todayCards[0];
-    if(!anchor){
-      /* si aujourd'hui absent (week-end/férié), chercher le plus proche */
-      var all=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-"]'));
-      anchor=all.reduce(function(b,c){
-        if(!b)return c;
-        var bd=b.id.slice(11,21);var cd=c.id.slice(11,21);
-        return Math.abs(cd.localeCompare(todayStr))<Math.abs(bd.localeCompare(todayStr))?c:b;
-      },null);
+    var all=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-"]'));
+    /* trier par date croissante */
+    all.sort(function(a,b){return a.id.slice(11,21).localeCompare(b.id.slice(11,21));});
+    /* prendre la première carte dont la date >= aujourd'hui */
+    var anchor=null;
+    for(var i=0;i<all.length;i++){
+      if(all[i].id.slice(11,21)>=todayStr){anchor=all[i];break;}
     }
+    if(!anchor&&all.length)anchor=all[all.length-1];
     if(anchor)anchor.scrollIntoView({behavior:'instant',block:'start'});
   },50);
 }
