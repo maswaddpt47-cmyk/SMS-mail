@@ -164,6 +164,7 @@
   </header>
   <nav id="tabnav" style="background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:0 clamp(16px,4vw,40px);display:flex;gap:4px;overflow-x:auto;"></nav>
   </div>
+  <div id="gh-banner-root"></div>
 
   <main class="gx-scroll" style="flex:1;overflow-y:auto;">
     <div id="pane-generate" class="tab-pane"></div>
@@ -320,7 +321,7 @@ var S={
   activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all", historySearch:"", historyGrouped:false,
   statsCMS:"", calendarType:"google",
   cmsList:[], demarches:[], secteurs:[], templates:{}, customTemplates:[], customVars:[], hiddenBuiltinKeys:[], history:[], mandats:[], favDemarches:[], permanences:[], collapsedThemes:[], orientations:[], orientSearch:"", orientFilter:"all", orientAddOpen:false, orientNew:null,
-  editPerm:null, np:{commune:'',jour:4,debut:'09:00',fin:'15:00',duree:30}, agendaRdv:null,
+  editPerm:null, np:{commune:'',jour:4,debut:'09:00',fin:'15:00',duree:30}, agendaRdv:null, _ghNewerBackup:null,
   saveStatus:"Données chargées",
   modal:null, histItem:null,
   editBuiltin:null, editBuiltinText:"",
@@ -347,45 +348,99 @@ function saveLast(){lsSet('ess-last',{selectedCMS:S.selectedCMS,selectedDemarche
 
 /* ============================== GITHUB BACKUP ============================== */
 var GH_REPO='maswaddpt47-cmyk/sms-mail';
-var GH_FILE='backup.json';
 var GH_BRANCH='main';
+var GH_BACKUP_DIR='backups';
+var GH_MAX_VERSIONS=7;
 function ghToken(){return localStorage.getItem('ess-gh-token')||'';}
 function ghHeaders(token){return{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github+json'};}
-
-function githubPush(){
-  var token=ghToken();
-  if(!token){showToast('⚠️ Token GitHub manquant — ajoutez-le dans Configuration','warn');return;}
-  showToast('⏳ Sauvegarde GitHub en cours…','ok');
-  var content=btoa(unescape(encodeURIComponent(JSON.stringify(exportData(),null,2))));
-  /* récupérer le SHA actuel du fichier (nécessaire pour update) */
-  fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE+'?ref='+GH_BRANCH,{headers:ghHeaders(token)})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(existing){
-      var sha=existing&&existing.sha?existing.sha:undefined;
-      var body={message:'backup: sauvegarde du '+new Date().toLocaleDateString('fr-FR'),content:content,branch:GH_BRANCH};
-      if(sha)body.sha=sha;
-      return fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE,{method:'PUT',headers:ghHeaders(token),body:JSON.stringify(body)});
-    })
-    .then(function(r){
-      if(r&&r.ok){showToast('✅ Sauvegarde GitHub réussie !');}
-      else{showToast('❌ Erreur GitHub (vérifiez le token)','err');}
-    })
-    .catch(function(){showToast('❌ Erreur réseau GitHub','err');});
+function ghTodayFile(){
+  var n=new Date();
+  var d=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+  return GH_BACKUP_DIR+'/backup-'+d+'.json';
 }
 
-function githubPull(){
+/* pousse un fichier daté, puis nettoie les anciens (garde GH_MAX_VERSIONS) */
+function githubPush(silent){
   var token=ghToken();
-  if(!token){showToast('⚠️ Token GitHub manquant — ajoutez-le dans Configuration','warn');return;}
-  showToast('⏳ Restauration GitHub en cours…','ok');
-  fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_FILE+'?ref='+GH_BRANCH,{headers:ghHeaders(token)})
-    .then(function(r){if(!r.ok)throw new Error('not found');return r.json();})
+  if(!token){if(!silent)showToast('⚠️ Token GitHub manquant — ajoutez-le dans Configuration','warn');return;}
+  if(!silent)showToast('⏳ Sauvegarde GitHub en cours…','ok');
+  var content=btoa(unescape(encodeURIComponent(JSON.stringify(exportData(),null,2))));
+  var file=ghTodayFile();
+  /* vérifier si le fichier du jour existe déjà (SHA nécessaire pour update) */
+  fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+file+'?ref='+GH_BRANCH,{headers:ghHeaders(token)})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(existing){
+      var body={message:'backup: '+new Date().toLocaleDateString('fr-FR'),content:content,branch:GH_BRANCH};
+      if(existing&&existing.sha)body.sha=existing.sha;
+      return fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+file,{method:'PUT',headers:ghHeaders(token),body:JSON.stringify(body)});
+    })
+    .then(function(r){
+      if(!r||!r.ok){if(!silent)showToast('❌ Erreur GitHub (vérifiez le token)','err');return;}
+      if(!silent)showToast('✅ Sauvegarde GitHub réussie !');
+      localStorage.setItem('ess-gh-last-backup',new Date().toISOString());
+      /* nettoyage : supprimer les fichiers au-delà de GH_MAX_VERSIONS */
+      ghCleanOldBackups(token);
+    })
+    .catch(function(){if(!silent)showToast('❌ Erreur réseau GitHub','err');});
+}
+
+function ghCleanOldBackups(token){
+  fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_BACKUP_DIR+'?ref='+GH_BRANCH,{headers:ghHeaders(token)})
+    .then(function(r){return r.ok?r.json():[];})
+    .then(function(files){
+      if(!Array.isArray(files))return;
+      var backups=files.filter(function(f){return f.name.match(/^backup-\d{4}-\d{2}-\d{2}\.json$/);});
+      backups.sort(function(a,b){return b.name.localeCompare(a.name);});
+      var toDelete=backups.slice(GH_MAX_VERSIONS);
+      toDelete.forEach(function(f){
+        fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+f.path,{method:'DELETE',headers:ghHeaders(token),body:JSON.stringify({message:'backup: nettoyage ancien backup',sha:f.sha,branch:GH_BRANCH})});
+      });
+    }).catch(function(){});
+}
+
+/* liste les backups disponibles sur GitHub */
+function ghListBackups(token,cb){
+  fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_BACKUP_DIR+'?ref='+GH_BRANCH,{headers:ghHeaders(token)})
+    .then(function(r){return r.ok?r.json():[];})
+    .then(function(files){
+      if(!Array.isArray(files)){cb([]);return;}
+      var backups=files.filter(function(f){return f.name.match(/^backup-\d{4}-\d{2}-\d{2}\.json$/);});
+      backups.sort(function(a,b){return b.name.localeCompare(a.name);});
+      cb(backups);
+    }).catch(function(){cb([]);});
+}
+
+/* restaure un fichier backup précis */
+function ghRestoreFile(token,filePath){
+  showToast('⏳ Restauration en cours…','ok');
+  fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+filePath+'?ref='+GH_BRANCH,{headers:ghHeaders(token)})
+    .then(function(r){if(!r.ok)throw new Error();return r.json();})
     .then(function(data){
       var json=decodeURIComponent(escape(atob(data.content.replace(/\n/g,''))));
-      S.importText=json;
-      doImport();
-      showToast('✅ Restauration GitHub réussie !');
+      S.importText=json;doImport();
+      showToast('✅ Restauration réussie !');
     })
-    .catch(function(){showToast('❌ Impossible de récupérer la sauvegarde GitHub','err');});
+    .catch(function(){showToast('❌ Impossible de restaurer ce backup','err');});
+}
+
+/* vérification silencieuse au démarrage */
+function ghCheckOnStartup(){
+  var token=ghToken();if(!token)return;
+  var lastLocal=localStorage.getItem('ess-gh-last-backup');
+  ghListBackups(token,function(backups){
+    if(!backups.length)return;
+    var latest=backups[0];
+    /* extraire la date du nom de fichier */
+    var m=latest.name.match(/backup-(\d{4}-\d{2}-\d{2})\.json/);
+    if(!m)return;
+    var ghDate=m[1];
+    var localDate=lastLocal?lastLocal.slice(0,10):'';
+    if(ghDate>localDate){
+      /* backup GitHub plus récent que notre dernier push local → proposer */
+      S._ghNewerBackup={file:latest.path,date:ghDate};
+      renderHeader();
+    }
+  });
 }
 
 /* ============================== TOAST ============================== */
@@ -793,7 +848,25 @@ function selectOpts(selectEl,opts,selected){
 }
 
 /* ============================== RENDER: HEADER/TABS ============================== */
-function renderHeader(){document.getElementById('saveStatus').textContent=S.saveStatus;}
+function renderHeader(){
+  document.getElementById('saveStatus').textContent=S.saveStatus;
+  var bannerRoot=document.getElementById('gh-banner-root');
+  if(!bannerRoot)return;
+  bannerRoot.innerHTML='';
+  if(S._ghNewerBackup){
+    var banner=el('div',{style:"display:flex;align-items:center;gap:10px;background:oklch(0.96 0.04 266);border-bottom:1.5px solid oklch(0.78 0.1 266);padding:8px clamp(12px,4vw,40px);font-size:12.5px;font-weight:600;color:oklch(0.4 0.14 266);"});
+    banner.appendChild(el('span',{},'☁️ Backup GitHub du '+S._ghNewerBackup.date.split('-').reverse().join('/')+' disponible — plus récent que ce navigateur.'));
+    var btn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:12px;padding:5px 12px;border-radius:8px;"});
+    btn.textContent='📥 Restaurer';
+    btn.addEventListener('click',function(){S.modal='gh-restore';renderModal();});
+    var dismiss=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:none;background:none;color:oklch(0.5 0.14 266);font-size:16px;padding:0 4px;margin-left:auto;"});
+    dismiss.textContent='✕';
+    dismiss.addEventListener('click',function(){S._ghNewerBackup=null;renderHeader();});
+    banner.appendChild(btn);
+    banner.appendChild(dismiss);
+    bannerRoot.appendChild(banner);
+  }
+}
 function renderTabs(){
   var nav=document.getElementById('tabnav');clear(nav);
   var today=new Date().toLocaleDateString('fr-FR');
@@ -2409,7 +2482,7 @@ function renderConfig(){
     card4.appendChild(tokenIn);
     var tokenRow=el('div',{style:"display:flex;gap:8px;margin-top:10px;"});
     tokenRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;background:oklch(0.2 0.02 264);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:10px;",onClick:function(){githubPush();}},"☁️ Sauvegarder sur GitHub"));
-    tokenRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.96 0.025 266);color:oklch(0.42 0.14 266);font-weight:700;font-size:13px;padding:10px;border-radius:10px;",onClick:function(){if(confirm('Restaurer depuis GitHub ? Toutes les données actuelles seront remplacées.'))githubPull();}},"⬇️ Restaurer depuis GitHub"));
+    tokenRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.96 0.025 266);color:oklch(0.42 0.14 266);font-weight:700;font-size:13px;padding:10px;border-radius:10px;",onClick:function(){S.modal='gh-restore';renderModal();}},"⬇️ Restaurer depuis GitHub"));
     card4.appendChild(tokenRow);
     wrap.appendChild(card4);
   }
@@ -3210,9 +3283,42 @@ function renderModal(){
     var ita=el('textarea',{placeholder:'{ "cmsList": [...], "demarches": [...] }',class:'gx-scroll',style:"width:100%;height:160px;font-family:ui-monospace,monospace;font-size:11px;border:1.5px solid var(--c-border-in);border-radius:12px;padding:12px;resize:none;color:var(--c-dim);background:var(--c-card);",onInput:function(e){S.importText=e.target.value;}});ita.value=S.importText;box.appendChild(ita);
     var ibr=el('div',{style:"display:flex;gap:10px;"});
     ibr.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13.5px;padding:12px;border-radius:12px;",onClick:doImport},"Importer fichier"));
-    ibr.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;background:oklch(0.2 0.02 264);color:#fff;font-weight:700;font-size:13.5px;padding:12px;border-radius:12px;",onClick:function(){S.modal=null;renderModal();githubPull();}},"☁️ Restaurer GitHub"));
+    ibr.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;background:oklch(0.2 0.02 264);color:#fff;font-weight:700;font-size:13.5px;padding:12px;border-radius:12px;",onClick:function(){S.modal='gh-restore';renderModal();}},"☁️ Restaurer GitHub"));
     box.appendChild(ibr);
     if(S.importError)box.appendChild(el('div',{style:"color:oklch(0.55 0.16 25);font-size:12.5px;font-weight:600;text-align:center;"},S.importError));
+  }
+  else if(S.modal==='gh-restore'){
+    box.appendChild(header('☁️ Restaurer depuis GitHub'));
+    var token=ghToken();
+    if(!token){
+      box.appendChild(el('div',{style:"color:oklch(0.55 0.16 25);font-size:13px;text-align:center;padding:20px;"},"⚠️ Token GitHub manquant — ajoutez-le dans Configuration → Général."));
+    } else {
+      var loadingDiv=el('div',{style:"text-align:center;padding:20px;color:var(--c-muted);font-size:13px;"},"⏳ Chargement des versions…");
+      box.appendChild(loadingDiv);
+      ghListBackups(token,function(backups){
+        box.removeChild(loadingDiv);
+        if(!backups.length){
+          box.appendChild(el('div',{style:"text-align:center;padding:20px;color:var(--c-muted);font-size:13px;"},"Aucun backup trouvé sur GitHub."));
+          return;
+        }
+        box.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:12px;"},"Choisissez la version à restaurer. ⚠️ Les données actuelles seront remplacées."));
+        backups.forEach(function(b){
+          var m=b.name.match(/backup-(\d{4}-\d{2}-\d{2})\.json/);
+          var dateStr=m?m[1].split('-').reverse().join('/'):'?';
+          var isToday=m&&m[1]===new Date().toISOString().slice(0,10);
+          var row=el('div',{style:"display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;border:1px solid var(--c-border);margin-bottom:6px;background:var(--c-card);"});
+          var lbl=el('div');
+          lbl.appendChild(el('div',{style:"font-size:13px;font-weight:700;color:var(--c-dim);"},'📅 '+dateStr+(isToday?' (aujourd\'hui)':'')));
+          row.appendChild(lbl);
+          var btn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:12px;padding:7px 14px;border-radius:8px;"});
+          btn.textContent='Restaurer';
+          (function(path){btn.addEventListener('click',function(){S.modal=null;renderModal();ghRestoreFile(token,path);});})(b.path);
+          row.appendChild(btn);
+          box.appendChild(row);
+        });
+      });
+    }
+    box.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:600;font-size:13px;padding:10px;border-radius:12px;margin-top:8px;",onClick:closeModal},'Fermer'));
   }
   else if(S.modal==='import-ics'){
     box.appendChild(header('⬆️ Importer un fichier ICS'));
@@ -3496,6 +3602,14 @@ function init(){
     if(ctrl&&e.key==='Enter'){e.preventDefault();if(S.generatedBody)copyBody();else if(canGenerate())handleGenerate();}
     if(ctrl&&e.shiftKey&&(e.key==='G'||e.key==='g')){e.preventDefault();if(canGenerate())handleGenerate();}
   });
+
+  /* auto-backup à la fermeture */
+  window.addEventListener('beforeunload',function(){
+    if(ghToken())githubPush(true);
+  });
+
+  /* vérification silencieuse au démarrage */
+  setTimeout(ghCheckOnStartup,2000);
 }
 /* appliquer le thème avant le rendu pour éviter le flash */
 (function(){var d=localStorage.getItem('ess-dark')==='1';document.documentElement.setAttribute('data-theme',d?'dark':'');})();
