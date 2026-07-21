@@ -9,8 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--c-bg);color:var(--c-text);-webkit-font-smoothing:antialiased;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--c-bg);color:var(--c-text);-webkit-font-smoothing:antialiased;height:100%;}
   ::selection{background:oklch(0.9 0.06 266);}
   @keyframes flyUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
   @keyframes popIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
@@ -146,7 +146,7 @@
 </style>
 </head>
 <body>
-<div id="app-root" style="min-height:100vh;display:flex;flex-direction:column;">
+<div id="app-root" style="height:100%;display:flex;flex-direction:column;overflow:hidden;">
 
   <!-- HEADER + TABS (sticky ensemble) -->
   <div style="position:sticky;top:0;z-index:100;">
@@ -769,10 +769,6 @@ function showActivePane(){
   ['pane-generate','pane-history','pane-agenda','pane-stats','pane-templates','pane-config','pane-mandat','pane-mandats','pane-orientations'].forEach(function(id){
     document.getElementById(id).style.display=(map[S.activeTab]===id)?'block':'none';
   });
-  if(S.activeTab!=='agenda'){
-    var old=document.getElementById('agenda-nav-fixed');
-    if(old)old.parentNode.removeChild(old);
-  }
 }
 
 /* ============================== RENDER: GENERATE ============================== */
@@ -1731,24 +1727,29 @@ function renderAgenda(){
   var seen={};days=days.filter(function(d){var k=d.dateStr+d.perm.commune;if(seen[k])return false;seen[k]=1;return true;});
 
   /* --- barre de navigation rapide — injectée dans le header sticky --- */
-  /* barre de navigation fixe — appendée au body pour éviter tout problème de z-index/overlay */
-  window._agendaScrollTo=function(dateStr){
+  /* --- barre de navigation — sticky dans main (main est maintenant le scroll container) --- */
+  var NBTN="cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:9px;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);";
+  var mainEl=document.querySelector('main');
+  function agScrollTo(dateStr){
     var allCards=Array.prototype.slice.call(document.querySelectorAll('[id^="agenda-day-"]'));
     if(!allCards.length)return;
     var best=allCards.reduce(function(b,c){
-      var cDate=c.id.replace('agenda-day-','').slice(0,10);
+      var cd=c.id.replace('agenda-day-','').slice(0,10);
       if(!b)return c;
-      var bDate=b.id.replace('agenda-day-','').slice(0,10);
-      return Math.abs(cDate.localeCompare(dateStr))<Math.abs(bDate.localeCompare(dateStr))?c:b;
+      var bd=b.id.replace('agenda-day-','').slice(0,10);
+      return Math.abs(cd.localeCompare(dateStr))<Math.abs(bd.localeCompare(dateStr))?c:b;
     },null);
-    if(best)best.scrollIntoView({behavior:'smooth',block:'center'});
-  };
-  window._agendaToday=function(){window._agendaScrollTo(toLocalDateStr(new Date()));};
-  window._agendaFilterNom=function(q){
-    var norm=q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
-    var cards=document.querySelectorAll('[id^="agenda-day-"]');
-    cards.forEach(function(card){
-      if(!norm){card.style.display='';return;}
+    if(!best)return;
+    if(mainEl){
+      mainEl.scrollTop=best.offsetTop-(navBar.offsetHeight||48)-8;
+    } else {
+      best.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+  }
+  function agFilterNom(q){
+    var norm=(q||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    document.querySelectorAll('[id^="agenda-day-"]').forEach(function(card){
+      if(!norm){card.style.display='';card.querySelectorAll('[data-nom]').forEach(function(p){p.style.outline='';});return;}
       var pills=card.querySelectorAll('[data-nom]');
       var match=false;
       pills.forEach(function(p){
@@ -1758,30 +1759,20 @@ function renderAgenda(){
       });
       card.style.display=match?'':'none';
     });
-  };
-  window._agendaWeek=function(delta){
-    var inp=document.getElementById('agenda-jump-date');
-    var base=inp&&inp.value?inp.value:toLocalDateStr(new Date());
-    var d=new Date(base+'T12:00:00');d.setDate(d.getDate()+delta*7);
-    var s=toLocalDateStr(d);if(inp)inp.value=s;
-    window._agendaScrollTo(s);
-  };
-  var oldNav=document.getElementById('agenda-nav-fixed');if(oldNav)oldNav.parentNode.removeChild(oldNav);
-  /* mesurer le bas du header sticky pour positionner la barre juste en dessous */
-  var stickyEl=document.querySelector('div[style*="position:sticky"]');
-  var navTop=stickyEl?Math.round(stickyEl.getBoundingClientRect().bottom):56;
-  var NBTN="cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:9px;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);";
-  var navDiv=document.createElement('div');
-  navDiv.id='agenda-nav-fixed';
-  navDiv.style.cssText='position:fixed;top:'+navTop+'px;left:0;right:0;z-index:9999;background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:8px clamp(12px,4vw,40px);display:flex;align-items:center;gap:8px;flex-wrap:wrap;box-shadow:0 2px 10px oklch(0.3 0.08 266 / .14);';
-  navDiv.innerHTML='<button class="gx-press" style="'+NBTN+'" onclick="window._agendaToday()">📍 Aujourd\'hui</button>'
-    +'<button class="gx-press" style="'+NBTN+'" onclick="window._agendaWeek(-1)">← Semaine préc.</button>'
-    +'<button class="gx-press" style="'+NBTN+'" onclick="window._agendaWeek(1)">Semaine suiv. →</button>'
-    +'<input id="agenda-search-nom" type="search" placeholder="🔍 Rechercher un nom…" oninput="window._agendaFilterNom(this.value)" style="font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);min-width:160px;flex:1;max-width:260px;">'
-    +'<input id="agenda-jump-date" type="date" value="'+todayStr+'" onchange="window._agendaScrollTo(this.value)" style="font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;margin-left:auto;">';
-  document.body.appendChild(navDiv);
-  /* ajouter un padding-top au pane pour compenser la barre fixe */
-  pane.style.paddingTop=(navDiv.offsetHeight||48)+'px';
+  }
+  var jumpIn=el('input',{type:'date',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;margin-left:auto;",value:todayStr});
+  jumpIn.addEventListener('change',function(e){if(e.target.value)agScrollTo(e.target.value);});
+  var searchIn=el('input',{type:'search',placeholder:'🔍 Nom…',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);min-width:120px;flex:1;max-width:220px;"});
+  searchIn.addEventListener('input',function(e){agFilterNom(e.target.value);});
+  var navBar=el('div',{style:"position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:8px clamp(12px,4vw,40px);box-shadow:0 2px 8px oklch(0.3 0.08 266 / .10);margin-bottom:16px;"});
+  var btnToday=el('button',{class:'gx-press',style:NBTN},'📍 Aujourd\'hui');
+  btnToday.addEventListener('click',function(){agScrollTo(todayStr);});
+  var btnPrev=el('button',{class:'gx-press',style:NBTN},'← Semaine préc.');
+  btnPrev.addEventListener('click',function(){var d=new Date((jumpIn.value||todayStr)+'T12:00:00');d.setDate(d.getDate()-7);var s=toLocalDateStr(d);jumpIn.value=s;agScrollTo(s);});
+  var btnNext=el('button',{class:'gx-press',style:NBTN},'Semaine suiv. →');
+  btnNext.addEventListener('click',function(){var d=new Date((jumpIn.value||todayStr)+'T12:00:00');d.setDate(d.getDate()+7);var s=toLocalDateStr(d);jumpIn.value=s;agScrollTo(s);});
+  navBar.appendChild(btnToday);navBar.appendChild(btnPrev);navBar.appendChild(btnNext);navBar.appendChild(searchIn);navBar.appendChild(jumpIn);
+  pane.appendChild(navBar);
 
   var MONTHS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
   days.forEach(function(day){
