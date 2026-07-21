@@ -1693,6 +1693,33 @@ function renderAgenda(){
   head.appendChild(headBtns);
   wrap.appendChild(head);
 
+  /* bannière dépassements */
+  (function(){
+    var nowB=new Date();
+    var todayB=nowB.getFullYear()+'-'+String(nowB.getMonth()+1).padStart(2,'0')+'-'+String(nowB.getDate()).padStart(2,'0');
+    var t0B=new Date(todayB+'T00:00:00');
+    var depasses=S.history.filter(function(h){
+      if(h.statut!=='en_attente'||!h.dateDemande)return false;
+      return Math.round((t0B-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;
+    });
+    if(!depasses.length)return;
+    var banner=el('div',{style:"display:flex;align-items:center;gap:12px;background:oklch(0.97 0.06 25);border:1.5px solid oklch(0.78 0.18 25);border-radius:14px;padding:12px 18px;margin-bottom:18px;box-shadow:0 2px 8px oklch(0.5 0.12 25 / .12);"});
+    banner.appendChild(el('span',{style:"font-size:22px;"},"🚨"));
+    var txt=el('div',{style:"flex:1;"});
+    txt.appendChild(el('div',{style:"font-size:13px;font-weight:800;color:oklch(0.45 0.18 25);"},depasses.length+' RDV en attente dépass'+(depasses.length>1?'ent':'e')+' 3 jours sans confirmation'));
+    var noms=depasses.slice(0,5).map(function(h){return[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ');}).filter(Boolean);
+    if(noms.length)txt.appendChild(el('div',{style:"font-size:11px;color:oklch(0.55 0.14 25);margin-top:3px;"},noms.join(' · ')+(depasses.length>5?' · …':'')));
+    banner.appendChild(txt);
+    var btnF=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:9px;border:1.5px solid oklch(0.72 0.18 25);background:oklch(0.92 0.08 25);color:oklch(0.42 0.18 25);white-space:nowrap;"});
+    btnF.textContent="Filtrer";
+    btnF.addEventListener('click',function(){
+      var sel=document.querySelector('#ag-statut-sel');
+      if(sel){sel.value='depasse';sel.dispatchEvent(new Event('change'));}
+    });
+    banner.appendChild(btnF);
+    wrap.appendChild(banner);
+  })();
+
   if(S.permanences.length===0){
     wrap.appendChild(el('div',{style:"text-align:center;padding:60px 20px;color:var(--c-muted);font-size:14px;"},"Aucune permanence configurée — ajoutez-en dans Configuration → Permanences."));
     pane.appendChild(wrap);return;
@@ -1772,7 +1799,7 @@ function renderAgenda(){
   btnPrev.addEventListener('click',function(){var d=new Date((jumpIn.value||todayStr)+'T12:00:00');d.setDate(d.getDate()-7);var s=toLocalDateStr(d);jumpIn.value=s;agScrollTo(s);});
   var btnNext=el('button',{class:'gx-press',style:NBTN},'Semaine suiv. →');
   btnNext.addEventListener('click',function(){var d=new Date((jumpIn.value||todayStr)+'T12:00:00');d.setDate(d.getDate()+7);var s=toLocalDateStr(d);jumpIn.value=s;agScrollTo(s);});
-  var statutSel=el('select',{style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;"});
+  var statutSel=el('select',{id:'ag-statut-sel',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;"});
   [['','Tous statuts'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['libre','🟢 Libre'],['depasse','🚨 Dépassement']].forEach(function(o){statutSel.appendChild(el('option',{value:o[0]},o[1]));});
   statutSel.addEventListener('change',function(e){agFilterStatut(e.target.value);});
   navBar.appendChild(btnToday);navBar.appendChild(btnPrev);navBar.appendChild(btnNext);navBar.appendChild(searchIn);navBar.appendChild(statutSel);navBar.appendChild(jumpIn);
