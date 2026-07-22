@@ -605,6 +605,26 @@
     {
       "channel": "sms",
       "msgType": "sans_appel",
+      "body": "Bonjour M. José ANTONIO,\n\nPour faire suite à la demande du Centre Médico-Social de Fumel, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Demande de retraite\" le vendredi 7 août 2026 à 10:30 au :\n\n📍 Centre Médico-Social de Fumel - 2 Place Voltaire, 47500 FUMEL\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n• Copie de l'acte de naissance avec mention marginale (moins de 3 mois)\n• Relevé d'identité bancaire (RIB/IBAN)\n• Deux derniers avis d'imposition\n• Copie intégrale du livret de famille\n• Relevé de carrière (disponible sur Info Retraite)\n• Notification d'invalidité ou carte d'invalidité (si concerné)\n• Décomptes d'indemnités journalières maladie des 12 derniers mois (si concerné)\n• Attestation France Travail des 12 derniers mois (si concerné)\n• Un accès à votre compte mail.\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+      "subject": "",
+      "civilite": "M.",
+      "prenom": "José",
+      "nom": "ANTONIO",
+      "telephone": "",
+      "demarche": "Demande de retraite",
+      "selectedDemarche": "401",
+      "demarcheAutre": "",
+      "commune": "Fumel",
+      "selectedCMS": "1",
+      "date": "2026-08-07",
+      "heure": "10:30",
+      "dateDemande": "2026-07-22",
+      "ts": "22/07/2026 10:50:47",
+      "statut": "en_attente"
+    },
+    {
+      "channel": "sms",
+      "msgType": "sans_appel",
       "body": "Bonjour M. Icham CHANET,\n\nPour faire suite à la demande du Centre Médico-Social de Fumel, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Demande de logement social (SNE / Numéro unique)\" le vendredi 7 août 2026 à 09:30 au :\n\n📍 Centre Médico-Social de Fumel - 2 Place Voltaire, 47500 FUMEL\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n• Pièce d'identité de tous les membres du foyer\n• Carte Vitale\n• Livret de famille\n• 2 derniers avis d'imposition\n• Attestation CAF, MSA ou CARSAT (allocations, retraite…)\n• Contrat de travail + 3 derniers bulletins de salaire (si salarié)\n• Contrat de location + quittances de loyer (si locataire)\n• Attestation d'hébergement + justificatif de domicile de l'hébergeur (si hébergé)\n• Arrêté d'insalubrité ou diagnostic (si logement insalubre)\n• Décision de justice (en cas de divorce ou violences)\n• Un accès à votre compte mail.\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
       "subject": "",
       "civilite": "M.",
@@ -1189,5 +1209,18 @@
       "exceptDate": "2026-07-27"
     }
   ],
-  "orientations": []
+  "orientations": [
+    {
+      "id": "1784710033173_1",
+      "nom": "ANTONIO",
+      "prenom": "José",
+      "commune": "Centre Médico-Social de Fumel",
+      "communeBenef": "LACAPELLE BIRON",
+      "motif": "Aide à la saisie pour la demande de retraite",
+      "orienteur": "BLATY Fabienne",
+      "date": "2026-07-22",
+      "etat": "Nouvelle demande à traiter",
+      "done": false
+    }
+  ]
 }
