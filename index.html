@@ -1621,7 +1621,7 @@ function renderStats(){
   var ttip=el('div',{style:"display:none;position:absolute;background:oklch(0.18 0.03 264);color:#fff;font-size:11px;font-weight:700;padding:5px 9px;border-radius:8px;pointer-events:none;z-index:20;white-space:nowrap;"});
   if(months.length){
     var maxVal=Math.max.apply(null,months.map(function(m){return monthMap[m].sms+monthMap[m].mail;}));
-    var cols=months.length,W=Math.max(cols*54,260),H=130,PB=26,PT=8;
+    var cols=months.length,W=Math.max(cols*64,320),H=130,PB=26,PT=8;
     var svgWrap=el('div',{style:"position:relative;"});
     svgWrap.appendChild(ttip);
     var svg=svgEl("svg",{viewBox:"0 0 "+W+" "+(H+PB+PT),width:"100%",height:"200",preserveAspectRatio:"none",style:"display:block;cursor:pointer;"});
@@ -1631,7 +1631,8 @@ function renderStats(){
       var tot=monthMap[m].sms+monthMap[m].mail;
       var sH=maxVal?Math.round(monthMap[m].sms/maxVal*(H-PT)):0;
       var mH=maxVal?Math.round(monthMap[m].mail/maxVal*(H-PT)):0;
-      var x=i*step+step*0.1,bw=step*0.36;
+      var bw=Math.min(step*0.36,28);
+      var x=i*step+(step-bw*2-1)/2;
       var baseY=PT+(H-PT);
       var rS=svgEl("rect",{x:x,y:PT+(H-PT-sH),width:bw,height:sH,fill:"oklch(0.62 0.14 155)",rx:3});
       var rM=svgEl("rect",{x:x+bw+1,y:PT+(H-PT-mH),width:bw,height:mH,fill:"oklch(0.56 0.15 264)",rx:3});
