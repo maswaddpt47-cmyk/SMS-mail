@@ -1963,7 +1963,7 @@ function renderAgenda(){
     /* grille des créneaux — colonnes fixes pour éviter les trous */
     var sg=el('div',{style:"display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;"});
     slots.forEach(function(slot){
-      var who=slot.taken?[slot.taken.civilite,slot.taken.nom,slot.taken.prenom].filter(Boolean).join(' '):'';
+      var who=slot.taken?[slot.taken.nom,slot.taken.prenom].filter(Boolean).join(' '):'';
       var isPropo=slot.taken&&slot.taken.msgType==='proposition';
       var _st=slot.taken&&slot.taken.statut;
       /* couleurs selon statut : rose=en_attente, bleu=confirmé, vert=vide/sans statut */
