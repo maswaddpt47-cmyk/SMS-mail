@@ -603,6 +603,26 @@
   "mandats": [],
   "history": [
     {
+      "channel": "mail",
+      "msgType": "proposition",
+      "body": "Bonjour Mme Josia RAJAONARISOA,\n\nJe me permets de vous contacter suite à ma tentative de vous joindre par téléphone.\n\nDans le cadre de votre démarche \"Demande de titre de séjour\", je vous propose un rendez-vous le jeudi 23 juillet 2026 à 11:00.\n\n📍 Adresse : Centre Médico-Social de Marmande - 8 Square de Verdun, 47200 MARMANDE\n\nMerci de bien vouloir me confirmer RAPIDEMENT par retour mail si ce créneau vous convient en répondant à ce mail ou en me contactant par téléphone.\n\nLe cas échéant, merci de prévoir les documents suivants :\n• Passeport en cours de validité\n• Photos d'identité récentes et conformes\n• Justificatif de domicile de moins de 3 mois\n• Acte de naissance traduit si nécessaire\n• Justificatif de ressources (bulletins de salaire, avis d'imposition…)\n• Timbre fiscal (montant variable selon le titre)\n• Un accès à votre compte mail.\n• Vos codes de connexion à votre mail ou votre téléphone.\n\nDans l'attente de votre retour, je reste à votre disposition.\n\nCordialement,\n\n📅 Ajouter à votre calendrier : Google : https://calendar.google.com/calendar/render?action=TEMPLATE&text=RDV%20Conseiller%20Num%C3%A9rique%20%E2%80%94%20Marmande&dates=20260723T110000/20260723T113000&location=Centre%20M%C3%A9dico-Social%20de%20Marmande%20-%208%20Square%20de%20Verdun%2C%2047200%20MARMANDE&details=D%C3%A9marche%20%3A%20Demande%20de%20titre%20de%20s%C3%A9jour\nOutlook : https://outlook.live.com/calendar/0/deeplink/compose?subject=RDV%20Conseiller%20Num%C3%A9rique%20%E2%80%94%20Marmande&startdt=2026-07-23T11%3A00%3A00&enddt=2026-07-23T11%3A30%3A00&location=Centre%20M%C3%A9dico-Social%20de%20Marmande%20-%208%20Square%20de%20Verdun%2C%2047200%20MARMANDE&body=D%C3%A9marche%20%3A%20Demande%20de%20titre%20de%20s%C3%A9jour&path=%2Fcalendar%2Faction%2Fcompose&rru=addevent",
+      "subject": "Proposition de rendez-vous — Demande de titre de séjour — jeudi 23 juillet 2026",
+      "civilite": "Mme",
+      "prenom": "Josia",
+      "nom": "RAJAONARISOA",
+      "telephone": "0602368123",
+      "demarche": "Demande de titre de séjour",
+      "selectedDemarche": "1001",
+      "demarcheAutre": "",
+      "commune": "Marmande",
+      "selectedCMS": "2",
+      "date": "2026-07-23",
+      "heure": "11:00",
+      "dateDemande": "2026-07-22",
+      "ts": "22/07/2026 08:59:15",
+      "statut": "en_attente"
+    },
+    {
       "channel": "sms",
       "msgType": "proposition",
       "body": "Bonjour Mme Jemaa Jemaa,\n\nPour faire suite à mon message téléphonique de ce jour, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Demande de la Carte Solidaire (transport)\" le jeudi 23 juillet 2026 à 10:00 au :\n\n📍 Centre Médico-Social de Marmande - 8 Square de Verdun, 47200 MARMANDE\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n• Photo d'identité récente et conforme\n• Pièce d'identité recto-verso (photocopie)\n• Justificatif de domicile de moins de 3 mois\n• Dernier avis d'imposition complet\n• Un accès à votre compte mail.\n• Pour les enfants : livret de famille + pièce d'identité de l'enfant.\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
@@ -981,26 +1001,6 @@
       "heure": "15:00",
       "dateDemande": "2026-07-21",
       "ts": "21/07/2026 09:52:17",
-      "statut": "confirme"
-    },
-    {
-      "channel": "sms",
-      "msgType": "proposition",
-      "body": "Bonjour Mme Maryline COULOUDOU,\n\nPour faire suite à mon message téléphonique de ce jour, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Demande de logement social (SNE / Numéro unique)\" le vendredi 24 juillet 2026 à 14:00 au :\n\n📍 Centre Médico-Social de Fumel - 2 Place Voltaire, 47500 FUMEL\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n• Pièce d'identité de tous les membres du foyer\n• Carte Vitale\n• Livret de famille\n• 2 derniers avis d'imposition\n• Attestation CAF, MSA ou CARSAT (allocations, retraite…)\n• Contrat de travail + 3 derniers bulletins de salaire (si salarié)\n• Contrat de location + quittances de loyer (si locataire)\n• Attestation d'hébergement + justificatif de domicile de l'hébergeur (si hébergé)\n• Arrêté d'insalubrité ou diagnostic (si logement insalubre)\n• Décision de justice (en cas de divorce ou violences)\n• Un accès à votre compte mail.\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
-      "subject": "",
-      "civilite": "Mme",
-      "prenom": "Maryline",
-      "nom": "COULOUDOU",
-      "telephone": "0645744183",
-      "demarche": "Demande de logement social (SNE / Numéro unique)",
-      "selectedDemarche": "801",
-      "demarcheAutre": "",
-      "commune": "Fumel",
-      "selectedCMS": "1",
-      "date": "2026-07-24",
-      "heure": "14:00",
-      "dateDemande": "2026-07-21",
-      "ts": "21/07/2026 09:51:24",
       "statut": "confirme"
     }
   ],
