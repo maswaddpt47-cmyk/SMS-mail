@@ -767,7 +767,7 @@ function getSlots(commune,dateStr){
   for(var t=start;t<=end;t+=perm.duree){
     var hh=String(Math.floor(t/60)).padStart(2,'0'),mm=String(t%60).padStart(2,'0');
     var heure=hh+':'+mm;
-    var matches=S.history.filter(function(x){return x.date===dateStr&&x.heure===heure&&x.commune===commune;});
+    var matches=S.history.filter(function(x){return x.date===dateStr&&x.heure===heure&&(x.commune===commune||!x.commune);});
     var confirmations=matches.filter(function(x){return x.msgType==='confirmation';});
     var propositions=matches.filter(function(x){return x.msgType==='proposition';});
     var sansAppels=matches.filter(function(x){return x.msgType==='sans_appel';});
