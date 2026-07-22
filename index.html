@@ -3296,24 +3296,6 @@ function renderModal(){
     box.appendChild(el('div',{style:"font-size:11px;font-weight:700;color:var(--c-muted);letter-spacing:.04em;"},'GITHUB'));
     box.appendChild(dataBtn('☁️ Sauvegarder sur GitHub','oklch(0.2 0.02 264)','#fff','none',function(){closeModal();githubPush();}));
     box.appendChild(dataBtn('⬇️ Restaurer depuis GitHub','oklch(0.96 0.025 266)','oklch(0.42 0.14 266)','1.5px solid oklch(0.7 0.1 266)',function(){S.modal='gh-restore';renderModal();}));
-    box.appendChild(dataBtn('🔄 Sync & Reset (backup → vider cache → restaurer)','oklch(0.97 0.03 25)','oklch(0.45 0.16 25)','1.5px solid oklch(0.7 0.12 25)',function(){
-      if(!ghToken()){showToast('⚠️ Token GitHub manquant','warn');return;}
-      var nbAvant=S.history.length;
-      if(!confirm('🔄 Sync & Reset\n\n1. Sauvegarde immédiate sur GitHub ('+nbAvant+' RDV)\n2. Vidage du localStorage\n3. Restauration depuis GitHub\n\nContinuer ?'))return;
-      closeModal();showToast('☁️ Sauvegarde en cours… ('+nbAvant+' RDV)');
-      githubPush(false,function(){
-        showToast('✅ Sauvegarde OK — '+nbAvant+' RDV sauvegardés');
-        setTimeout(function(){
-          showToast('🗑 Cache vidé — localStorage effacé');
-          var tok=ghToken();localStorage.clear();localStorage.setItem('ess-gh-token',tok);
-          ghRestoreLatest(tok,function(){
-            var nbApres=S.history.length;
-            showToast('✅ Restauration OK — '+nbApres+' RDV récupérés');
-            regen();renderAll();
-          });
-        },1500);
-      });
-    }));
     /* Calendrier */
     box.appendChild(el('div',{style:"font-size:11px;font-weight:700;color:var(--c-muted);letter-spacing:.04em;margin-top:6px;"},'CALENDRIER'));
     box.appendChild(dataBtn('⬇️ Exporter ICS','oklch(0.94 0.06 155)','oklch(0.38 0.12 155)','1.5px solid oklch(0.7 0.1 155)',function(){closeModal();exportICS();}));
