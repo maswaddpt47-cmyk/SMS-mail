@@ -605,41 +605,21 @@
     {
       "channel": "sms",
       "msgType": "sans_appel",
-      "body": "Bonjour M. Akim AMAROUCHE,\n\nPour faire suite à la demande du Centre Médico-Social de Villeneuve-Sur-Lot, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Demande de logement social (SNE / Numéro unique)\" le lundi 24 août 2026 à 11:00 au :\n\n📍 Centre Médico-Social de Villeneuve-Sur-Lot - 1 Place d'Aquitaine, 47300 VILLENEUVE-SUR-LOT\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n• Pièce d'identité de tous les membres du foyer\n• Carte Vitale\n• Livret de famille\n• 2 derniers avis d'imposition\n• Attestation CAF, MSA ou CARSAT (allocations, retraite…)\n• Contrat de travail + 3 derniers bulletins de salaire (si salarié)\n• Contrat de location + quittances de loyer (si locataire)\n• Attestation d'hébergement + justificatif de domicile de l'hébergeur (si hébergé)\n• Arrêté d'insalubrité ou diagnostic (si logement insalubre)\n• Décision de justice (en cas de divorce ou violences)\n• Un accès à votre compte mail.\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nCorentin TUAL\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+      "body": "Bonjour Mme Flore WOFE NOUMSSI,\n\nPour faire suite à la demande du Centre Médico-Social de Marmande, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Demande de logement social (SNE / Numéro unique)\" le jeudi 23 juillet 2026 à 09:00 au :\n\n📍 Centre Médico-Social de Marmande - 8 Square de Verdun, 47200 MARMANDE\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n• Pièce d'identité de tous les membres du foyer\n• Carte Vitale\n• Livret de famille\n• 2 derniers avis d'imposition\n• Attestation CAF, MSA ou CARSAT (allocations, retraite…)\n• Contrat de travail + 3 derniers bulletins de salaire (si salarié)\n• Contrat de location + quittances de loyer (si locataire)\n• Attestation d'hébergement + justificatif de domicile de l'hébergeur (si hébergé)\n• Arrêté d'insalubrité ou diagnostic (si logement insalubre)\n• Décision de justice (en cas de divorce ou violences)\n• Un accès à votre compte mail.\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
       "subject": "",
-      "civilite": "M.",
-      "prenom": "Akim",
-      "nom": "AMAROUCHE",
-      "telephone": "06 89 41 55 28",
+      "civilite": "Mme",
+      "prenom": "Flore",
+      "nom": "WOFE NOUMSSI",
+      "telephone": "0751541726",
       "demarche": "Demande de logement social (SNE / Numéro unique)",
       "selectedDemarche": "801",
       "demarcheAutre": "",
-      "commune": "Villeneuve-Sur-Lot",
-      "selectedCMS": "4",
-      "date": "2026-08-24",
-      "heure": "11:00",
-      "dateDemande": "2026-07-21",
-      "ts": "21/07/2026 16:10:53",
-      "statut": "en_attente"
-    },
-    {
-      "channel": "sms",
-      "msgType": "sans_appel",
-      "body": "Bonjour M. Icham CHANET,\n\nPour faire suite à la demande du Centre Médico-Social de Fumel, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Demande de logement social (SNE / Numéro unique)\" le vendredi 7 août 2026 à 09:30 au :\n\n📍 Centre Médico-Social de Fumel - 2 Place Voltaire, 47500 FUMEL\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n• Pièce d'identité de tous les membres du foyer\n• Carte Vitale\n• Livret de famille\n• 2 derniers avis d'imposition\n• Attestation CAF, MSA ou CARSAT (allocations, retraite…)\n• Contrat de travail + 3 derniers bulletins de salaire (si salarié)\n• Contrat de location + quittances de loyer (si locataire)\n• Attestation d'hébergement + justificatif de domicile de l'hébergeur (si hébergé)\n• Arrêté d'insalubrité ou diagnostic (si logement insalubre)\n• Décision de justice (en cas de divorce ou violences)\n• Un accès à votre compte mail.\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
-      "subject": "",
-      "civilite": "M.",
-      "prenom": "Icham",
-      "nom": "CHANET",
-      "telephone": "06 09 27 42 90",
-      "demarche": "Demande de logement social (SNE / Numéro unique)",
-      "selectedDemarche": "801",
-      "demarcheAutre": "",
-      "commune": "Fumel",
-      "selectedCMS": "1",
-      "date": "2026-08-07",
-      "heure": "09:30",
-      "dateDemande": "2026-07-21",
-      "ts": "21/07/2026 11:00:33",
+      "commune": "Marmande",
+      "selectedCMS": "2",
+      "date": "2026-07-23",
+      "heure": "09:00",
+      "dateDemande": "2026-07-22",
+      "ts": "22/07/2026 08:43:10",
       "statut": "confirme"
     },
     {
@@ -658,10 +638,9 @@
       "selectedCMS": "1",
       "date": "2026-08-07",
       "heure": "15:00",
-      "dateDemande": "2026-07-20",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 10:44:43",
-      "statut": "confirme",
-      "notes": ""
+      "statut": "confirme"
     },
     {
       "channel": "sms",
@@ -679,10 +658,9 @@
       "selectedCMS": "2",
       "date": "2026-08-06",
       "heure": "09:00",
-      "dateDemande": "2026-07-20",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 10:40:04",
-      "statut": "confirme",
-      "notes": ""
+      "statut": "confirme"
     },
     {
       "channel": "sms",
@@ -760,10 +738,9 @@
       "selectedCMS": "1784553745301",
       "date": "2026-07-31",
       "heure": "14:30",
-      "dateDemande": "2026-07-09",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 10:18:54",
-      "statut": "confirme",
-      "notes": ""
+      "statut": "confirme"
     },
     {
       "channel": "sms",
@@ -781,10 +758,9 @@
       "selectedCMS": "1",
       "date": "2026-07-31",
       "heure": "11:30",
-      "dateDemande": "2026-07-10",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 10:10:03",
-      "statut": "confirme",
-      "notes": ""
+      "statut": "confirme"
     },
     {
       "channel": "sms",
@@ -802,10 +778,9 @@
       "selectedCMS": "1",
       "date": "2026-07-31",
       "heure": "10:30",
-      "dateDemande": "2026-07-10",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 10:09:16",
-      "statut": "confirme",
-      "notes": ""
+      "statut": "confirme"
     },
     {
       "channel": "sms",
@@ -823,10 +798,9 @@
       "selectedCMS": "1",
       "date": "2026-07-31",
       "heure": "09:30",
-      "dateDemande": "2026-07-20",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 10:08:24",
-      "statut": "confirme",
-      "notes": ""
+      "statut": "confirme"
     },
     {
       "channel": "sms",
@@ -844,10 +818,9 @@
       "selectedCMS": "2",
       "date": "2026-07-30",
       "heure": "11:00",
-      "dateDemande": "2026-07-20",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 10:05:14",
-      "statut": "en_attente",
-      "notes": ""
+      "statut": "en_attente"
     },
     {
       "channel": "sms",
@@ -886,10 +859,9 @@
       "selectedCMS": "2",
       "date": "2026-07-30",
       "heure": "10:00",
-      "dateDemande": "2026-07-20",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 09:58:57",
-      "statut": "confirme",
-      "notes": ""
+      "statut": "confirme"
     },
     {
       "channel": "sms",
@@ -907,10 +879,9 @@
       "selectedCMS": "2",
       "date": "2026-07-30",
       "heure": "09:00",
-      "dateDemande": "2026-07-20",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 09:57:30",
-      "statut": "confirme",
-      "notes": ""
+      "statut": "confirme"
     },
     {
       "channel": "sms",
@@ -988,10 +959,9 @@
       "selectedCMS": "1",
       "date": "2026-07-24",
       "heure": "15:00",
-      "dateDemande": "2026-07-03",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 09:52:17",
-      "statut": "confirme",
-      "notes": ""
+      "statut": "confirme"
     },
     {
       "channel": "sms",
@@ -1009,10 +979,29 @@
       "selectedCMS": "1",
       "date": "2026-07-24",
       "heure": "14:00",
-      "dateDemande": "2026-07-03",
+      "dateDemande": "2026-07-21",
       "ts": "21/07/2026 09:51:24",
-      "statut": "confirme",
-      "notes": ""
+      "statut": "confirme"
+    },
+    {
+      "channel": "sms",
+      "msgType": "proposition",
+      "body": "Bonjour Mme véronique LEGROS,\n\nPour faire suite à mon message téléphonique de ce jour, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Diag PIX\" le vendredi 24 juillet 2026 à 11:30 au :\n\n📍 Centre Médico-Social de Fumel - 2 Place Voltaire, 47500 FUMEL\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\n\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+      "subject": "",
+      "civilite": "Mme",
+      "prenom": "véronique",
+      "nom": "LEGROS",
+      "telephone": "0695311563",
+      "demarche": "Diag PIX",
+      "selectedDemarche": "__autre__",
+      "demarcheAutre": "Diag PIX",
+      "commune": "Fumel",
+      "selectedCMS": "1",
+      "date": "2026-07-24",
+      "heure": "11:30",
+      "dateDemande": "2026-07-21",
+      "ts": "21/07/2026 09:50:24",
+      "statut": "confirme"
     }
   ],
   "permanences": [
