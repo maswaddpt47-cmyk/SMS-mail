@@ -3295,12 +3295,20 @@ function renderModal(){
     box.appendChild(dataBtn('⬇️ Restaurer depuis GitHub','oklch(0.96 0.025 266)','oklch(0.42 0.14 266)','1.5px solid oklch(0.7 0.1 266)',function(){S.modal='gh-restore';renderModal();}));
     box.appendChild(dataBtn('🔄 Sync & Reset (backup → vider cache → restaurer)','oklch(0.97 0.03 25)','oklch(0.45 0.16 25)','1.5px solid oklch(0.7 0.12 25)',function(){
       if(!ghToken()){showToast('⚠️ Token GitHub manquant','warn');return;}
-      if(!confirm('🔄 Sync & Reset\n\n1. Sauvegarde immédiate sur GitHub\n2. Vidage du localStorage\n3. Restauration depuis GitHub\n\nContinuer ?'))return;
-      closeModal();showToast('☁️ Sauvegarde en cours…');
+      var nbAvant=S.history.length;
+      if(!confirm('🔄 Sync & Reset\n\n1. Sauvegarde immédiate sur GitHub ('+nbAvant+' RDV)\n2. Vidage du localStorage\n3. Restauration depuis GitHub\n\nContinuer ?'))return;
+      closeModal();showToast('☁️ Sauvegarde en cours… ('+nbAvant+' RDV)');
       githubPush(false,function(){
-        showToast('🗑 Vidage du cache…');
-        var tok=ghToken();localStorage.clear();localStorage.setItem('ess-gh-token',tok);
-        ghRestoreLatest(tok,function(){showToast('✅ Sync & Reset terminé');regen();renderAll();});
+        showToast('✅ Sauvegarde OK — '+nbAvant+' RDV sauvegardés');
+        setTimeout(function(){
+          showToast('🗑 Cache vidé — localStorage effacé');
+          var tok=ghToken();localStorage.clear();localStorage.setItem('ess-gh-token',tok);
+          ghRestoreLatest(tok,function(){
+            var nbApres=S.history.length;
+            showToast('✅ Restauration OK — '+nbApres+' RDV récupérés');
+            regen();renderAll();
+          });
+        },1500);
       });
     }));
     /* Local JSON */
