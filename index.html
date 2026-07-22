@@ -369,7 +369,7 @@ function ghNowFile(){
 }
 
 /* pousse un fichier daté, puis nettoie les anciens (garde GH_MAX_VERSIONS) */
-function githubPush(silent){
+function githubPush(silent,onSuccess){
   var token=ghToken();
   if(!token){if(!silent)showToast('⚠️ Token GitHub manquant — ajoutez-le dans Configuration','warn');return;}
   if(!silent)showToast('⏳ Sauvegarde GitHub en cours…','ok');
@@ -387,10 +387,26 @@ function githubPush(silent){
       if(!r||!r.ok){if(!silent)showToast('❌ Erreur GitHub (vérifiez le token)','err');return;}
       if(!silent)showToast('✅ Sauvegarde GitHub réussie !');
       localStorage.setItem('ess-gh-last-backup',new Date().toISOString());
-      /* nettoyage : supprimer les fichiers au-delà de GH_MAX_VERSIONS */
       ghCleanOldBackups(token);
+      if(onSuccess)onSuccess();
     })
     .catch(function(){if(!silent)showToast('❌ Erreur réseau GitHub','err');});
+}
+
+/* restaure le backup le plus récent sur GitHub */
+function ghRestoreLatest(token,onSuccess){
+  ghListBackups(token,function(backups){
+    if(!backups.length){showToast('❌ Aucun backup trouvé sur GitHub','err');return;}
+    var latest=backups[0];
+    fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+latest.path+'?ref='+GH_BRANCH,{headers:ghHeaders(token)})
+      .then(function(r){if(!r.ok)throw new Error();return r.json();})
+      .then(function(data){
+        var json=decodeURIComponent(escape(atob(data.content.replace(/\n/g,''))));
+        S.importText=json;doImport();
+        if(onSuccess)onSuccess();
+      })
+      .catch(function(){showToast('❌ Impossible de restaurer depuis GitHub','err');});
+  });
 }
 
 function ghCleanOldBackups(token){
@@ -2506,6 +2522,24 @@ function renderConfig(){
     tokenRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;background:oklch(0.2 0.02 264);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:10px;",onClick:function(){githubPush();}},"☁️ Sauvegarder sur GitHub"));
     tokenRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.96 0.025 266);color:oklch(0.42 0.14 266);font-weight:700;font-size:13px;padding:10px;border-radius:10px;",onClick:function(){S.modal='gh-restore';renderModal();}},"⬇️ Restaurer depuis GitHub"));
     card4.appendChild(tokenRow);
+    /* Sync & Reset */
+    var syncRow=el('div',{style:"margin-top:8px;"});
+    syncRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;width:100%;font-family:inherit;border:1.5px solid oklch(0.7 0.12 25);background:oklch(0.97 0.03 25);color:oklch(0.45 0.16 25);font-weight:700;font-size:13px;padding:10px;border-radius:10px;",onClick:function(){
+      if(!ghToken()){showToast('⚠️ Token GitHub manquant','warn');return;}
+      if(!confirm('🔄 Sync & Reset\n\n1. Sauvegarde immédiate sur GitHub\n2. Vidage du localStorage\n3. Restauration depuis GitHub\n\nContinuer ?'))return;
+      showToast('☁️ Sauvegarde en cours…');
+      githubPush(false,function(){
+        showToast('🗑 Vidage du cache…');
+        var token=ghToken();
+        localStorage.clear();
+        localStorage.setItem('ess-gh-token',token);
+        ghRestoreLatest(token,function(){
+          showToast('✅ Sync & Reset terminé — données restaurées depuis GitHub');
+          regen();renderAll();
+        });
+      });
+    }},"🔄 Sync & Reset (backup → vider cache → restaurer)"));
+    card4.appendChild(syncRow);
     wrap.appendChild(card4);
   }
   pane.appendChild(wrap);
