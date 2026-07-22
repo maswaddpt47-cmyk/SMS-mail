@@ -359,13 +359,13 @@ function saveLast(){lsSet('ess-last',{selectedCMS:S.selectedCMS,selectedDemarche
 var GH_REPO='maswaddpt47-cmyk/sms-mail';
 var GH_BRANCH='main';
 var GH_BACKUP_DIR='backups';
-var GH_MAX_VERSIONS=7;
 function ghToken(){return localStorage.getItem('ess-gh-token')||'';}
 function ghHeaders(token){return{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github+json'};}
-function ghTodayFile(){
+function ghNowFile(){
   var n=new Date();
   var d=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
-  return GH_BACKUP_DIR+'/backup-'+d+'.json';
+  var h=String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0');
+  return GH_BACKUP_DIR+'/backup-'+d+'-'+h+'.json';
 }
 
 /* pousse un fichier daté, puis nettoie les anciens (garde GH_MAX_VERSIONS) */
@@ -374,12 +374,12 @@ function githubPush(silent){
   if(!token){if(!silent)showToast('⚠️ Token GitHub manquant — ajoutez-le dans Configuration','warn');return;}
   if(!silent)showToast('⏳ Sauvegarde GitHub en cours…','ok');
   var content=btoa(unescape(encodeURIComponent(JSON.stringify(exportData(),null,2))));
-  var file=ghTodayFile();
-  /* vérifier si le fichier du jour existe déjà (SHA nécessaire pour update) */
+  var file=ghNowFile();
+  /* chaque backup est un nouveau fichier horodaté — pas besoin de SHA */
   fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+file+'?ref='+GH_BRANCH,{headers:ghHeaders(token)})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(existing){
-      var body={message:'backup: '+new Date().toLocaleDateString('fr-FR'),content:content,branch:GH_BRANCH};
+      var body={message:'backup: '+new Date().toLocaleString('fr-FR'),content:content,branch:GH_BRANCH};
       if(existing&&existing.sha)body.sha=existing.sha;
       return fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+file,{method:'PUT',headers:ghHeaders(token),body:JSON.stringify(body)});
     })
@@ -398,11 +398,17 @@ function ghCleanOldBackups(token){
     .then(function(r){return r.ok?r.json():[];})
     .then(function(files){
       if(!Array.isArray(files))return;
-      var backups=files.filter(function(f){return f.name.match(/^backup-\d{4}-\d{2}-\d{2}\.json$/);});
-      backups.sort(function(a,b){return b.name.localeCompare(a.name);});
-      var toDelete=backups.slice(GH_MAX_VERSIONS);
+      var backups=files.filter(function(f){return f.name.match(/^backup-\d{4}-\d{2}-\d{2}-\d{4}\.json$|^backup-\d{4}-\d{2}-\d{2}\.json$/);});
+      backups.sort(function(a,b){return b.name.localeCompare(a.name);}); /* du plus récent au plus ancien */
+      var cutoff=Date.now()-48*3600*1000;
+      var toDelete=backups.slice(1).filter(function(f){ /* toujours garder le plus récent [0] */
+        var m=f.name.match(/backup-(\d{4})-(\d{2})-(\d{2})(?:-(\d{2})(\d{2}))?\.json/);
+        if(!m)return false;
+        var d=new Date(+m[1],+m[2]-1,+m[3],m[4]?+m[4]:0,m[5]?+m[5]:0);
+        return d.getTime()<cutoff;
+      });
       toDelete.forEach(function(f){
-        fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+f.path,{method:'DELETE',headers:ghHeaders(token),body:JSON.stringify({message:'backup: nettoyage ancien backup',sha:f.sha,branch:GH_BRANCH})});
+        fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+f.path,{method:'DELETE',headers:ghHeaders(token),body:JSON.stringify({message:'backup: nettoyage >48h',sha:f.sha,branch:GH_BRANCH})});
       });
     }).catch(function(){});
 }
@@ -413,7 +419,7 @@ function ghListBackups(token,cb){
     .then(function(r){return r.ok?r.json():[];})
     .then(function(files){
       if(!Array.isArray(files)){cb([]);return;}
-      var backups=files.filter(function(f){return f.name.match(/^backup-\d{4}-\d{2}-\d{2}\.json$/);});
+      var backups=files.filter(function(f){return f.name.match(/^backup-\d{4}-\d{2}-\d{2}(?:-\d{4})?\.json$/);});
       backups.sort(function(a,b){return b.name.localeCompare(a.name);});
       cb(backups);
     }).catch(function(){cb([]);});
@@ -3315,9 +3321,9 @@ function renderModal(){
         }
         box.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:12px;"},"Choisissez la version à restaurer. ⚠️ Les données actuelles seront remplacées."));
         backups.forEach(function(b){
-          var m=b.name.match(/backup-(\d{4}-\d{2}-\d{2})\.json/);
-          var dateStr=m?m[1].split('-').reverse().join('/'):'?';
-          var isToday=m&&m[1]===new Date().toISOString().slice(0,10);
+          var m=b.name.match(/backup-(\d{4})-(\d{2})-(\d{2})(?:-(\d{2})(\d{2}))?\.json/);
+          var dateStr=m?(m[3]+'/'+m[2]+'/'+m[1]+(m[4]?' à '+m[4]+'h'+m[5]:'')):'?';
+          var isToday=m&&(m[1]+'-'+m[2]+'-'+m[3])===new Date().toISOString().slice(0,10);
           var row=el('div',{style:"display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;border:1px solid var(--c-border);margin-bottom:6px;background:var(--c-card);"});
           var lbl=el('div');
           lbl.appendChild(el('div',{style:"font-size:13px;font-weight:700;color:var(--c-dim);"},'📅 '+dateStr+(isToday?' (aujourd\'hui)':'')));
