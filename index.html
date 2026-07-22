@@ -3465,7 +3465,7 @@ function renderModal(){
       var fullName=[t.civilite,t.prenom,t.nom].filter(Boolean).join(' ')||'—';
       var stSel=el('select',{style:"width:100%;font-family:inherit;font-size:13px;font-weight:700;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);box-sizing:border-box;margin-bottom:10px;",onChange:function(ev){
         var idx=S.history.findIndex(function(h){return h===t;});
-        if(idx!==-1){S.history[idx].statut=ev.target.value||null;t.statut=ev.target.value||null;lsSet('ess-history',S.history);renderAgenda();}
+        if(idx!==-1){S.history[idx].statut=ev.target.value||null;t.statut=ev.target.value||null;lsSet('ess-history',S.history);renderAgenda();if(ghToken()){var _n=Date.now();if(_n-_ghLastAutoPush>120000){_ghLastAutoPush=_n;githubPush(true);}}}
       }});
       [['','— Statut —'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé']].forEach(function(o){var opt=el('option',{value:o[0]},o[1]);if((t.statut||'')===(o[0]))opt.selected=true;stSel.appendChild(opt);});
       box.appendChild(stSel);
