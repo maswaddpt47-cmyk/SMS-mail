@@ -3305,7 +3305,7 @@ function renderModal(){
     }));
     /* Local JSON */
     box.appendChild(el('div',{style:"font-size:11px;font-weight:700;color:var(--c-muted);letter-spacing:.04em;margin-top:6px;"},'FICHIER LOCAL'));
-    box.appendChild(dataBtn('⬇️ Télécharger JSON','oklch(0.5 0.16 266)','#fff','none',function(){closeModal();downloadExport();}));
+    box.appendChild(dataBtn('⬇️ Exporter JSON','oklch(0.5 0.16 266)','#fff','none',function(){closeModal();downloadExport();}));
     var fileIn2=el('input',{type:'file',accept:'.json,application/json',style:"display:none;"});
     fileIn2.addEventListener('change',function(e){var f=e.target.files&&e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){S.importText=ev.target.result;doImport();};r.readAsText(f);});
     var impLbl=el('label',{style:"cursor:pointer;display:block;"});
