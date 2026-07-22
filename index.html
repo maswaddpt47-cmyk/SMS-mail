@@ -156,7 +156,10 @@
     <div style="width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,oklch(0.56 0.16 266),oklch(0.46 0.16 272));display:flex;align-items:center;justify-content:center;color:#fff;font-size:19px;box-shadow:0 6px 16px oklch(0.5 0.16 266 / .35);flex-shrink:0;">✦</div>
     <div style="flex:1;min-width:0;">
       <div style="font-weight:800;font-size:16px;letter-spacing:-.02em;line-height:1.1;">Générateur SMS &amp; Mail</div>
-      <div id="saveStatus" style="font-size:12px;color:oklch(0.56 0.02 264);font-weight:500;margin-top:1px;"></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:1px;">
+        <div id="saveStatus" style="font-size:12px;color:oklch(0.56 0.02 264);font-weight:500;"></div>
+        <div id="rdvCounter" style="font-size:12px;color:oklch(0.5 0.14 155);font-weight:700;"></div>
+      </div>
     </div>
     <button class="gx-press" id="btnDark" title="Mode sombre" style="cursor:pointer;font-family:inherit;border:none;background:none;font-size:20px;padding:4px 6px;line-height:1;border-radius:9px;flex-shrink:0;">🌙</button>
     <button class="gx-press hdr-btn" id="btnData" style="border:none;background:oklch(0.26 0.03 264);color:#fff;box-shadow:0 4px 12px oklch(0.26 0.03 264 / .25);">💾 Données</button>
@@ -883,6 +886,9 @@ function selectOpts(selectEl,opts,selected){
 /* ============================== RENDER: HEADER/TABS ============================== */
 function renderHeader(){
   document.getElementById('saveStatus').textContent=S.saveStatus;
+  var ctr=document.getElementById('rdvCounter');
+  if(ctr){var n=S.history.filter(function(h){return h.date;}).length;ctr.textContent=n>0?'· '+n+' RDV':'';}
+
   var bannerRoot=document.getElementById('gh-banner-root');
   if(!bannerRoot)return;
   bannerRoot.innerHTML='';
@@ -1835,11 +1841,7 @@ function renderAgenda(){
   var wrap=el('div',{style:"max-width:860px;margin:0 auto;padding:clamp(14px,3vw,32px) clamp(12px,4vw,40px);"});
   var head=el('div',{style:"display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:20px;flex-wrap:wrap;"});
   head.appendChild(el('h2',{style:"margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;"},"Agenda des permanences"));
-  var headBtns=el('div',{style:"display:flex;gap:8px;flex-wrap:wrap;"});
-  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);",onClick:function(){S.activeTab='config';S.configTab='permanences';showActivePane();renderTabs();renderConfig();}},'⚙️ Gérer les permanences'));
-  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);",onClick:exportICS},'⬇️ Export ICS'));
-  headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;border:1.5px solid oklch(0.7 0.1 38);background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);",onClick:function(){S.modal='import-ics';renderModal();}},'⬆️ Import ICS'));
-  head.appendChild(headBtns);
+  head.appendChild(el('div',{style:"font-size:13px;color:var(--c-muted);font-weight:600;"},S.history.filter(function(h){return h.date;}).length+' RDV'));
   wrap.appendChild(head);
 
   /* bannière dépassements */
@@ -3311,6 +3313,11 @@ function renderModal(){
         },1500);
       });
     }));
+    /* Calendrier */
+    box.appendChild(el('div',{style:"font-size:11px;font-weight:700;color:var(--c-muted);letter-spacing:.04em;margin-top:6px;"},'CALENDRIER'));
+    box.appendChild(dataBtn('⚙️ Gérer les permanences','oklch(0.94 0.06 266)','oklch(0.4 0.14 266)','1.5px solid oklch(0.7 0.1 266)',function(){closeModal();S.activeTab='config';S.configTab='permanences';showActivePane();renderTabs();renderConfig();}));
+    box.appendChild(dataBtn('⬇️ Exporter ICS','oklch(0.94 0.06 155)','oklch(0.38 0.12 155)','1.5px solid oklch(0.7 0.1 155)',function(){closeModal();exportICS();}));
+    box.appendChild(dataBtn('⬆️ Importer ICS','oklch(0.94 0.06 38)','oklch(0.42 0.12 38)','1.5px solid oklch(0.7 0.1 38)',function(){S.modal='import-ics';renderModal();}));
     /* Local JSON */
     box.appendChild(el('div',{style:"font-size:11px;font-weight:700;color:var(--c-muted);letter-spacing:.04em;margin-top:6px;"},'FICHIER LOCAL'));
     box.appendChild(dataBtn('⬇️ Exporter JSON','oklch(0.5 0.16 266)','#fff','none',function(){closeModal();downloadExport();}));
