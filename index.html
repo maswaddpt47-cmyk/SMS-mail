@@ -3313,13 +3313,15 @@ function renderModal(){
     } else {
       var loadingDiv=el('div',{style:"text-align:center;padding:20px;color:var(--c-muted);font-size:13px;"},"⏳ Chargement des versions…");
       box.appendChild(loadingDiv);
+      var listDiv=el('div',{class:'gx-scroll',style:"overflow-y:auto;max-height:340px;flex:1;"});
+      box.appendChild(listDiv);
       ghListBackups(token,function(backups){
         box.removeChild(loadingDiv);
         if(!backups.length){
-          box.appendChild(el('div',{style:"text-align:center;padding:20px;color:var(--c-muted);font-size:13px;"},"Aucun backup trouvé sur GitHub."));
+          listDiv.appendChild(el('div',{style:"text-align:center;padding:20px;color:var(--c-muted);font-size:13px;"},"Aucun backup trouvé sur GitHub."));
           return;
         }
-        box.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:12px;"},"Choisissez la version à restaurer. ⚠️ Les données actuelles seront remplacées."));
+        listDiv.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:12px;"},"Choisissez la version à restaurer. ⚠️ Les données actuelles seront remplacées."));
         backups.forEach(function(b){
           var m=b.name.match(/backup-(\d{4})-(\d{2})-(\d{2})(?:-(\d{2})(\d{2}))?\.json/);
           var dateStr=m?(m[3]+'/'+m[2]+'/'+m[1]+(m[4]?' à '+m[4]+'h'+m[5]:'')):'?';
@@ -3332,7 +3334,7 @@ function renderModal(){
           btn.textContent='Restaurer';
           (function(path){btn.addEventListener('click',function(){S.modal=null;renderModal();ghRestoreFile(token,path);});})(b.path);
           row.appendChild(btn);
-          box.appendChild(row);
+          listDiv.appendChild(row);
         });
       });
     }
