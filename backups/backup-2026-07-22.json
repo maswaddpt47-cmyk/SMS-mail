@@ -604,6 +604,26 @@
   "history": [
     {
       "channel": "sms",
+      "msgType": "proposition",
+      "body": "Bonjour Mme Jemaa Jemaa,\n\nPour faire suite à mon message téléphonique de ce jour, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Demande de la Carte Solidaire (transport)\" le jeudi 23 juillet 2026 à 10:00 au :\n\n📍 Centre Médico-Social de Marmande - 8 Square de Verdun, 47200 MARMANDE\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n• Photo d'identité récente et conforme\n• Pièce d'identité recto-verso (photocopie)\n• Justificatif de domicile de moins de 3 mois\n• Dernier avis d'imposition complet\n• Un accès à votre compte mail.\n• Pour les enfants : livret de famille + pièce d'identité de l'enfant.\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+      "subject": "",
+      "civilite": "Mme",
+      "prenom": "Jemaa",
+      "nom": "Jemaa",
+      "telephone": "0784744088",
+      "demarche": "Demande de la Carte Solidaire (transport)",
+      "selectedDemarche": "804",
+      "demarcheAutre": "",
+      "commune": "Marmande",
+      "selectedCMS": "2",
+      "date": "2026-07-23",
+      "heure": "10:00",
+      "dateDemande": "2026-07-22",
+      "ts": "22/07/2026 08:54:32",
+      "statut": "en_attente"
+    },
+    {
+      "channel": "sms",
       "msgType": "sans_appel",
       "body": "Bonjour Mme Flore WOFE NOUMSSI,\n\nPour faire suite à la demande du Centre Médico-Social de Marmande, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Demande de logement social (SNE / Numéro unique)\" le jeudi 23 juillet 2026 à 09:00 au :\n\n📍 Centre Médico-Social de Marmande - 8 Square de Verdun, 47200 MARMANDE\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\nSi oui, pensez à apporter :\n• Pièce d'identité de tous les membres du foyer\n• Carte Vitale\n• Livret de famille\n• 2 derniers avis d'imposition\n• Attestation CAF, MSA ou CARSAT (allocations, retraite…)\n• Contrat de travail + 3 derniers bulletins de salaire (si salarié)\n• Contrat de location + quittances de loyer (si locataire)\n• Attestation d'hébergement + justificatif de domicile de l'hébergeur (si hébergé)\n• Arrêté d'insalubrité ou diagnostic (si logement insalubre)\n• Décision de justice (en cas de divorce ou violences)\n• Un accès à votre compte mail.\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
       "subject": "",
@@ -981,26 +1001,6 @@
       "heure": "14:00",
       "dateDemande": "2026-07-21",
       "ts": "21/07/2026 09:51:24",
-      "statut": "confirme"
-    },
-    {
-      "channel": "sms",
-      "msgType": "proposition",
-      "body": "Bonjour Mme véronique LEGROS,\n\nPour faire suite à mon message téléphonique de ce jour, je vous propose un rendez-vous pour un accompagnement numérique, concernant votre \"Diag PIX\" le vendredi 24 juillet 2026 à 11:30 au :\n\n📍 Centre Médico-Social de Fumel - 2 Place Voltaire, 47500 FUMEL\n\nMERCI DE ME DIRE RAPIDEMENT SI CETTE DATE VOUS CONVIENT.\n\n\n\nDans le cas contraire, n'hésitez pas à me recontacter par SMS.\n\nCordialement,\n\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
-      "subject": "",
-      "civilite": "Mme",
-      "prenom": "véronique",
-      "nom": "LEGROS",
-      "telephone": "0695311563",
-      "demarche": "Diag PIX",
-      "selectedDemarche": "__autre__",
-      "demarcheAutre": "Diag PIX",
-      "commune": "Fumel",
-      "selectedCMS": "1",
-      "date": "2026-07-24",
-      "heure": "11:30",
-      "dateDemande": "2026-07-21",
-      "ts": "21/07/2026 09:50:24",
       "statut": "confirme"
     }
   ],
