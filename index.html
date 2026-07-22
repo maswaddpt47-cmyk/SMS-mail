@@ -1961,16 +1961,20 @@ function renderAgenda(){
     dayHead.appendChild(freeBadge);
     card.appendChild(dayHead);
     /* grille des créneaux — colonnes fixes pour éviter les trous */
-    var sg=el('div',{style:"display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;"});
+    var sg=el('div',{style:"display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;"});
     slots.forEach(function(slot){
       var who=slot.taken?[slot.taken.nom,slot.taken.prenom].filter(Boolean).join(' '):'';
       var isPropo=slot.taken&&slot.taken.msgType==='proposition';
       var _st=slot.taken&&slot.taken.statut;
-      /* couleurs selon statut : rose=en_attente, bleu=confirmé, vert=vide/sans statut */
-      var pillBorder,pillBg,pillTxt;
+      /* créneaux libres : pastille compacte */
       if(!slot.taken){
-        pillBorder='oklch(0.82 0.08 155)';pillBg='oklch(0.95 0.04 155)';pillTxt='oklch(0.42 0.12 155)';
-      } else if(slot.multiPropo){
+        var freePill=el('button',{style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:600;padding:3px 7px;border-radius:6px;border:1px dashed oklch(0.78 0.06 155);background:oklch(0.97 0.02 155);color:oklch(0.62 0.08 155);",'data-nom':'','data-statut':'libre','data-depasse':'0',title:'🟢 Créneau libre — '+slot.heure,onClick:(function(s,d){return function(){S.modal='agenda-new';S.agendaNew={heure:s.heure,dateStr:d.dateStr,commune:d.perm.commune,civilite:'',prenom:'',nom:'',telephone:'',selectedCMS:S.selectedCMS||'',selectedDemarche:S.selectedDemarche||'',demarcheAutre:'',channel:S.channel||'sms'};renderModal();};})(slot,day)},slot.heure);
+        sg.appendChild(freePill);
+        return;
+      }
+      /* couleurs selon statut : rose=en_attente, bleu=confirmé */
+      var pillBorder,pillBg,pillTxt;
+      if(slot.multiPropo){
         pillBorder='oklch(0.62 0.2 25)';pillBg='oklch(0.92 0.08 25)';pillTxt='oklch(0.42 0.2 25)';
       } else if(_st==='confirme'){
         pillBorder='oklch(0.48 0.2 266)';pillBg='oklch(0.82 0.14 266)';pillTxt='oklch(0.2 0.15 266)';
@@ -1979,7 +1983,7 @@ function renderAgenda(){
       } else {
         pillBorder='oklch(0.82 0.08 155)';pillBg='oklch(0.95 0.04 155)';pillTxt='oklch(0.42 0.12 155)';
       }
-      var _pillStatut=!slot.taken?'libre':(_st||'pris');
+      var _pillStatut=_st||'pris';
       var _ttLines=[];
       if(slot.taken){
         var _t=slot.taken;
