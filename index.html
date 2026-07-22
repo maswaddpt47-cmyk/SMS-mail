@@ -1417,7 +1417,7 @@ function renderStats(){
   if(!S.statsPeriod)S.statsPeriod='all';
 
   /* ── filtre de période ── */
-  var now=new Date(2026,6,9);
+  var now=new Date();
   function cutoff(p){
     if(p==='1m'){var d=new Date(now);d.setMonth(d.getMonth()-1);return d;}
     if(p==='3m'){var d=new Date(now);d.setMonth(d.getMonth()-3);return d;}
