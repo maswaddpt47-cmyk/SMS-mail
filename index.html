@@ -2026,7 +2026,7 @@ function renderAgenda(){
         } else if(slot.taken.body){
           _ago=timeAgo(slot.taken.ts);
         }
-        if(_ago&&_st!=='confirmé')pill.appendChild(el('div',{style:"font-size:9px;font-weight:700;color:"+pillTxt+";background:rgba(0,0,0,0.07);border-radius:4px;padding:1px 4px;margin-top:1px;"},_ago));
+        if(_ago&&_st!=='confirme')pill.appendChild(el('div',{style:"font-size:9px;font-weight:700;color:"+pillTxt+";background:rgba(0,0,0,0.07);border-radius:4px;padding:1px 4px;margin-top:1px;"},_ago));
       }
       (function(s,d){
         pill.addEventListener('click',function(){
