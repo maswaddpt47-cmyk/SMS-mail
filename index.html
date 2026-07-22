@@ -337,12 +337,21 @@ var S={
 
 /* ============================== PERSISTENCE ============================== */
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){showToast('⚠️ Stockage plein. Exportez vos données !','warn');}}
+var _ghLastAutoPush=0;
 function persist(){
   lsSet('ess-cms',S.cmsList);lsSet('ess-demarches',S.demarches);lsSet('ess-secteurs',S.secteurs);
   lsSet('ess-templates',S.templates);lsSet('ess-custom-tpl',S.customTemplates);lsSet('ess-vars',S.customVars);
   lsSet('ess-hidden',S.hiddenBuiltinKeys);
   var now=new Date().toLocaleString('fr-FR');lsSet('ess-lastSave',now);
   S.saveStatus='Sauvegardé le '+now;renderHeader();
+  /* auto-backup GitHub throttlé : max 1 push toutes les 2 minutes */
+  if(ghToken()){
+    var nowMs=Date.now();
+    if(nowMs-_ghLastAutoPush>120000){
+      _ghLastAutoPush=nowMs;
+      githubPush(true);
+    }
+  }
 }
 function saveLast(){lsSet('ess-last',{selectedCMS:S.selectedCMS,selectedDemarche:S.selectedDemarche,commune:S.commune});}
 
@@ -605,6 +614,8 @@ function addHistory(item){
   if(item.body&&!item.statut)item.statut='en_attente';
   var h=[item].concat(S.history);if(h.length>HISTORY_MAX)h.pop();
   S.history=h;lsSet('ess-history',h);
+  /* auto-backup GitHub immédiat après chaque nouveau RDV (throttlé 2 min) */
+  if(ghToken()){var nowMs=Date.now();if(nowMs-_ghLastAutoPush>120000){_ghLastAutoPush=nowMs;githubPush(true);}}
   /* Rappel export tous les 5 messages */
   var since=parseInt(localStorage.getItem('ess-since-export')||'0',10)+1;
   localStorage.setItem('ess-since-export',since);
@@ -3602,11 +3613,6 @@ function init(){
     var ctrl=e.ctrlKey||e.metaKey;
     if(ctrl&&e.key==='Enter'){e.preventDefault();if(S.generatedBody)copyBody();else if(canGenerate())handleGenerate();}
     if(ctrl&&e.shiftKey&&(e.key==='G'||e.key==='g')){e.preventDefault();if(canGenerate())handleGenerate();}
-  });
-
-  /* auto-backup à la fermeture */
-  window.addEventListener('beforeunload',function(){
-    if(ghToken())githubPush(true);
   });
 
   /* vérification silencieuse au démarrage */
