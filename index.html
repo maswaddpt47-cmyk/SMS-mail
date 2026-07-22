@@ -3315,7 +3315,6 @@ function renderModal(){
     }));
     /* Calendrier */
     box.appendChild(el('div',{style:"font-size:11px;font-weight:700;color:var(--c-muted);letter-spacing:.04em;margin-top:6px;"},'CALENDRIER'));
-    box.appendChild(dataBtn('⚙️ Gérer les permanences','oklch(0.94 0.06 266)','oklch(0.4 0.14 266)','1.5px solid oklch(0.7 0.1 266)',function(){closeModal();S.activeTab='config';S.configTab='permanences';showActivePane();renderTabs();renderConfig();}));
     box.appendChild(dataBtn('⬇️ Exporter ICS','oklch(0.94 0.06 155)','oklch(0.38 0.12 155)','1.5px solid oklch(0.7 0.1 155)',function(){closeModal();exportICS();}));
     box.appendChild(dataBtn('⬆️ Importer ICS','oklch(0.94 0.06 38)','oklch(0.42 0.12 38)','1.5px solid oklch(0.7 0.1 38)',function(){S.modal='import-ics';renderModal();}));
     /* Local JSON */
