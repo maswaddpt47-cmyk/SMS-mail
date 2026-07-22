@@ -159,8 +159,7 @@
       <div id="saveStatus" style="font-size:12px;color:oklch(0.56 0.02 264);font-weight:500;margin-top:1px;"></div>
     </div>
     <button class="gx-press" id="btnDark" title="Mode sombre" style="cursor:pointer;font-family:inherit;border:none;background:none;font-size:20px;padding:4px 6px;line-height:1;border-radius:9px;flex-shrink:0;">🌙</button>
-    <button class="gx-press hdr-btn" id="btnImport" style="border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);">Importer</button>
-    <button class="gx-press hdr-btn" id="btnExport" style="border:none;background:oklch(0.26 0.03 264);color:#fff;box-shadow:0 4px 12px oklch(0.26 0.03 264 / .25);">Sauvegarder</button>
+    <button class="gx-press hdr-btn" id="btnData" style="border:none;background:oklch(0.26 0.03 264);color:#fff;box-shadow:0 4px 12px oklch(0.26 0.03 264 / .25);">💾 Données</button>
   </header>
   <nav id="tabnav" style="background:var(--c-nav);border-bottom:1px solid var(--c-border);padding:0 clamp(16px,4vw,40px);display:flex;gap:4px;overflow-x:auto;"></nav>
   </div>
@@ -2513,33 +2512,11 @@ function renderConfig(){
 
     /* token GitHub */
     var card4=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px 20px;margin-bottom:14px;"});
-    card4.appendChild(el('div',{style:"font-weight:800;font-size:14px;margin-bottom:6px;"},"☁️ Sauvegarde GitHub"));
+    card4.appendChild(el('div',{style:"font-weight:800;font-size:14px;margin-bottom:6px;"},"☁️ Token GitHub"));
     card4.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:10px;line-height:1.5;"},"Collez ici votre token GitHub (scope : Contents → Read & Write). Il est stocké uniquement dans ce navigateur et n'est envoyé qu'à api.github.com."));
     var tokenIn=el('input',{type:'password',style:INS3,placeholder:"ghp_xxxxxxxxxxxxxxxxxxxx",value:ghToken()});
     tokenIn.addEventListener('input',function(e){localStorage.setItem('ess-gh-token',e.target.value.trim());});
     card4.appendChild(tokenIn);
-    var tokenRow=el('div',{style:"display:flex;gap:8px;margin-top:10px;"});
-    tokenRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:none;background:oklch(0.2 0.02 264);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:10px;",onClick:function(){githubPush();}},"☁️ Sauvegarder sur GitHub"));
-    tokenRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;flex:1;font-family:inherit;border:1.5px solid oklch(0.7 0.1 266);background:oklch(0.96 0.025 266);color:oklch(0.42 0.14 266);font-weight:700;font-size:13px;padding:10px;border-radius:10px;",onClick:function(){S.modal='gh-restore';renderModal();}},"⬇️ Restaurer depuis GitHub"));
-    card4.appendChild(tokenRow);
-    /* Sync & Reset */
-    var syncRow=el('div',{style:"margin-top:8px;"});
-    syncRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;width:100%;font-family:inherit;border:1.5px solid oklch(0.7 0.12 25);background:oklch(0.97 0.03 25);color:oklch(0.45 0.16 25);font-weight:700;font-size:13px;padding:10px;border-radius:10px;",onClick:function(){
-      if(!ghToken()){showToast('⚠️ Token GitHub manquant','warn');return;}
-      if(!confirm('🔄 Sync & Reset\n\n1. Sauvegarde immédiate sur GitHub\n2. Vidage du localStorage\n3. Restauration depuis GitHub\n\nContinuer ?'))return;
-      showToast('☁️ Sauvegarde en cours…');
-      githubPush(false,function(){
-        showToast('🗑 Vidage du cache…');
-        var token=ghToken();
-        localStorage.clear();
-        localStorage.setItem('ess-gh-token',token);
-        ghRestoreLatest(token,function(){
-          showToast('✅ Sync & Reset terminé — données restaurées depuis GitHub');
-          regen();renderAll();
-        });
-      });
-    }},"🔄 Sync & Reset (backup → vider cache → restaurer)"));
-    card4.appendChild(syncRow);
     wrap.appendChild(card4);
   }
   pane.appendChild(wrap);
@@ -3309,7 +3286,35 @@ function renderModal(){
   function closeBtn(){return el('button',{class:'gx-press',style:"cursor:pointer;border:none;background:var(--c-hover);width:32px;height:32px;border-radius:50%;font-size:15px;color:var(--c-dim);",onClick:closeModal},"✕");}
   function header(title){var h=el('div',{style:"display:flex;align-items:center;justify-content:space-between;"});h.appendChild(el('div',{style:"font-weight:800;font-size:17px;"},title));h.appendChild(closeBtn());return h;}
 
-  if(S.modal==='export'){
+  if(S.modal==='data'){
+    box.appendChild(header('💾 Gestion des données'));
+    function dataBtn(label,bg,color,border,cb){return el('button',{class:'gx-press',style:"cursor:pointer;width:100%;font-family:inherit;border:"+(border||'none')+";background:"+bg+";color:"+color+";font-weight:700;font-size:13px;padding:11px 14px;border-radius:11px;text-align:left;",onClick:cb},label);}
+    /* GitHub */
+    box.appendChild(el('div',{style:"font-size:11px;font-weight:700;color:var(--c-muted);letter-spacing:.04em;"},'GITHUB'));
+    box.appendChild(dataBtn('☁️ Sauvegarder sur GitHub','oklch(0.2 0.02 264)','#fff','none',function(){closeModal();githubPush();}));
+    box.appendChild(dataBtn('⬇️ Restaurer depuis GitHub','oklch(0.96 0.025 266)','oklch(0.42 0.14 266)','1.5px solid oklch(0.7 0.1 266)',function(){S.modal='gh-restore';renderModal();}));
+    box.appendChild(dataBtn('🔄 Sync & Reset (backup → vider cache → restaurer)','oklch(0.97 0.03 25)','oklch(0.45 0.16 25)','1.5px solid oklch(0.7 0.12 25)',function(){
+      if(!ghToken()){showToast('⚠️ Token GitHub manquant','warn');return;}
+      if(!confirm('🔄 Sync & Reset\n\n1. Sauvegarde immédiate sur GitHub\n2. Vidage du localStorage\n3. Restauration depuis GitHub\n\nContinuer ?'))return;
+      closeModal();showToast('☁️ Sauvegarde en cours…');
+      githubPush(false,function(){
+        showToast('🗑 Vidage du cache…');
+        var tok=ghToken();localStorage.clear();localStorage.setItem('ess-gh-token',tok);
+        ghRestoreLatest(tok,function(){showToast('✅ Sync & Reset terminé');regen();renderAll();});
+      });
+    }));
+    /* Local JSON */
+    box.appendChild(el('div',{style:"font-size:11px;font-weight:700;color:var(--c-muted);letter-spacing:.04em;margin-top:6px;"},'FICHIER LOCAL'));
+    box.appendChild(dataBtn('⬇️ Télécharger JSON','oklch(0.5 0.16 266)','#fff','none',function(){closeModal();downloadExport();}));
+    var fileIn2=el('input',{type:'file',accept:'.json,application/json',style:"display:none;"});
+    fileIn2.addEventListener('change',function(e){var f=e.target.files&&e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){S.importText=ev.target.result;doImport();};r.readAsText(f);});
+    var impLbl=el('label',{style:"cursor:pointer;display:block;"});
+    impLbl.appendChild(fileIn2);
+    impLbl.appendChild(dataBtn('⬆️ Importer JSON','var(--c-card)','var(--c-dim)','1px solid var(--c-border)',function(){fileIn2.click();}));
+    box.appendChild(impLbl);
+    box.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:600;font-size:13px;padding:10px;border-radius:12px;",onClick:closeModal},'Fermer'));
+  }
+  else if(S.modal==='export'){
     box.appendChild(header("Sauvegarde"));
     box.appendChild(el('div',{style:"background:oklch(0.96 0.04 155);border:1px solid oklch(0.85 0.06 155);border-radius:12px;padding:12px 14px;font-size:12.5px;color:oklch(0.42 0.1 155);line-height:1.55;"},"Téléchargez le fichier JSON ou copiez le contenu pour restaurer vos données ailleurs."));
     var ta=el('textarea',{readonly:true,class:'gx-scroll',style:"width:100%;height:200px;font-family:ui-monospace,monospace;font-size:11px;border:1.5px solid var(--c-border-in);border-radius:12px;padding:12px;resize:none;color:var(--c-dim);background:var(--c-subtle-bg);"});ta.value=S.exportText;box.appendChild(ta);
@@ -3652,8 +3657,7 @@ function init(){
 
   initTheme();
   document.getElementById('btnDark').addEventListener('click',toggleDark);
-  document.getElementById('btnImport').addEventListener('click',openImport);
-  document.getElementById('btnExport').addEventListener('click',openExport);
+  document.getElementById('btnData').addEventListener('click',function(){S.modal='data';renderModal();});
 
   document.addEventListener('keydown',function(e){
     var ctrl=e.ctrlKey||e.metaKey;
