@@ -28,11 +28,35 @@ Après chaque commit, pousser dans le repo :
 git push -u origin main
 ```
 
+## Politique de tests
+
+### Vérification syntaxe JS — toujours, avant chaque commit
+```bash
+node -e "
+const fs = require('fs');
+const html = fs.readFileSync('index.html','utf8');
+const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+scripts.forEach((s,i)=>{ try{ new Function(s); console.log(i,'OK'); } catch(e){ console.log(i,'ERROR', e.message); } });
+"
+```
+
+### Test Playwright — uniquement si le changement touche :
+- Calcul ou persistance localStorage
+- Migration / fusion / déduplication de listes
+- Calculs de statuts / créneaux
+- Sauvegarde / restauration GitHub
+
+### Pas de Playwright pour :
+- Bouton, libellé, couleur, réorganisation UI
+
+> Raison : une perte de données réelle (11 CMS réduits à 6) s'est produite sur sms-mail-multi à cause d'une migration localStorage non testée.
+
 ## Résumé du flux
 
 ```
 git pull origin main
 → modification
+→ vérification syntaxe JS
 → commit (feat/fix/refactor)
 → git push origin main
 ```
