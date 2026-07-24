@@ -1936,7 +1936,12 @@ function renderAgenda(){
     var best=null;
     for(var i=0;i<allCards.length;i++){if(allCards[i].id.slice(11,21)>=dateStr){best=allCards[i];break;}}
     if(!best)best=allCards[allCards.length-1];
-    best.scrollIntoView({behavior:'smooth',block:'start'});
+    var stickyH=navBar?navBar.offsetHeight:60;
+    if(mainEl){
+      mainEl.scrollTo({top:best.offsetTop-stickyH-8,behavior:'smooth'});
+    } else {
+      window.scrollTo({top:window.scrollY+best.getBoundingClientRect().top-stickyH-8,behavior:'smooth'});
+    }
   }
   var _agNomFilter='';var _agStatutFilter='';
   function agApplyFilters(){
