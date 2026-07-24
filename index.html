@@ -1499,6 +1499,24 @@ function renderStats(){
       grid.appendChild(tile);
     });
     dashboard.appendChild(grid);
+    /* ── Répartition par statut ── */
+    var statuts=[
+      {k:'confirme',  lbl:'Confirmé',  icon:'✓',  col:'oklch(0.48 0.2 266)'},
+      {k:'en_attente',lbl:'En attente',icon:'⏳', col:'oklch(0.52 0.18 350)'},
+      {k:'realise',   lbl:'Réalisé',   icon:'✅', col:'oklch(0.38 0.14 155)'},
+      {k:'excuse',    lbl:'Excusé',    icon:'🙏', col:'oklch(0.45 0.14 85)'},
+      {k:'lapin',     lbl:'Lapin',     icon:'🐇', col:'oklch(0.42 0.1 25)'}
+    ];
+    var statGrid=el('div',{style:"display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px;"});
+    statuts.forEach(function(s){
+      var n=S.history.filter(function(h){return (h.statut||'en_attente')===s.k;}).length;
+      var tile=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:12px;padding:10px 6px;text-align:center;"});
+      tile.appendChild(el('div',{style:"font-size:16px;"},s.icon));
+      tile.appendChild(el('div',{style:"font-size:22px;font-weight:900;color:"+s.col+";line-height:1.2;"},String(n)));
+      tile.appendChild(el('div',{style:"font-size:10px;font-weight:700;color:var(--c-muted);letter-spacing:.03em;margin-top:2px;"},s.lbl));
+      statGrid.appendChild(tile);
+    });
+    dashboard.appendChild(statGrid);
     wrap.appendChild(dashboard);
   })();
 
@@ -1952,7 +1970,7 @@ function renderAgenda(){
   var btnNext=el('button',{class:'gx-press',style:NBTN},'Semaine suiv. →');
   btnNext.addEventListener('click',function(){var d=new Date((jumpIn.value||todayStr)+'T12:00:00');d.setDate(d.getDate()+7);var s=toLocalDateStr(d);jumpIn.value=s;agScrollTo(s);});
   var statutSel=el('select',{id:'ag-statut-sel',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;"});
-  [['','Tous statuts'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['libre','🟢 Libre'],['depasse','🚨 Dépassement']].forEach(function(o){statutSel.appendChild(el('option',{value:o[0]},o[1]));});
+  [['','Tous statuts'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['realise','✅ Réalisé'],['excuse','🙏 Excusé'],['lapin','🐇 Lapin'],['libre','🟢 Libre'],['depasse','🚨 Dépassement']].forEach(function(o){statutSel.appendChild(el('option',{value:o[0]},o[1]));});
   statutSel.addEventListener('change',function(e){agFilterStatut(e.target.value);});
   navBar.appendChild(btnToday);navBar.appendChild(btnPrev);navBar.appendChild(btnNext);navBar.appendChild(searchIn);navBar.appendChild(statutSel);navBar.appendChild(jumpIn);
   pane.appendChild(navBar);
@@ -1998,6 +2016,12 @@ function renderAgenda(){
         pillBorder='oklch(0.48 0.2 266)';pillBg='oklch(0.82 0.14 266)';pillTxt='oklch(0.2 0.15 266)';
       } else if(_st==='en_attente'){
         pillBorder='oklch(0.78 0.14 350)';pillBg='oklch(0.95 0.06 350)';pillTxt='oklch(0.45 0.18 350)';
+      } else if(_st==='realise'){
+        pillBorder='oklch(0.38 0.14 155)';pillBg='oklch(0.82 0.12 155)';pillTxt='oklch(0.18 0.12 155)';
+      } else if(_st==='excuse'){
+        pillBorder='oklch(0.6 0.14 85)';pillBg='oklch(0.92 0.1 85)';pillTxt='oklch(0.38 0.14 85)';
+      } else if(_st==='lapin'){
+        pillBorder='oklch(0.52 0.08 25)';pillBg='oklch(0.88 0.05 25)';pillTxt='oklch(0.32 0.1 25)';
       } else {
         pillBorder='oklch(0.82 0.08 155)';pillBg='oklch(0.95 0.04 155)';pillTxt='oklch(0.42 0.12 155)';
       }
@@ -2011,7 +2035,7 @@ function renderAgenda(){
         var _demLabel=_t.demarcheAutre||(_t.selectedDemarche&&S.demarches?((S.demarches.find(function(d){return String(d.id)===String(_t.selectedDemarche);})||{}).nom||''):'');
         if(_demLabel)_ttLines.push('📋 '+_demLabel);
         if(_t.date)_ttLines.push('📅 '+_t.date+(_t.heure?' à '+_t.heure:''));
-        var _stLabel={'confirme':'✓ Confirmé','en_attente':'⏳ En attente','libre':'🟢 Libre'}[_st]||'';
+        var _stLabel={'confirme':'✓ Confirmé','en_attente':'⏳ En attente','realise':'✅ Réalisé','excuse':'🙏 Excusé','lapin':'🐇 Lapin','libre':'🟢 Libre'}[_st]||'';
         if(_stLabel)_ttLines.push(_stLabel);
       } else {
         _ttLines.push('🟢 Créneau libre — '+slot.heure);
@@ -3509,7 +3533,7 @@ function renderModal(){
         var idx=S.history.findIndex(function(h){return h===t;});
         if(idx!==-1){S.history[idx].statut=ev.target.value||null;t.statut=ev.target.value||null;lsSet('ess-history',S.history);renderAgenda();if(ghToken()){var _n=Date.now();if(_n-_ghLastAutoPush>120000){_ghLastAutoPush=_n;githubPush(true);}}}
       }});
-      [['','— Statut —'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé']].forEach(function(o){var opt=el('option',{value:o[0]},o[1]);if((t.statut||'')===(o[0]))opt.selected=true;stSel.appendChild(opt);});
+      [['','— Statut —'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['realise','✅ Réalisé'],['excuse','🙏 Excusé'],['lapin','🐇 Lapin']].forEach(function(o){var opt=el('option',{value:o[0]},o[1]);if((t.statut||'')===(o[0]))opt.selected=true;stSel.appendChild(opt);});
       box.appendChild(stSel);
       [['Bénéficiaire',fullName],['Téléphone',t.telephone||'—'],['Démarche',t.demarche||'—'],['Date RDV',(d.dateStr||'').split('-').reverse().join('/')],['Envoi msg',t.dateDemande?(t.dateDemande.split('-').reverse().join('/')):'—'],['Notes',t.notes||'—']].forEach(function(r){
         var row=el('div',{style:"display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--c-border);"});
