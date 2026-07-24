@@ -1507,7 +1507,7 @@ function renderStats(){
     dashboard.appendChild(el('div',{style:"font-size:14px;font-weight:800;color:var(--c-dim);margin-bottom:10px;letter-spacing:-.01em;"},"Tableau de bord"));
     var grid=el('div',{style:"display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"});
     var realiseN=S.history.filter(function(h){return h.statut==='realise';}).length;
-    var concretN=S.history.filter(function(h){return h.date;}).length;
+    var concretN=S.history.filter(function(h){return h.date&&h.date<=todayStr;}).length;
     var concretStr=concretN>0?Math.round(realiseN/concretN*100)+'%':'—';
     [[countToday,"RDV aujourd'hui"],[countWeek,"RDV cette semaine"],[countMonth,"RDV ce mois"],[occStr,"Taux d'occupation (30j)"],[concretStr,"Taux de concrétisation"]].forEach(function(kpi){
       var tile=el('div',{style:kpiStyle});
