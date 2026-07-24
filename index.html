@@ -1511,10 +1511,13 @@ function renderStats(){
     var concretN=S.history.filter(function(h){return h.date&&h.date<=todayStr;}).length;
     var concretStr=concretN>0?Math.round(realiseN/concretN*100)+'%':'—';
     var lapinStr=concretN>0?Math.round(lapinN/concretN*100)+'%':'—';
-    [[countToday,"RDV aujourd'hui",null],[countWeek,"RDV cette semaine",null],[countMonth,"RDV ce mois",null],[occStr,"Taux d'occupation (30j)",null],[concretStr,"Taux de concrétisation",'oklch(0.38 0.14 155)'],[lapinStr,"Taux de lapin 🐇",'oklch(0.52 0.1 25)']].forEach(function(kpi){
+    [[countToday,"RDV aujourd'hui",null,null],[countWeek,"RDV cette semaine",null,null],[countMonth,"RDV ce mois",null,null],[occStr,"Taux d'occupation (30j)",null,"Créneaux pris / créneaux totaux sur les 30 prochains jours. Indique la charge à venir dans votre agenda."],[concretStr,"Taux de concrétisation",'oklch(0.38 0.14 155)',"% de RDV passés marqués Réalisé. Calculé uniquement sur les RDV dont la date est déjà passée."],[lapinStr,"Taux de lapin 🐇",'oklch(0.52 0.1 25)',"% de RDV passés où l'usager ne s'est pas présenté (statut Lapin). Calculé sur les RDV dont la date est déjà passée."]].forEach(function(kpi){
       var tile=el('div',{style:kpiStyle});
       tile.appendChild(el('div',{style:kpiNumStyle.replace('oklch(0.45 0.18 266)',kpi[2]||'oklch(0.45 0.18 266)')},String(kpi[0])));
-      tile.appendChild(el('div',{style:kpiLblStyle},kpi[1]));
+      var lblRow=el('div',{style:"display:flex;align-items:center;justify-content:center;gap:4px;"});
+      lblRow.appendChild(el('span',{style:kpiLblStyle},kpi[1]));
+      if(kpi[3])lblRow.appendChild(el('span',{title:kpi[3],style:"cursor:help;font-size:11px;color:var(--c-muted);"},'ℹ️'));
+      tile.appendChild(lblRow);
       grid.appendChild(tile);
     });
     dashboard.appendChild(grid);
