@@ -613,7 +613,7 @@ function setFieldSave(patch){Object.assign(S,patch);regen();saveLast();renderGen
 function handleGenerate(){
   if(!canGenerate())return;
   if(hasConflict(S.date,S.heure,S.commune)){
-    var conf=S.history.find(function(h){return h.date===S.date&&h.heure===S.heure&&h.commune===S.commune;});
+    var conf=S.history.find(function(h){return h.date===S.date&&h.heure===S.heure&&h.commune===S.commune&&FREE_AGAIN_STATUTS.indexOf(h.statut)===-1;});
     var who=conf?[conf.civilite,conf.prenom,conf.nom].filter(Boolean).join(' '):'';
     showToast('⚠️ Créneau déjà pris'+(who?' — '+who:''),'warn');
   }
@@ -796,8 +796,9 @@ function getSlots(commune,dateStr){
   }
   return slots;
 }
+var FREE_AGAIN_STATUTS=['pas_de_retour','lapin','excuse'];
 function hasConflict(date,heure,commune){
-  return S.history.some(function(h){return h.date===date&&h.heure===heure&&(h.commune===commune||!h.commune);});
+  return S.history.some(function(h){return h.date===date&&h.heure===heure&&(h.commune===commune||!h.commune)&&FREE_AGAIN_STATUTS.indexOf(h.statut)===-1;});
 }
 function addPerm(){
   var np=S.np;
