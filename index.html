@@ -1938,7 +1938,10 @@ function renderAgenda(){
     if(!best)best=allCards[allCards.length-1];
     var stickyH=navBar?navBar.offsetHeight:60;
     if(mainEl){
-      mainEl.scrollTo({top:best.offsetTop-stickyH-8,behavior:'smooth'});
+      var cRect=mainEl.getBoundingClientRect();
+      var bRect=best.getBoundingClientRect();
+      var target=mainEl.scrollTop+(bRect.top-cRect.top)-stickyH-8;
+      mainEl.scrollTo({top:target,behavior:'smooth'});
     } else {
       window.scrollTo({top:window.scrollY+best.getBoundingClientRect().top-stickyH-8,behavior:'smooth'});
     }
