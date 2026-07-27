@@ -395,6 +395,7 @@ function githubPush(silent,onSuccess){
       if(!r||!r.ok){if(!silent)showToast('❌ Erreur GitHub (vérifiez le token)','err');return;}
       if(!silent)showToast('✅ Sauvegarde GitHub réussie !');
       localStorage.setItem('ess-gh-last-backup',new Date().toISOString());
+      S._ghNewerBackup=null;renderHeader();
       ghCleanOldBackups(token);
       if(onSuccess)onSuccess();
     })
