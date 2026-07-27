@@ -469,14 +469,22 @@ function ghCheckOnStartup(){
   ghListBackups(token,function(backups){
     if(!backups.length)return;
     var latest=backups[0];
-    /* extraire la date du nom de fichier */
-    var m=latest.name.match(/backup-(\d{4}-\d{2}-\d{2})\.json/);
+    /* extraire YYYY-MM-DD-HHMM ou YYYY-MM-DD du nom de fichier */
+    var m=latest.name.match(/backup-(\d{4}-\d{2}-\d{2})(?:-(\d{2})(\d{2}))?\.json/);
     if(!m)return;
-    var ghDate=m[1];
-    var localDate=lastLocal?lastLocal.slice(0,10):'';
-    if(ghDate>localDate){
-      /* backup GitHub plus récent que notre dernier push local → proposer */
-      S._ghNewerBackup={file:latest.path,date:ghDate};
+    var ghKey=m[1]+(m[2]&&m[3]?'-'+m[2]+m[3]:'');
+    /* construire la même clé depuis le timestamp ISO local */
+    var localKey='';
+    if(lastLocal){
+      var d=new Date(lastLocal);
+      if(!isNaN(d.getTime())){
+        localKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
+      }
+    }
+    if(ghKey>localKey){
+      var displayDate=m[1].split('-').reverse().join('/');
+      var displayTime=m[2]&&m[3]?m[2]+':'+m[3]:'';
+      S._ghNewerBackup={file:latest.path,date:m[1],display:displayDate+(displayTime?' à '+displayTime:'')};
       renderHeader();
     }
   });
@@ -902,7 +910,7 @@ function renderHeader(){
   bannerRoot.innerHTML='';
   if(S._ghNewerBackup){
     var banner=el('div',{style:"display:flex;align-items:center;gap:10px;background:oklch(0.96 0.04 266);border-bottom:1.5px solid oklch(0.78 0.1 266);padding:8px clamp(12px,4vw,40px);font-size:12.5px;font-weight:600;color:oklch(0.4 0.14 266);"});
-    banner.appendChild(el('span',{},'☁️ Backup GitHub du '+S._ghNewerBackup.date.split('-').reverse().join('/')+' disponible — plus récent que ce navigateur.'));
+    banner.appendChild(el('span',{},'☁️ Backup GitHub du '+S._ghNewerBackup.display+' disponible — plus récent que ce navigateur.'));
     var btn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:12px;padding:5px 12px;border-radius:8px;"});
     btn.textContent='📥 Restaurer';
     btn.addEventListener('click',function(){S.modal='gh-restore';renderModal();});
