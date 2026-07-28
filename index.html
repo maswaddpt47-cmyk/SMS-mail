@@ -3261,42 +3261,11 @@ function renderOrientations(){
     wrap.appendChild(srchWrap);
   }
 
-  /* manual add form */
-  var addCard=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:16px 18px;margin-bottom:18px;"});
-  var addToggle=S.orientAddOpen;
-  var addHdr=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;width:100%;text-align:left;border:none;background:none;font-size:13.5px;font-weight:700;color:var(--c-dim);padding:0;display:flex;justify-content:space-between;align-items:center;",onClick:function(){S.orientAddOpen=!S.orientAddOpen;renderOrientations();}});
-  addHdr.appendChild(document.createTextNode('➕ Ajouter manuellement'));
-  addHdr.appendChild(el('span',{style:"font-size:16px;color:var(--c-muted);"},S.orientAddOpen?'▲':'▼'));
-  addCard.appendChild(addHdr);
-  if(S.orientAddOpen){
-    var newO=S.orientNew=S.orientNew||{nom:'',prenom:'',telephone:'',commune:'Fumel',motif:'',orienteur:'',date:''};
-    var INS3="width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-input);color:var(--c-text);box-sizing:border-box;";
-    var LBL3="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:3px;display:block;margin-top:10px;";
-    function field3(lbl,inp){var w=el('div');w.appendChild(el('label',{style:LBL3},lbl));w.appendChild(inp);return w;}
-    var r1=el('div',{style:"display:grid;grid-template-columns:1fr 1fr;gap:8px;"});
-    r1.appendChild(field3('Nom *',el('input',{type:'text',style:INS3,value:newO.nom,onInput:function(e){newO.nom=e.target.value;}})));
-    r1.appendChild(field3('Prénom',el('input',{type:'text',style:INS3,value:newO.prenom,onInput:function(e){newO.prenom=e.target.value;}})));
-    addCard.appendChild(r1);
-    var commSel=el('select',{style:INS3,onChange:function(e){newO.commune=e.target.value;}});
-    ['Fumel','Marmande'].forEach(function(v){var o=el('option',{value:v},v);if(newO.commune===v)o.selected=true;commSel.appendChild(o);});
-    addCard.appendChild(field3('Commune',commSel));
-    addCard.appendChild(field3('Motif / Démarche',el('input',{type:'text',style:INS3,value:newO.motif,onInput:function(e){newO.motif=e.target.value;}})));
-    addCard.appendChild(field3('Orienteur',el('input',{type:'text',style:INS3,value:newO.orienteur,onInput:function(e){newO.orienteur=e.target.value;}})));
-    addCard.appendChild(field3('Date demande',el('input',{type:'date',style:INS3,value:newO.date,onInput:function(e){newO.date=e.target.value;}})));
-    var addBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;margin-top:12px;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13px;padding:10px 16px;border-radius:11px;",onClick:function(){
-      if(!newO.nom.trim()){showToast('⚠️ Nom requis','warn');return;}
-      S.orientations.push({id:String(Date.now()),nom:newO.nom.trim(),prenom:newO.prenom.trim(),telephone:(newO.telephone||'').trim(),commune:newO.commune,motif:newO.motif.trim(),orienteur:newO.orienteur.trim(),date:newO.date,etat:'',done:false});
-      lsSet('ess-orientations',S.orientations);S.orientNew={nom:'',prenom:'',telephone:'',commune:'Fumel',motif:'',orienteur:'',date:''};S.orientAddOpen=false;renderOrientations();renderTabs();showToast('✅ Orientation ajoutée');
-    }},'Ajouter');
-    addCard.appendChild(addBtn);
-  }
-  wrap.appendChild(addCard);
-
   if(S.orientations.length===0){
     var empty=el('div',{style:"text-align:center;padding:40px 20px;color:var(--c-muted);"});
     empty.appendChild(el('div',{style:"font-size:48px;margin-bottom:12px;opacity:.4;"},"📋"));
     empty.appendChild(el('div',{style:"font-size:15px;font-weight:700;margin-bottom:6px;"},"Aucune orientation"));
-    empty.appendChild(el('div',{style:"font-size:13px;line-height:1.6;max-width:380px;margin:0 auto;"},"Importez un export Excel du GDIN ou ajoutez manuellement des bénéficiaires de Fumel et Marmande."));
+    empty.appendChild(el('div',{style:"font-size:13px;line-height:1.6;max-width:380px;margin:0 auto;"},"Importez un export Excel du GDIN pour afficher les bénéficiaires de Fumel et Marmande."));
     wrap.appendChild(empty);
     pane.appendChild(wrap);return;
   }
