@@ -1956,6 +1956,9 @@ function renderAgenda(){
     btnF.addEventListener('click',function(){
       var sel=document.querySelector('#ag-statut-sel');
       if(sel){sel.value='depasse';sel.dispatchEvent(new Event('change'));}
+      /* scroller vers le premier RDV en dépassement */
+      var first=depasses.slice().sort(function(a,b){return(a.date||'').localeCompare(b.date||'');});
+      if(first.length&&first[0].date)agScrollTo(first[0].date);
     });
     banner.appendChild(btnF);
     wrap.appendChild(banner);
@@ -1972,7 +1975,7 @@ function renderAgenda(){
   var days=[];
   /* permanences régulières (sans exceptDate) */
   var regularPerms=S.permanences.filter(function(p){return !p.exceptDate&&p.commune.toLowerCase().indexOf('villeneuve')===-1;});
-  for(var w=-4;w<7;w++){
+  for(var w=-8;w<7;w++){
     regularPerms.forEach(function(perm){
       var base=new Date(today);base.setDate(base.getDate()+w*7);
       var baseDay=base.getDay();
