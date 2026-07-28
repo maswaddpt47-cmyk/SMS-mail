@@ -3186,7 +3186,7 @@ function parseXlsxOrientationsAsync(arrayBuffer){
           id:String(Date.now())+'_'+ri,
           nom:nom,prenom:prenom,commune:communeAff,
           communeBenef:commune,
-          telephone:(colTel?String(c[colTel]||'').trim():''),
+          telephone:(colTel?(function(v){var s=String(v||'').trim();if(/^\d{9}$/.test(s))s='0'+s;return s;})( c[colTel]):''),
           motif:(colMotif?c[colMotif]||'':'').trim(),
           orienteur:(colOrienteur?c[colOrienteur]||'':'').trim(),
           date:dateRaw?excelDate(dateRaw):'',
