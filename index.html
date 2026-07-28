@@ -777,6 +777,17 @@ function getPermanence(commune,dateStr){
   }
   return S.permanences.find(function(p){return p.commune===commune&&!p.exceptDate;});
 }
+function isInMyAgenda(h){
+  /* vrai si le RDV tombe sur une permanence configurée (régulière ou exceptionnelle) */
+  if(!h.date||!h.commune)return false;
+  var d=new Date(h.date+'T12:00:00');if(isNaN(d.getTime()))return false;
+  var dow=d.getDay();
+  return S.permanences.some(function(p){
+    if(p.commune!==h.commune)return false;
+    if(p.exceptDate)return p.exceptDate===h.date;
+    return p.jour===dow;
+  });
+}
 function nextPermDate(perm){
   var d=new Date();
   var diff=(perm.jour-d.getDay()+7)%7||7;
@@ -929,7 +940,7 @@ function renderTabs(){
   var todayN=S.history.filter(function(h){return h.ts===today;}).length;
   var orientN=S.orientations.filter(function(o){return !o.done;}).length;
   var _nowTab=new Date();var _todayTab=_nowTab.getFullYear()+'-'+String(_nowTab.getMonth()+1).padStart(2,'0')+'-'+String(_nowTab.getDate()).padStart(2,'0');
-  var depasseN=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&Math.round((new Date(_todayTab+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;}).length;
+  var depasseN=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&isInMyAgenda(h)&&Math.round((new Date(_todayTab+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;}).length;
   var defs=[["generate","Générer"],["history","Historique"],["orientations","📋 Orientations"+(orientN>0?" ("+orientN+")":"")],["agenda","📅 Agenda"],["stats","📊 Stats"],["templates","Modèles"],["config","Configuration"],["mandat","Mandat"],["mandats","Mandats archivés"]];
   defs.forEach(function(d){
     var btn=el('button',{class:'gx-press',style:tabStyle(S.activeTab===d[0]),onClick:(function(key){return function(){S.activeTab=key;showActivePane();renderTabs();var m=document.querySelector('main');if(m)m.scrollTop=0;if(key==='stats')renderStats();if(key==='agenda')renderAgenda();if(key==='orientations')renderOrientations();};})(d[0])},d[1]);
@@ -1940,7 +1951,7 @@ function renderAgenda(){
     var todayB=nowB.getFullYear()+'-'+String(nowB.getMonth()+1).padStart(2,'0')+'-'+String(nowB.getDate()).padStart(2,'0');
     var t0B=new Date(todayB+'T00:00:00');
     var depasses=S.history.filter(function(h){
-      if(h.statut!=='en_attente'||!h.dateDemande)return false;
+      if(h.statut!=='en_attente'||!h.dateDemande||!isInMyAgenda(h))return false;
       return Math.round((t0B-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;
     });
     if(!depasses.length)return;
@@ -2041,7 +2052,7 @@ function renderAgenda(){
     var orphanBox=document.getElementById('ag-orphan-depasse');
     if(statut==='depasse'){
       var nowO=new Date();var tdO=nowO.getFullYear()+'-'+String(nowO.getMonth()+1).padStart(2,'0')+'-'+String(nowO.getDate()).padStart(2,'0');
-      var allDepasses=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&Math.round((new Date(tdO+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;});
+      var allDepasses=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&isInMyAgenda(h)&&Math.round((new Date(tdO+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;});
       /* trouver ceux qui n'ont pas de pill data-depasse=1 dans le DOM */
       var pillNoms=Array.prototype.slice.call(document.querySelectorAll('[data-depasse="1"]')).map(function(p){return(p.getAttribute('data-nom')||'').trim();});
       var orphans=allDepasses.filter(function(h){var n=([h.civilite,h.prenom,h.nom].filter(Boolean).join(' ')).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');return!pillNoms.some(function(pn){return pn&&pn.indexOf(n.split(' ').pop())!==-1;});});
@@ -3818,7 +3829,7 @@ function init(){
   /* rappel RDV en attente dépassés */
   setTimeout(function(){
     var _n2=new Date();var _td=_n2.getFullYear()+'-'+String(_n2.getMonth()+1).padStart(2,'0')+'-'+String(_n2.getDate()).padStart(2,'0');
-    var overdue=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&Math.round((new Date(_td+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;});
+    var overdue=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&isInMyAgenda(h)&&Math.round((new Date(_td+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;});
     if(!overdue.length)return;
     var seen=localStorage.getItem('ess-rappel-seen');
     if(seen===_td)return;
