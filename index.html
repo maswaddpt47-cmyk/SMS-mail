@@ -3280,7 +3280,6 @@ function renderOrientations(){
     var commSel=el('select',{style:INS3,onChange:function(e){newO.commune=e.target.value;}});
     ['Fumel','Marmande'].forEach(function(v){var o=el('option',{value:v},v);if(newO.commune===v)o.selected=true;commSel.appendChild(o);});
     addCard.appendChild(field3('Commune',commSel));
-    addCard.appendChild(field3('Téléphone',el('input',{type:'tel',style:INS3,value:newO.telephone||'',onInput:function(e){newO.telephone=e.target.value;}})));
     addCard.appendChild(field3('Motif / Démarche',el('input',{type:'text',style:INS3,value:newO.motif,onInput:function(e){newO.motif=e.target.value;}})));
     addCard.appendChild(field3('Orienteur',el('input',{type:'text',style:INS3,value:newO.orienteur,onInput:function(e){newO.orienteur=e.target.value;}})));
     addCard.appendChild(field3('Date demande',el('input',{type:'date',style:INS3,value:newO.date,onInput:function(e){newO.date=e.target.value;}})));
