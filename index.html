@@ -3160,12 +3160,6 @@ function parseXlsxOrientationsAsync(arrayBuffer){
       var colEtat=findCol(hdr,['etat de la demande','état de la demande','etat','état','statut']);
       var colOrienteur=findCol(hdr,['prénom de l\'orient','orienteur','orient']);
       var results=[];
-      function normOI(s){return(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
-      function findCms(commune,structure){
-        var keys=[normOI(commune),normOI(structure)].filter(Boolean);
-        var match=S.cmsList.find(function(cm){var cn=normOI(cm.nom);return keys.some(function(k){return k&&(cn===k||k.indexOf(cn)!==-1||cn.indexOf(k)!==-1);});});
-        return match?match.nom:'';
-      }
       for(var ri=1;ri<rows.length;ri++){
         var c=rows[ri].cells;
         var commune=(colCommune?c[colCommune]||'':'').trim();
@@ -3180,7 +3174,7 @@ function parseXlsxOrientationsAsync(arrayBuffer){
         }
         if(!nom&&!prenom)continue;
         var dateRaw=colDate?c[colDate]||'':'';
-        var cms=findCms(commune,structure);
+        var cms=structure;
         results.push({
           id:String(Date.now())+'_'+ri,
           nom:nom,prenom:prenom,commune:commune,cms:cms,
