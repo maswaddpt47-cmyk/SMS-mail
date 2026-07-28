@@ -3164,28 +3164,19 @@ function parseXlsxOrientationsAsync(arrayBuffer){
         var c=rows[ri].cells;
         /* filtre : commune bénéficiaire OU structure d'orientation doit contenir fumel ou marmande */
         var commune=(colCommune?c[colCommune]||'':'').trim();
-        var structure=(colStructure?c[colStructure]||'':'').trim();
-        var cl=commune.toLowerCase();var sl=structure.toLowerCase();
-        var isFumelMarmande=(cl.indexOf('fumel')!==-1||sl.indexOf('fumel')!==-1||cl.indexOf('marmande')!==-1||sl.indexOf('marmande')!==-1);
-        if(!isFumelMarmande)continue;
         /* nom + prénom */
         var nomPrenom=(colNomPrenom?c[colNomPrenom]||'':'').trim();
         var nom='',prenom='';
         if(colPrenom){
-          /* colonnes séparées */
           nom=nomPrenom;prenom=(c[colPrenom]||'').trim();
         } else {
-          /* tout dans une colonne → split sur la casse */
           var sp=splitNomPrenom(nomPrenom);nom=sp.nom;prenom=sp.prenom;
         }
         if(!nom&&!prenom)continue;
-        /* commune affichée = structure si commune bénéficiaire ne contient pas fumel/marmande */
-        var communeAff=(cl.indexOf('fumel')!==-1||cl.indexOf('marmande')!==-1)?commune:structure;
         var dateRaw=colDate?c[colDate]||'':'';
         results.push({
           id:String(Date.now())+'_'+ri,
-          nom:nom,prenom:prenom,commune:communeAff,
-          communeBenef:commune,
+          nom:nom,prenom:prenom,commune:commune,
           telephone:(colTel?(function(v){var s=String(v||'').trim();if(/^\d{9}$/.test(s))s='0'+s;return s;})( c[colTel]):''),
           motif:(colMotif?c[colMotif]||'':'').trim(),
           orienteur:(colOrienteur?c[colOrienteur]||'':'').trim(),
@@ -3259,6 +3250,12 @@ function renderOrientations(){
     srchWrap.appendChild(srchIn);
     if(S.orientSearch){var cl2=el('button',{style:"position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:none;font-size:16px;cursor:pointer;color:var(--c-muted);padding:0;",onClick:function(){S.orientSearch='';renderOrientations();}});cl2.textContent='✕';srchWrap.appendChild(cl2);}
     wrap.appendChild(srchWrap);
+    /* commune dropdown */
+    var communes=[];S.orientations.forEach(function(o){if(o.commune&&communes.indexOf(o.commune)===-1)communes.push(o.commune);});communes.sort();
+    var commSel2=el('select',{style:"font-family:inherit;font-size:13px;padding:8px 12px;border:1.5px solid var(--c-border-in);border-radius:12px;background:var(--c-input);color:var(--c-text);width:100%;margin-bottom:14px;",onChange:function(e){S.orientCommune=e.target.value;renderOrientations();}});
+    var optAll=el('option',{value:''},'Toutes les communes');if(!(S.orientCommune||''))optAll.selected=true;commSel2.appendChild(optAll);
+    communes.forEach(function(c2){var o2=el('option',{value:c2},c2);if(c2===(S.orientCommune||''))o2.selected=true;commSel2.appendChild(o2);});
+    wrap.appendChild(commSel2);
   }
 
   if(S.orientations.length===0){
@@ -3273,6 +3270,7 @@ function renderOrientations(){
   function normO(s){return(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
   var q=normO(S.orientSearch).trim();
   var list=S.orientations.filter(function(o){
+    if(S.orientCommune&&o.commune!==S.orientCommune)return false;
     if(!q)return true;
     return normO(o.nom).indexOf(q)!==-1||normO(o.prenom).indexOf(q)!==-1||normO(o.motif).indexOf(q)!==-1||normO(o.commune).indexOf(q)!==-1;
   });
