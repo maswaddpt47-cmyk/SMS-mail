@@ -3151,6 +3151,7 @@ function parseXlsxOrientationsAsync(arrayBuffer){
       /* si colonnes séparées : chercher prénom seulement si différent de colNomPrenom */
       var colPrenom=findCol(hdr,['prénom','prenom']);
       if(colPrenom===colNomPrenom)colPrenom=null; /* même colonne → pas de colonne prénom séparée */
+      var colTel=findCol(hdr,['tel','téléphone','telephone','mobile','portable']);
       var colCommune=findCol(hdr,['commune']);
       var colStructure=findCol(hdr,['structure']);
       var colMotif=findCol(hdr,['motif']);
@@ -3185,6 +3186,7 @@ function parseXlsxOrientationsAsync(arrayBuffer){
           id:String(Date.now())+'_'+ri,
           nom:nom,prenom:prenom,commune:communeAff,
           communeBenef:commune,
+          telephone:(colTel?String(c[colTel]||'').trim():''),
           motif:(colMotif?c[colMotif]||'':'').trim(),
           orienteur:(colOrienteur?c[colOrienteur]||'':'').trim(),
           date:dateRaw?excelDate(dateRaw):'',
@@ -3267,7 +3269,7 @@ function renderOrientations(){
   addHdr.appendChild(el('span',{style:"font-size:16px;color:var(--c-muted);"},S.orientAddOpen?'▲':'▼'));
   addCard.appendChild(addHdr);
   if(S.orientAddOpen){
-    var newO=S.orientNew=S.orientNew||{nom:'',prenom:'',commune:'Fumel',motif:'',orienteur:'',date:''};
+    var newO=S.orientNew=S.orientNew||{nom:'',prenom:'',telephone:'',commune:'Fumel',motif:'',orienteur:'',date:''};
     var INS3="width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-input);color:var(--c-text);box-sizing:border-box;";
     var LBL3="font-size:11px;font-weight:700;color:var(--c-muted);margin-bottom:3px;display:block;margin-top:10px;";
     function field3(lbl,inp){var w=el('div');w.appendChild(el('label',{style:LBL3},lbl));w.appendChild(inp);return w;}
@@ -3278,13 +3280,14 @@ function renderOrientations(){
     var commSel=el('select',{style:INS3,onChange:function(e){newO.commune=e.target.value;}});
     ['Fumel','Marmande'].forEach(function(v){var o=el('option',{value:v},v);if(newO.commune===v)o.selected=true;commSel.appendChild(o);});
     addCard.appendChild(field3('Commune',commSel));
+    addCard.appendChild(field3('Téléphone',el('input',{type:'tel',style:INS3,value:newO.telephone||'',onInput:function(e){newO.telephone=e.target.value;}})));
     addCard.appendChild(field3('Motif / Démarche',el('input',{type:'text',style:INS3,value:newO.motif,onInput:function(e){newO.motif=e.target.value;}})));
     addCard.appendChild(field3('Orienteur',el('input',{type:'text',style:INS3,value:newO.orienteur,onInput:function(e){newO.orienteur=e.target.value;}})));
     addCard.appendChild(field3('Date demande',el('input',{type:'date',style:INS3,value:newO.date,onInput:function(e){newO.date=e.target.value;}})));
     var addBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;margin-top:12px;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13px;padding:10px 16px;border-radius:11px;",onClick:function(){
       if(!newO.nom.trim()){showToast('⚠️ Nom requis','warn');return;}
-      S.orientations.push({id:String(Date.now()),nom:newO.nom.trim(),prenom:newO.prenom.trim(),commune:newO.commune,motif:newO.motif.trim(),orienteur:newO.orienteur.trim(),date:newO.date,etat:'',done:false});
-      lsSet('ess-orientations',S.orientations);S.orientNew={nom:'',prenom:'',commune:'Fumel',motif:'',orienteur:'',date:''};S.orientAddOpen=false;renderOrientations();renderTabs();showToast('✅ Orientation ajoutée');
+      S.orientations.push({id:String(Date.now()),nom:newO.nom.trim(),prenom:newO.prenom.trim(),telephone:(newO.telephone||'').trim(),commune:newO.commune,motif:newO.motif.trim(),orienteur:newO.orienteur.trim(),date:newO.date,etat:'',done:false});
+      lsSet('ess-orientations',S.orientations);S.orientNew={nom:'',prenom:'',telephone:'',commune:'Fumel',motif:'',orienteur:'',date:''};S.orientAddOpen=false;renderOrientations();renderTabs();showToast('✅ Orientation ajoutée');
     }},'Ajouter');
     addCard.appendChild(addBtn);
   }
