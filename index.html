@@ -2050,8 +2050,10 @@ function renderAgenda(){
         box.appendChild(el('div',{style:"font-size:12px;font-weight:800;color:oklch(0.45 0.18 25);margin-bottom:6px;"},'🚨 '+orphans.length+' RDV en dépassement sans créneau agenda :'));
         orphans.forEach(function(h){
           var name=[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ');
-          var dateRdv=h.date?(h.date.split('-').reverse().join('/')):'sans date';
-          box.appendChild(el('div',{style:"font-size:12px;color:oklch(0.5 0.16 25);margin-top:3px;"},name+' — RDV : '+dateRdv+(h.heure?' à '+h.heure:'')));
+          var dateRdv=h.date?(h.date.split('-').reverse().join('/')):'—';
+          var dateDem=h.dateDemande?(h.dateDemande.slice(0,10).split('-').reverse().join('/')):'—';
+          var info=name+' · RDV : '+dateRdv+(h.heure?' à '+h.heure:'')+(h.commune?' ('+h.commune+')':'')+' · Demande : '+dateDem;
+          box.appendChild(el('div',{style:"font-size:12px;color:oklch(0.5 0.16 25);margin-top:3px;"},info));
         });
         var firstCard=document.querySelector('[id^="agenda-day-"]');
         if(firstCard&&firstCard.parentNode)firstCard.parentNode.insertBefore(box,firstCard);
