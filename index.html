@@ -3160,10 +3160,16 @@ function parseXlsxOrientationsAsync(arrayBuffer){
       var colEtat=findCol(hdr,['etat de la demande','état de la demande','etat','état','statut']);
       var colOrienteur=findCol(hdr,['prénom de l\'orient','orienteur','orient']);
       var results=[];
+      function normOI(s){return(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+      function findCms(commune,structure){
+        var keys=[normOI(commune),normOI(structure)].filter(Boolean);
+        var match=S.cmsList.find(function(cm){var cn=normOI(cm.nom);return keys.some(function(k){return k&&(cn===k||k.indexOf(cn)!==-1||cn.indexOf(k)!==-1);});});
+        return match?match.nom:'';
+      }
       for(var ri=1;ri<rows.length;ri++){
         var c=rows[ri].cells;
-        /* filtre : commune bénéficiaire OU structure d'orientation doit contenir fumel ou marmande */
         var commune=(colCommune?c[colCommune]||'':'').trim();
+        var structure=(colStructure?c[colStructure]||'':'').trim();
         /* nom + prénom */
         var nomPrenom=(colNomPrenom?c[colNomPrenom]||'':'').trim();
         var nom='',prenom='';
@@ -3174,9 +3180,10 @@ function parseXlsxOrientationsAsync(arrayBuffer){
         }
         if(!nom&&!prenom)continue;
         var dateRaw=colDate?c[colDate]||'':'';
+        var cms=findCms(commune,structure);
         results.push({
           id:String(Date.now())+'_'+ri,
-          nom:nom,prenom:prenom,commune:commune,
+          nom:nom,prenom:prenom,commune:commune,cms:cms,
           telephone:(colTel?(function(v){var s=String(v||'').trim();if(/^\d{9}$/.test(s))s='0'+s;return s;})( c[colTel]):''),
           motif:(colMotif?c[colMotif]||'':'').trim(),
           orienteur:(colOrienteur?c[colOrienteur]||'':'').trim(),
@@ -3250,12 +3257,14 @@ function renderOrientations(){
     srchWrap.appendChild(srchIn);
     if(S.orientSearch){var cl2=el('button',{style:"position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:none;font-size:16px;cursor:pointer;color:var(--c-muted);padding:0;",onClick:function(){S.orientSearch='';renderOrientations();}});cl2.textContent='✕';srchWrap.appendChild(cl2);}
     wrap.appendChild(srchWrap);
-    /* commune dropdown */
-    var communes=[];S.orientations.forEach(function(o){if(o.commune&&communes.indexOf(o.commune)===-1)communes.push(o.commune);});communes.sort();
-    var commSel2=el('select',{style:"font-family:inherit;font-size:13px;padding:8px 12px;border:1.5px solid var(--c-border-in);border-radius:12px;background:var(--c-input);color:var(--c-text);width:100%;margin-bottom:14px;",onChange:function(e){S.orientCommune=e.target.value;renderOrientations();}});
-    var optAll=el('option',{value:''},'Toutes les communes');if(!(S.orientCommune||''))optAll.selected=true;commSel2.appendChild(optAll);
-    communes.forEach(function(c2){var o2=el('option',{value:c2},c2);if(c2===(S.orientCommune||''))o2.selected=true;commSel2.appendChild(o2);});
-    wrap.appendChild(commSel2);
+    /* CMS dropdown */
+    var cmsVals=[];S.orientations.forEach(function(o){if(o.cms&&cmsVals.indexOf(o.cms)===-1)cmsVals.push(o.cms);});cmsVals.sort();
+    if(cmsVals.length>1){
+      var cmsSel=el('select',{style:"font-family:inherit;font-size:13px;padding:8px 12px;border:1.5px solid var(--c-border-in);border-radius:12px;background:var(--c-input);color:var(--c-text);width:100%;margin-bottom:14px;",onChange:function(e){S.orientCommune=e.target.value;renderOrientations();}});
+      var optAll=el('option',{value:''},'Tous les CMS');if(!(S.orientCommune||''))optAll.selected=true;cmsSel.appendChild(optAll);
+      cmsVals.forEach(function(v){var o2=el('option',{value:v},v);if(v===(S.orientCommune||''))o2.selected=true;cmsSel.appendChild(o2);});
+      wrap.appendChild(cmsSel);
+    }
   }
 
   if(S.orientations.length===0){
@@ -3270,7 +3279,7 @@ function renderOrientations(){
   function normO(s){return(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
   var q=normO(S.orientSearch).trim();
   var list=S.orientations.filter(function(o){
-    if(S.orientCommune&&o.commune!==S.orientCommune)return false;
+    if(S.orientCommune&&o.cms!==S.orientCommune)return false;
     if(!q)return true;
     return normO(o.nom).indexOf(q)!==-1||normO(o.prenom).indexOf(q)!==-1||normO(o.motif).indexOf(q)!==-1||normO(o.commune).indexOf(q)!==-1;
   });
