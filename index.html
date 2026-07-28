@@ -2037,6 +2037,28 @@ function renderAgenda(){
       });
       card.style.display=(matchNom&&matchSt)?'':'none';
     });
+    /* encart "hors agenda" pour les dépassements sans slot visible */
+    var orphanBox=document.getElementById('ag-orphan-depasse');
+    if(statut==='depasse'){
+      var nowO=new Date();var tdO=nowO.getFullYear()+'-'+String(nowO.getMonth()+1).padStart(2,'0')+'-'+String(nowO.getDate()).padStart(2,'0');
+      var allDepasses=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&Math.round((new Date(tdO+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;});
+      /* trouver ceux qui n'ont pas de pill data-depasse=1 dans le DOM */
+      var pillNoms=Array.prototype.slice.call(document.querySelectorAll('[data-depasse="1"]')).map(function(p){return(p.getAttribute('data-nom')||'').trim();});
+      var orphans=allDepasses.filter(function(h){var n=([h.civilite,h.prenom,h.nom].filter(Boolean).join(' ')).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');return!pillNoms.some(function(pn){return pn&&pn.indexOf(n.split(' ').pop())!==-1;});});
+      if(!orphanBox&&orphans.length){
+        var box=el('div',{id:'ag-orphan-depasse',style:"background:oklch(0.97 0.06 25);border:1.5px solid oklch(0.78 0.18 25);border-radius:14px;padding:12px 18px;margin-bottom:18px;"});
+        box.appendChild(el('div',{style:"font-size:12px;font-weight:800;color:oklch(0.45 0.18 25);margin-bottom:6px;"},'🚨 '+orphans.length+' RDV en dépassement sans créneau agenda :'));
+        orphans.forEach(function(h){
+          var name=[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ');
+          var dateRdv=h.date?(h.date.split('-').reverse().join('/')):'sans date';
+          box.appendChild(el('div',{style:"font-size:12px;color:oklch(0.5 0.16 25);margin-top:3px;"},name+' — RDV : '+dateRdv+(h.heure?' à '+h.heure:'')));
+        });
+        var firstCard=document.querySelector('[id^="agenda-day-"]');
+        if(firstCard&&firstCard.parentNode)firstCard.parentNode.insertBefore(box,firstCard);
+      } else if(orphanBox&&!orphans.length){orphanBox.remove();}
+    } else {
+      if(orphanBox)orphanBox.remove();
+    }
   }
   function agFilterNom(q){_agNomFilter=q;agApplyFilters();}
   function agFilterStatut(v){_agStatutFilter=v;agApplyFilters();}
