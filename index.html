@@ -2430,14 +2430,21 @@ function renderAgenda(){
       (function(s){pill.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',JSON.stringify({date:s.taken.date,heure:s.taken.heure,commune:s.taken.commune||'',nom:s.taken.nom||''}));pill.style.opacity='0.5';});pill.addEventListener('dragend',function(){pill.style.opacity='1';});})(slot);
       var heureRow=el('div',{style:"display:flex;align-items:center;gap:3px;"});
       heureRow.appendChild(el('span',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
-      if(slot.freeAgain)heureRow.appendChild(el('span',{style:"font-size:9px;",title:'Créneau réutilisable'},'🔓'));
       pill.appendChild(heureRow);
       if(slot.taken&&slot.multiPropo){
         pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé ("+slot.allPropo.length+")"));
       } else if(slot.taken&&who){
-        var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.48 0.15 25);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"});
-        nameEl.textContent=who;
-        pill.appendChild(nameEl);
+        if(slot.freeAgain){
+          var _stIcon={'pas_de_retour':'📵','lapin':'🐇','excuse':'🙏'}[_st]||'';
+          var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.6 0.04 266);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;"});
+          nameEl.textContent=who;
+          pill.appendChild(nameEl);
+          if(_stIcon)pill.appendChild(el('div',{style:"font-size:9px;text-align:center;line-height:1;"},_stIcon));
+        } else {
+          var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.48 0.15 25);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"});
+          nameEl.textContent=who;
+          pill.appendChild(nameEl);
+        }
       }
       if(slot.taken){
         var _ago='';
