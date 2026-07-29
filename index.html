@@ -3656,7 +3656,7 @@ function renderOrientations(){
       S.selectedDemarche=matched?String(matched.id):'';
       S.demarcheAutre=matched?'':o.motif;
       S.genNotes=o.motif||(o.orienteur?'Orienté par '+o.orienteur:'');
-      S.dateDemande=o.date||new Date().toISOString().slice(0,10);
+      S.dateDemande=new Date().toISOString().slice(0,10);
       S.msgType='sans_appel';
       S.activeTab='generate';
       showActivePane();renderTabs();renderGenerate();
