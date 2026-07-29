@@ -827,7 +827,8 @@ function getSlots(commune,dateStr){
     var taken=confirmations[0]||propositions[0]||sansAppels[0]||relances[0]||null;
     var freeAgain=taken&&(taken.statut==='pas_de_retour'||taken.statut==='lapin'||taken.statut==='excuse');
     var multiPropo=confirmations.length===0&&propositions.length>1;
-    slots.push({heure:heure,taken:taken||null,freeAgain:!!freeAgain,multiPropo:multiPropo,allPropo:propositions});
+    var replaced=matches.filter(function(x){return x!==taken&&(x.statut==='pas_de_retour'||x.statut==='lapin'||x.statut==='excuse');});
+    slots.push({heure:heure,taken:taken||null,freeAgain:!!freeAgain,multiPropo:multiPropo,allPropo:propositions,replaced:replaced});
   }
   return slots;
 }
@@ -2478,6 +2479,16 @@ function renderAgenda(){
           var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.48 0.15 25);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"});
           nameEl.textContent=who;
           pill.appendChild(nameEl);
+          if(slot.replaced&&slot.replaced.length>0){
+            var _RICON={'pas_de_retour':'📵','lapin':'🐇','excuse':'🙏'};
+            slot.replaced.forEach(function(r){
+              var rName=([r.nom,r.prenom].filter(Boolean).join(' '))||'';
+              var rIcon=_RICON[r.statut]||'';
+              var rEl=el('div',{style:"font-size:8px;color:oklch(0.62 0.04 266);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;",title:(rIcon+' '+rName).trim()});
+              rEl.textContent=(rIcon?rIcon+' ':'')+rName;
+              pill.appendChild(rEl);
+            });
+          }
         }
       }
       if(slot.taken){
