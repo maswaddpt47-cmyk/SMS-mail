@@ -823,7 +823,8 @@ function getSlots(commune,dateStr){
     var confirmations=matches.filter(function(x){return x.msgType==='confirmation';});
     var propositions=matches.filter(function(x){return x.msgType==='proposition';});
     var sansAppels=matches.filter(function(x){return x.msgType==='sans_appel';});
-    var taken=confirmations[0]||propositions[0]||sansAppels[0]||null;
+    var relances=matches.filter(function(x){return x.msgType==='relance';});
+    var taken=confirmations[0]||propositions[0]||sansAppels[0]||relances[0]||null;
     var freeAgain=taken&&(taken.statut==='pas_de_retour'||taken.statut==='lapin'||taken.statut==='excuse');
     var multiPropo=confirmations.length===0&&propositions.length>1;
     slots.push({heure:heure,taken:taken||null,freeAgain:!!freeAgain,multiPropo:multiPropo,allPropo:propositions});
