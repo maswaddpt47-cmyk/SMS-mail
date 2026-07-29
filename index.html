@@ -1032,7 +1032,25 @@ function renderGenerate(){
   pre.appendChild(el('input',{class:'gx-in',style:INPUT,value:S.prenom,placeholder:"Sophie",onInput:function(e){S.prenom=e.target.value;regen();updatePreviewOnly();}}));
   row1.appendChild(pre);
   var noms=el('div');noms.appendChild(el('label',{style:LABEL},"Nom *"));
-  noms.appendChild(el('input',{class:'gx-in',style:INPUT,value:S.nom,placeholder:"Dupont",onInput:function(e){S.nom=e.target.value;regen();updatePreviewOnly();},onBlur:function(){renderGenerate();}}));
+  var nomIn=el('input',{class:'gx-in',style:INPUT,value:S.nom,placeholder:"Dupont",onInput:function(e){S.nom=e.target.value;regen();updatePreviewOnly();},onBlur:function(){renderGenerate();}});
+  noms.appendChild(nomIn);
+  (function(){
+    var hint=el('div',{style:"font-size:11px;color:oklch(0.52 0.18 45);font-weight:700;margin-top:3px;display:none;"});
+    noms.appendChild(hint);
+    nomIn.addEventListener('input',function(){
+      var v=(nomIn.value||'').trim().toLowerCase();
+      if(v.length<2){hint.style.display='none';return;}
+      var matches=S.history.filter(function(h){return (h.nom||'').toLowerCase()===v;});
+      if(matches.length>0){
+        var last=matches[0];
+        var lastInfo=[last.prenom,last.demarche,last.statut?({'en_attente':'⏳','confirme':'✓','realise':'✅','excuse':'🙏','lapin':'🐇','pas_de_retour':'📵'}[last.statut]||''):''].filter(Boolean).join(' · ');
+        hint.textContent='⚠️ Déjà dans l\'historique ('+matches.length+'x) — '+lastInfo;
+        hint.style.display='block';
+      } else {
+        hint.style.display='none';
+      }
+    });
+  })();
   row1.appendChild(noms);
   col.appendChild(row1);
 
@@ -1457,12 +1475,28 @@ function renderHistoryList(){
       if(!groups[key]){groups[key]=[];groupOrder.push(key);}
       groups[key].push(h);
     });
+    groupOrder.sort(function(a,b){return a.localeCompare(b,'fr',{sensitivity:'base'});});
+    var STATUT_ICON={'en_attente':'⏳','confirme':'✓','realise':'✅','excuse':'🙏','lapin':'🐇','pas_de_retour':'📵'};
     groupOrder.forEach(function(key){
-      var grpWrap=el('div',{style:"margin-bottom:4px;"});
-      var grpHead=el('div',{style:"font-size:12px;font-weight:800;color:var(--c-muted);letter-spacing:.06em;text-transform:uppercase;padding:6px 2px 4px;border-bottom:1px solid var(--c-border);margin-bottom:8px;"},key+" ("+groups[key].length+")");
+      var grpWrap=el('div',{style:"margin-bottom:12px;"});
+      var entries=groups[key];
+      var last=entries[0];
+      var tel=last.telephone||(entries.find(function(h){return h.telephone;})||{}).telephone||'';
+      var lastStatut=last.statut?STATUT_ICON[last.statut]||'':'';
+      var lastDem=last.demarche||'';
+      var grpHead=el('div',{style:"display:flex;align-items:center;gap:8px;padding:6px 4px 5px;border-bottom:2px solid oklch(0.88 0.06 266);margin-bottom:8px;"});
+      grpHead.appendChild(el('span',{style:"font-size:13px;font-weight:800;color:oklch(0.38 0.12 266);letter-spacing:.02em;"},key));
+      grpHead.appendChild(el('span',{style:"font-size:11px;font-weight:700;color:var(--c-muted);background:var(--c-hover);padding:2px 7px;border-radius:10px;"},entries.length+(entries.length>1?' passages':' passage')));
+      if(lastStatut)grpHead.appendChild(el('span',{style:"font-size:12px;",title:'Dernier statut'},lastStatut));
+      if(lastDem)grpHead.appendChild(el('span',{style:"font-size:11px;color:var(--c-dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"},lastDem));
+      if(tel){
+        var telSpan=el('span',{style:"font-size:11px;font-weight:700;color:oklch(0.42 0.12 266);cursor:pointer;white-space:nowrap;",title:'Copier le téléphone'},tel);
+        telSpan.addEventListener('click',function(e){e.stopPropagation();navigator.clipboard.writeText(tel).then(function(){showToast('📋 '+tel+' copié');});});
+        grpHead.appendChild(telSpan);
+      }
       grpWrap.appendChild(grpHead);
       var grpList=el('div',{style:"display:flex;flex-direction:column;gap:8px;"});
-      groups[key].forEach(function(h){var realIdx=S.history.indexOf(h);renderHistoryCard(h,realIdx,grpList);});
+      entries.forEach(function(h){var realIdx=S.history.indexOf(h);renderHistoryCard(h,realIdx,grpList);});
       grpWrap.appendChild(grpList);
       container.appendChild(grpWrap);
     });
