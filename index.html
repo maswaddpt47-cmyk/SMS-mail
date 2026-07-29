@@ -656,7 +656,7 @@ function addHistory(item){
     var di=S.history.findIndex(function(h){
       return h.date===item.date&&h.heure===item.heure&&h.commune===item.commune&&(h.nom||'').toLowerCase()===(item.nom||'').toLowerCase();
     });
-    if(di!==-1){S.history.splice(di,1,Object.assign({},S.history[di],item));lsSet('ess-history',S.history);return;}
+    if(di!==-1){var merged=Object.assign({},S.history[di],item);if(merged.body&&(!merged.statut||merged.statut==='libre'))merged.statut='en_attente';S.history.splice(di,1,merged);lsSet('ess-history',S.history);return;}
   }
   if(item.body&&!item.statut)item.statut='en_attente';
   var h=[item].concat(S.history);if(h.length>HISTORY_MAX)h.pop();
