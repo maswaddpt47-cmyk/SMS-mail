@@ -898,6 +898,19 @@ function reuseHistItem(h){
   regen();S.activeTab="generate";showActivePane();renderTabs();renderGenerate();
   showToast("✓ Usager chargé — modifiez la date, l'heure et la démarche");
 }
+function openHistInGen(h){
+  S.civilite=h.civilite||"";S.prenom=h.prenom||"";S.nom=h.nom||"";S.telephone=h.telephone||"";
+  S.commune=h.commune||"";S.selectedCMS=h.selectedCMS||"";
+  S.channel=h.channel||"sms";S.msgType=h.msgType||"proposition";
+  if(h.selectedDemarche)S.selectedDemarche=h.selectedDemarche;
+  if(h.demarcheAutre)S.demarcheAutre=h.demarcheAutre;
+  S.date=h.date||"";S.heure=h.heure||"";
+  S.dateDemande=h.dateDemande||new Date().toISOString().slice(0,10);
+  S.genNotes=h.notes||"";
+  S.selectedTemplate="__default__";
+  regen();S.activeTab="generate";showActivePane();renderTabs();renderGenerate();
+  showToast("📋 Fiche chargée dans Générer");
+}
 
 /* ============================== STYLE HELPERS ============================== */
 function badge(bg,fg){return "display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.02em;background:"+bg+";color:"+fg+";";}
@@ -1382,6 +1395,7 @@ function renderHistoryCard(h,realIdx,container){
   meta.appendChild(el('span',{style:"font-size:11.5px;color:var(--c-subtle);"},h.ts+(ago?' · '+ago:'')));
   var actWrap=el('span',{style:"margin-left:auto;display:flex;gap:6px;"});
   if(!isEditing){
+    actWrap.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.72 0.12 266);background:oklch(0.94 0.06 266);color:oklch(0.38 0.16 266);font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px;",onClick:function(e){e.stopPropagation();openHistInGen(h);}},"📋 Ouvrir"));
     actWrap.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.72 0.14 155);background:oklch(0.95 0.05 155);color:oklch(0.38 0.13 155);font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px;",onClick:function(e){e.stopPropagation();reuseHistItem(h);}},"↩ Réutiliser"));
     actWrap.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:oklch(0.4 0.1 264);font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;",onClick:function(e){e.stopPropagation();S.editHistIdx=realIdx;S.editHistBody=h.body||"";S.editHistNotes=h.notes||"";S.editHistDateDemande=h.dateDemande||"";renderHistoryList();}},"✏️"));
   }
