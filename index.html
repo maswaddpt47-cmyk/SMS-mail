@@ -3944,12 +3944,19 @@ function renderModal(){
       motifWrap.appendChild(motifIn);
       var stSel=el('select',{style:"width:100%;font-family:inherit;font-size:13px;font-weight:700;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);box-sizing:border-box;margin-bottom:10px;",onChange:function(ev){
         var idx=S.history.findIndex(function(h){return h===t;});
-        if(idx!==-1){S.history[idx].statut=ev.target.value||null;t.statut=ev.target.value||null;lsSet('ess-history',S.history);motifWrap.style.display=ev.target.value==='excuse'?'block':'none';renderAgenda();if(ghToken()){var _n=Date.now();if(_n-_ghLastAutoPush>120000){_ghLastAutoPush=_n;githubPush(true);}}}
+        if(idx!==-1){
+          S.history[idx].statut=ev.target.value||null;t.statut=ev.target.value||null;
+          if(ev.target.value==='pas_de_retour'&&!S.history[idx].dateRelance){
+            var _today=new Date().toISOString().slice(0,10);
+            S.history[idx].dateRelance=_today;t.dateRelance=_today;
+          }
+          lsSet('ess-history',S.history);motifWrap.style.display=ev.target.value==='excuse'?'block':'none';renderAgenda();if(ghToken()){var _n=Date.now();if(_n-_ghLastAutoPush>120000){_ghLastAutoPush=_n;githubPush(true);}}
+        }
       }});
       [['','— Statut —'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['realise','✅ Réalisé'],['excuse','🙏 Excusé'],['lapin','🐇 Lapin'],['pas_de_retour','📵 Pas de retour']].forEach(function(o){var opt=el('option',{value:o[0]},o[1]);if((t.statut||'')===(o[0]))opt.selected=true;stSel.appendChild(opt);});
       box.appendChild(stSel);
       box.appendChild(motifWrap);
-      [['Bénéficiaire',fullName],['Téléphone',t.telephone||'—'],['Démarche',t.demarche||'—'],['Date RDV',(d.dateStr||'').split('-').reverse().join('/')],['Envoi msg',t.dateDemande?(t.dateDemande.split('-').reverse().join('/')):'—'],['Notes',t.notes||'—']].forEach(function(r){
+      [['Bénéficiaire',fullName],['Téléphone',t.telephone||'—'],['Démarche',t.demarche||'—'],['Date RDV',(d.dateStr||'').split('-').reverse().join('/')],['Envoi msg',t.dateDemande?(t.dateDemande.split('-').reverse().join('/')):'—'],['Relance',t.dateRelance?(t.dateRelance.split('-').reverse().join('/')):'—'],['Notes',t.notes||'—']].forEach(function(r){
         var row=el('div',{style:"display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--c-border);"});
         row.appendChild(el('div',{style:"font-size:12px;font-weight:700;color:var(--c-muted);min-width:100px;"},r[0]));
         row.appendChild(el('div',{style:"font-size:13px;color:var(--c-dim);font-weight:600;flex:1;word-break:break-all;"},r[1]));
