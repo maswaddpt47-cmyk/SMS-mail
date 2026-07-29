@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#4f46e5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SMS & Mail">
+<link rel="manifest" href="manifest.json">
 <title>Générateur SMS &amp; Mail</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -877,6 +883,16 @@ function doImport(){
 function openHistItem(i){S.histItem=S.history[i];S.modal='hist';renderModal();}
 function copyHistModal(){var h=S.histItem;if(!h)return;doCopy(h.body).then(function(ok){if(ok){flashCopied('histmodal');showToast("✓ Copié !");}});}
 function clearHistory(){S.history=[];lsSet('ess-history',[]);renderHistory();}
+function exportOrientationsCSV(){
+  if(!S.orientations.length){showToast("Aucune orientation à exporter","warn");return;}
+  var cols=["Nom","Prénom","Commune","Démarche","Date","Conseiller","Statut"];
+  var esc=function(v){return '"'+(String(v||"").replace(/"/g,'""'))+'"';};
+  var rows=S.orientations.map(function(o){return[o.nom,o.prenom,o.commune,o.demarche,o.date,o.conseiller,o.done?'Traité':'En attente'].map(esc).join(";");});
+  var csv="﻿"+cols.map(esc).join(";")+"\n"+rows.join("\n");
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="orientations-"+new Date().toISOString().slice(0,10)+".csv";a.click();
+  showToast("✓ Export CSV orientations téléchargé");
+}
 function exportHistoryCSV(){
   if(!S.history.length){showToast("Aucun historique à exporter","warn");return;}
   var cols=["Date","Canal","Type","Civilité","Prénom","Nom","Téléphone","Démarche","Commune","CMS","Corps"];
@@ -2374,6 +2390,32 @@ function renderAgenda(){
     } else {
       if(pdrBox)pdrBox.remove();
     }
+    /* encarts lapin / excuse — même angle mort que pas_de_retour */
+    ['lapin','excuse'].forEach(function(st){
+      var icon=st==='lapin'?'🐇':'🙏';var label=st==='lapin'?'lapins':'excusés';
+      var boxId='ag-orphan-'+st;
+      var stBox=document.getElementById(boxId);
+      if(statut===st){
+        var allSt=S.history.filter(function(h){return h.statut===st&&isInMyAgenda(h);});
+        allSt.sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
+        if(!stBox&&allSt.length){
+          var stB=el('div',{id:boxId,style:"background:oklch(0.96 0.04 60);border:1.5px solid oklch(0.75 0.1 60);border-radius:14px;padding:12px 18px;margin-bottom:18px;"});
+          stB.appendChild(el('div',{style:"font-size:12px;font-weight:800;color:oklch(0.42 0.12 60);margin-bottom:8px;"},icon+' '+allSt.length+' RDV '+label+' :'));
+          allSt.forEach(function(h){
+            var name=[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ');
+            var dateRdv=h.date?(h.date.split('-').reverse().join('/')):'—';
+            var row=el('div',{style:"font-size:12px;color:oklch(0.45 0.1 60);margin-top:4px;padding:4px 0;border-bottom:1px solid oklch(0.88 0.06 60);"});
+            row.textContent=name+' · RDV : '+dateRdv+(h.heure?' à '+h.heure:'')+(h.commune?' ('+h.commune+')':'')+(h.demarche?' — '+h.demarche:'')+(h.motifExcuse?' · '+h.motifExcuse:'');
+            stB.appendChild(row);
+          });
+          var firstCard=document.querySelector('[id^="agenda-day-"]');
+          if(firstCard&&firstCard.parentNode)firstCard.parentNode.insertBefore(stB,firstCard);
+          else{var ap2=document.getElementById('pane-agenda');if(ap2)ap2.appendChild(stB);}
+        } else if(stBox&&!allSt.length){stBox.remove();}
+      } else {
+        if(stBox)stBox.remove();
+      }
+    });
   }
   function agFilterNom(q){_agNomFilter=q;agApplyFilters();}
   function agFilterStatut(v){_agStatutFilter=v;agApplyFilters();}
@@ -3616,6 +3658,7 @@ function renderOrientations(){
   head.appendChild(importBtn);
 
   if(S.orientations.length>0){
+    head.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.82 0.08 155);background:var(--c-card);color:oklch(0.42 0.12 155);font-weight:600;font-size:12.5px;padding:9px 14px;border-radius:11px;",onClick:exportOrientationsCSV},"📥 CSV"));
     head.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:var(--c-card);color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:9px 14px;border-radius:11px;",onClick:function(){if(confirm('Vider toutes les orientations ?')){S.orientations=[];lsSet('ess-orientations',[]);renderOrientations();renderTabs();}}},"Vider"));
   }
   wrap.appendChild(head);
