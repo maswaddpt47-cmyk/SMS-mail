@@ -53,7 +53,7 @@
   .gen-preview{position:static;}
   @media(min-width:720px){.gen-preview{position:sticky;top:136px;}}
   .gen-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  @media(min-width:420px){.gen-type-grid{grid-template-columns:1fr 1fr 1fr;}}
+  @media(min-width:420px){.gen-type-grid{grid-template-columns:1fr 1fr 1fr 1fr;}}
   .gen-row1{display:grid;grid-template-columns:80px 1fr;gap:9px;}
   @media(min-width:400px){.gen-row1{grid-template-columns:80px 1fr 1fr;}}
   .mandat-grid{display:flex;flex-direction:column;gap:20px;max-width:1180px;margin:0 auto;padding:clamp(14px,3vw,32px) clamp(12px,4vw,40px);}
@@ -297,17 +297,23 @@ var DEFAULT_TEMPLATES={
   mail_confirmation:"Bonjour {civilite} {nom} {prenom},\n\nSuite à notre échange téléphonique, je vous confirme votre rendez-vous dans le cadre de votre démarche \"{demarche}\".\n\n📅 Date : {date}\n🕐 Heure : {heure}\n📍 Adresse : {adresse}\n\nMerci de vous munir des documents suivants :\n{documents}\n\nEn cas d'empêchement, merci de me prévenir par retour mail dans les meilleurs délais.\n\nCordialement,\n\n📅 Ajouter à votre calendrier : {lienCalendrier}",
   mail_sans_appel_sujet:"Proposition de rendez-vous — {demarche} — {date}",
   mail_sans_appel:"Bonjour {civilite} {nom} {prenom},\n\nPour faire suite à la demande du CMS de {commune}, je me permets de vous contacter par écrit dans le cadre de votre démarche \"{demarche}\".\n\nJe vous propose un rendez-vous le {date} à {heure} au :\n\n📍 {adresse}\n\nMerci de bien vouloir me confirmer par retour mail si ce créneau vous convient en répondant à ce mail.\n\nLe cas échéant, merci de prévoir les documents suivants :\n{documents}\n\nDans l'attente de votre retour, je reste à votre disposition.\n\nCordialement,\n\n📅 Ajouter à votre calendrier : {lienCalendrier}",
+  sms_relance:"Bonjour {civilite} {nom} {prenom},\n\nJe reviens vers vous suite à ma proposition de RDV du {dateDemande} concernant \"{demarche}\" prévu le {date} à {heure}.\n\nMerci de me confirmer rapidement votre venue par SMS.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+  mail_relance_sujet:"Rappel — Votre RDV du {date} — {demarche}",
+  mail_relance:"Bonjour {civilite} {nom} {prenom},\n\nJe me permets de revenir vers vous suite à ma proposition de rendez-vous du {dateDemande} concernant votre démarche \"{demarche}\".\n\nVotre RDV est prévu le {date} à {heure} au :\n📍 {adresse}\n\nMerci de bien vouloir me confirmer par retour mail ou par SMS si ce créneau vous convient toujours.\n\nDans l'attente de votre retour, je reste à votre disposition.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
 };
 var LABELS={
   sms_proposition:"💬 SMS — Proposition (non joint)",
   sms_confirmation:"💬 SMS — Confirmation (joint)",
   sms_sans_appel:"💬 SMS — Proposition sans appel",
+  sms_relance:"💬 SMS — Relance",
   mail_proposition_sujet:"✉️ Mail — Objet Proposition",
   mail_proposition:"✉️ Mail — Corps Proposition",
   mail_confirmation_sujet:"✉️ Mail — Objet Confirmation",
   mail_confirmation:"✉️ Mail — Corps Confirmation",
   mail_sans_appel_sujet:"✉️ Mail — Objet Proposition sans appel",
   mail_sans_appel:"✉️ Mail — Corps Proposition sans appel",
+  mail_relance_sujet:"✉️ Mail — Objet Relance",
+  mail_relance:"✉️ Mail — Corps Relance",
 };
 var HISTORY_MAX=99999;
 
@@ -339,6 +345,7 @@ var S={
   editCms:null, editSect:null, editVar:null, editTpl:null,
   exportText:"", importText:"", importError:"",
   copied:{}, toast:null,
+  relanceDelai:3,
   mandatSource:"",
   mandatCivilite:"", mandatPrenom:"", mandatNom:"", mandatCommune:"", mandatNum:"",  helpMandatOpen:false,
 };
@@ -554,6 +561,7 @@ function fillTemplate(tpl,v){
     .replace(/Pensez à apporter :\n\{documents\}/g, docList?'Pensez à apporter :\n'+docList:'')
     .replace(/merci de prévoir les documents suivants :\n\{documents\}/g, docList?'merci de prévoir les documents suivants :\n'+docList:'')
     .replace(/{documents}/g,docList).replace(/{commune}/g,v.commune||"[commune]")
+    .replace(/{dateDemande}/g,v.dateDemande?new Date(v.dateDemande).toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"}):"[date de proposition]")
     .replace(/\n📅 Ajouter à votre calendrier : \{lienCalendrier\}/g, v.lienCalendrier ? '\n📅 Ajouter à votre calendrier : '+v.lienCalendrier : '')
     .replace(/{lienCalendrier}/g,v.lienCalendrier||"");
   for(var i=0;i<S.customVars.length;i++){var cv=S.customVars[i];if(cv.nom)r=r.replace(new RegExp("\\{"+cv.nom+"\\}","g"),cv.valeur);}
@@ -585,14 +593,14 @@ function buildCalLink(){
 function compute(){
   var cms=S.cmsList.find(function(c){return String(c.id)===String(S.selectedCMS);});
   var dem=S.selectedDemarche==="__autre__"?{nom:S.demarcheAutre||"Autre",documents:[]}:S.demarches.find(function(d){return String(d.id)===String(S.selectedDemarche);});
-  var vars={civilite:S.civilite,prenom:S.prenom,nom:S.nom,demarche:dem?dem.nom:"[démarche]",date:S.date,heure:S.heure,adresse:cms?cms.adresse:"[adresse]",documents:dem?dem.documents:[],commune:S.commune,lienCalendrier:buildCalLink()};
+  var vars={civilite:S.civilite,prenom:S.prenom,nom:S.nom,demarche:dem?dem.nom:"[démarche]",date:S.date,heure:S.heure,adresse:cms?cms.adresse:"[adresse]",documents:dem?dem.documents:[],commune:S.commune,lienCalendrier:buildCalLink(),dateDemande:S.dateDemande||""};
   var body="",subject="";
   if(S.selectedTemplate!=="__default__"){
     var ct=S.customTemplates.find(function(t){return String(t.id)===String(S.selectedTemplate);});
     if(ct){body=fillTemplate(ct.body,vars);subject=ct.canal==="mail"?fillTemplate(ct.sujet||"",vars):"";}
   } else {
-    var bk={sms:{proposition:"sms_proposition",confirmation:"sms_confirmation",sans_appel:"sms_sans_appel"},mail:{proposition:"mail_proposition",confirmation:"mail_confirmation",sans_appel:"mail_sans_appel"}};
-    var sk={proposition:"mail_proposition_sujet",confirmation:"mail_confirmation_sujet",sans_appel:"mail_sans_appel_sujet"};
+    var bk={sms:{proposition:"sms_proposition",confirmation:"sms_confirmation",sans_appel:"sms_sans_appel",relance:"sms_relance"},mail:{proposition:"mail_proposition",confirmation:"mail_confirmation",sans_appel:"mail_sans_appel",relance:"mail_relance"}};
+    var sk={proposition:"mail_proposition_sujet",confirmation:"mail_confirmation_sujet",sans_appel:"mail_sans_appel_sujet",relance:"mail_relance_sujet"};
     var bodyKey=bk[S.channel][S.msgType];
     var tpl=S.templates[bodyKey]||DEFAULT_TEMPLATES[bodyKey]||"";
     body=fillTemplate(tpl,vars);
@@ -940,7 +948,7 @@ function renderTabs(){
   var todayN=S.history.filter(function(h){return h.ts===today;}).length;
   var orientN=S.orientations.filter(function(o){return !o.done;}).length;
   var _nowTab=new Date();var _todayTab=_nowTab.getFullYear()+'-'+String(_nowTab.getMonth()+1).padStart(2,'0')+'-'+String(_nowTab.getDate()).padStart(2,'0');
-  var depasseN=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&isInMyAgenda(h)&&Math.round((new Date(_todayTab+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;}).length;
+  var depasseN=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&isInMyAgenda(h)&&Math.round((new Date(_todayTab+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>(S.relanceDelai||3);}).length;
   var defs=[["generate","Générer"],["history","Historique"],["orientations","📋 Orientations"+(orientN>0?" ("+orientN+")":"")],["agenda","📅 Agenda"],["stats","📊 Stats"],["templates","Modèles"],["config","Configuration"],["mandat","Mandat"],["mandats","Mandats archivés"]];
   defs.forEach(function(d){
     var btn=el('button',{class:'gx-press',style:tabStyle(S.activeTab===d[0]),onClick:(function(key){return function(){S.activeTab=key;showActivePane();renderTabs();var m=document.querySelector('main');if(m)m.scrollTop=0;if(key==='stats')renderStats();if(key==='agenda')renderAgenda();if(key==='orientations')renderOrientations();};})(d[0])},d[1]);
@@ -979,7 +987,7 @@ function renderGenerate(){
   c1.appendChild(chGrid);
   c1.appendChild(el('div',{style:"font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--c-muted);margin:18px 0 11px;"},"Type de message"));
   var tGrid=el('div',{class:"gen-type-grid"});
-  [["proposition","Proposition","Non joint"],["confirmation","Confirmation","Joint"],["sans_appel","Sans appel","Direct"]].forEach(function(b){
+  [["proposition","Proposition","Non joint"],["confirmation","Confirmation","Joint"],["sans_appel","Sans appel","Direct"],["relance","Relance","Rappel"]].forEach(function(b){
     var btn=el('button',{class:'gx-press',style:typeBtn(S.msgType===b[0]),onClick:function(){S.msgType=b[0];S.selectedTemplate="__default__";regen();renderGenerate();}});
     btn.appendChild(el('div',{style:"font-weight:700;font-size:13px;"},b[1]));
     btn.appendChild(el('div',{style:"font-size:10.5px;font-weight:500;margin-top:2px;opacity:.7;"},b[2]));
@@ -2136,6 +2144,18 @@ function importPlanningJson(){
     };fr.readAsText(file);
   };inp.click();
 }
+function lancerRelance(h){
+  if(!h)return;
+  S.civilite=h.civilite||"";S.prenom=h.prenom||"";S.nom=h.nom||"";S.telephone=h.telephone||"";
+  S.commune=h.commune||"";S.selectedCMS=h.selectedCMS||"";
+  S.date=h.date||"";S.heure=h.heure||"";
+  S.dateDemande=h.dateDemande||"";
+  if(h.selectedDemarche)S.selectedDemarche=h.selectedDemarche;
+  if(h.demarcheAutre)S.demarcheAutre=h.demarcheAutre;
+  S.channel=h.channel||"sms";S.msgType="relance";S.selectedTemplate="__default__";
+  regen();S.activeTab="generate";showActivePane();renderTabs();renderGenerate();
+  showToast("📨 Formulaire pré-rempli pour relance");
+}
 function renderAgenda(){
   var pane=document.getElementById('pane-agenda');if(!pane)return;clear(pane);
   var wrap=el('div',{style:"max-width:860px;margin:0 auto;padding:clamp(14px,3vw,32px) clamp(12px,4vw,40px);"});
@@ -2151,13 +2171,13 @@ function renderAgenda(){
     var t0B=new Date(todayB+'T00:00:00');
     var depasses=S.history.filter(function(h){
       if(h.statut!=='en_attente'||!h.dateDemande||!isInMyAgenda(h))return false;
-      return Math.round((t0B-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;
+      return Math.round((t0B-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>(S.relanceDelai||3);
     });
     if(!depasses.length)return;
     var banner=el('div',{style:"display:flex;align-items:center;gap:12px;background:oklch(0.97 0.06 25);border:1.5px solid oklch(0.78 0.18 25);border-radius:14px;padding:12px 18px;margin-bottom:18px;box-shadow:0 2px 8px oklch(0.5 0.12 25 / .12);"});
     banner.appendChild(el('span',{style:"font-size:22px;"},"🚨"));
     var txt=el('div',{style:"flex:1;"});
-    txt.appendChild(el('div',{style:"font-size:13px;font-weight:800;color:oklch(0.45 0.18 25);"},depasses.length+' RDV en attente dépass'+(depasses.length>1?'ent':'e')+' 3 jours sans confirmation'));
+    txt.appendChild(el('div',{style:"font-size:13px;font-weight:800;color:oklch(0.45 0.18 25);"},depasses.length+' RDV en attente dépass'+(depasses.length>1?'ent':'e')+' '+(S.relanceDelai||3)+' jours sans confirmation'));
     var noms=depasses.slice(0,5).map(function(h){return[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ');}).filter(Boolean);
     if(noms.length)txt.appendChild(el('div',{style:"font-size:11px;color:oklch(0.55 0.14 25);margin-top:3px;"},noms.join(' · ')+(depasses.length>5?' · …':'')));
     banner.appendChild(txt);
@@ -2251,7 +2271,7 @@ function renderAgenda(){
     var orphanBox=document.getElementById('ag-orphan-depasse');
     if(statut==='depasse'){
       var nowO=new Date();var tdO=nowO.getFullYear()+'-'+String(nowO.getMonth()+1).padStart(2,'0')+'-'+String(nowO.getDate()).padStart(2,'0');
-      var allDepasses=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&isInMyAgenda(h)&&Math.round((new Date(tdO+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;});
+      var allDepasses=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&isInMyAgenda(h)&&Math.round((new Date(tdO+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>(S.relanceDelai||3);});
       /* trouver ceux qui n'ont pas de pill data-depasse=1 dans le DOM */
       var pillNoms=Array.prototype.slice.call(document.querySelectorAll('[data-depasse="1"]')).map(function(p){return(p.getAttribute('data-nom')||'').trim();});
       var orphans=allDepasses.filter(function(h){var n=([h.civilite,h.prenom,h.nom].filter(Boolean).join(' ')).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');return!pillNoms.some(function(pn){return pn&&pn.indexOf(n.split(' ').pop())!==-1;});});
@@ -2382,7 +2402,7 @@ function renderAgenda(){
       if(slot.taken&&_st==='en_attente'&&slot.taken.dateDemande){
         var _nowD=new Date();
         var _todayD=_nowD.getFullYear()+'-'+String(_nowD.getMonth()+1).padStart(2,'0')+'-'+String(_nowD.getDate()).padStart(2,'0');
-        _isDepasse=Math.round((new Date(_todayD+'T00:00:00')-new Date(slot.taken.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;
+        _isDepasse=Math.round((new Date(_todayD+'T00:00:00')-new Date(slot.taken.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>(S.relanceDelai||3);
       }
       var pill=el('button',{class:_isDepasse?'ag-depasse':'',draggable:'true',style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:grab;font-family:inherit;min-height:52px;",'data-nom':who.toLowerCase(),'data-statut':_pillStatut,'data-depasse':_isDepasse?'1':'0',title:_ttLines.join('\n')});
       (function(s){pill.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',JSON.stringify({date:s.taken.date,heure:s.taken.heure,commune:s.taken.commune||'',nom:s.taken.nom||''}));pill.style.opacity='0.5';});pill.addEventListener('dragend',function(){pill.style.opacity='1';});})(slot);
@@ -2415,6 +2435,12 @@ function renderAgenda(){
           _ago=timeAgo(slot.taken.ts);
         }
         if(_ago&&_st!=='confirme')pill.appendChild(el('div',{style:"font-size:9px;font-weight:700;color:"+pillTxt+";background:rgba(0,0,0,0.07);border-radius:4px;padding:1px 4px;margin-top:1px;"},_ago));
+      }
+      if(_isDepasse){
+        var relBtn=el('button',{style:"margin-top:4px;font-family:inherit;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;border:1.5px solid oklch(0.62 0.18 266);background:oklch(0.94 0.06 266);color:oklch(0.38 0.18 266);cursor:pointer;width:100%;",title:"Relancer par SMS ou mail"});
+        relBtn.textContent='📨 Relancer';
+        (function(t){relBtn.addEventListener('click',function(e){e.stopPropagation();lancerRelance(t);});})(slot.taken);
+        pill.appendChild(relBtn);
       }
       (function(s,d){
         pill.addEventListener('click',function(){
@@ -2878,6 +2904,40 @@ function renderConfig(){
     });
     card3.appendChild(calSel);
     wrap.appendChild(card3);
+
+    /* relance automatique */
+    var cardR=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px 20px;margin-bottom:14px;"});
+    cardR.appendChild(el('div',{style:"font-weight:800;font-size:14px;margin-bottom:6px;"},"📨 Relance automatique"));
+    cardR.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:12px;line-height:1.5;"},"Délai (en jours) au-delà duquel un RDV « En attente » est considéré en dépassement et peut être relancé depuis l'agenda."));
+    var delaiRow=el('div',{style:"display:flex;align-items:center;gap:10px;margin-bottom:16px;"});
+    delaiRow.appendChild(el('span',{style:"font-size:13px;color:var(--c-dim)"},"Délai dépassement :"));
+    var delaiIn=el('input',{type:'number',min:'1',max:'30',style:INS3+"width:70px;",value:String(S.relanceDelai||3)});
+    delaiIn.addEventListener('change',function(e){var v=parseInt(e.target.value,10);if(v>0&&v<=30){S.relanceDelai=v;lsSet('ess-relance-delai',v);}});
+    delaiRow.appendChild(delaiIn);
+    delaiRow.appendChild(el('span',{style:"font-size:12px;color:var(--c-muted);"},"jours"));
+    cardR.appendChild(delaiRow);
+    /* SMS relance template */
+    var rSmsLbl=el('div',{style:"font-size:12px;font-weight:700;color:oklch(0.45 0.12 266);margin-bottom:5px;"},"Modèle SMS Relance");
+    cardR.appendChild(rSmsLbl);
+    var rSmsTa=el('textarea',{style:INS3+"height:110px;resize:vertical;font-family:ui-monospace,monospace;font-size:11.5px;margin-bottom:12px;"});
+    rSmsTa.value=S.templates.sms_relance||DEFAULT_TEMPLATES.sms_relance||"";
+    rSmsTa.addEventListener('input',function(e){var t=Object.assign({},S.templates);t.sms_relance=e.target.value;S.templates=t;lsSet('ess-templates',S.templates);regen();});
+    cardR.appendChild(rSmsTa);
+    /* mail relance sujet */
+    var rMailSLbl=el('div',{style:"font-size:12px;font-weight:700;color:oklch(0.45 0.12 266);margin-bottom:5px;"},"Objet Mail Relance");
+    cardR.appendChild(rMailSLbl);
+    var rMailSIn=el('input',{style:INS3+"margin-bottom:12px;",value:S.templates.mail_relance_sujet||DEFAULT_TEMPLATES.mail_relance_sujet||""});
+    rMailSIn.addEventListener('input',function(e){var t=Object.assign({},S.templates);t.mail_relance_sujet=e.target.value;S.templates=t;lsSet('ess-templates',S.templates);regen();});
+    cardR.appendChild(rMailSIn);
+    /* mail relance corps */
+    var rMailLbl=el('div',{style:"font-size:12px;font-weight:700;color:oklch(0.45 0.12 266);margin-bottom:5px;"},"Corps Mail Relance");
+    cardR.appendChild(rMailLbl);
+    var rMailTa=el('textarea',{style:INS3+"height:140px;resize:vertical;font-family:ui-monospace,monospace;font-size:11.5px;margin-bottom:6px;"});
+    rMailTa.value=S.templates.mail_relance||DEFAULT_TEMPLATES.mail_relance||"";
+    rMailTa.addEventListener('input',function(e){var t=Object.assign({},S.templates);t.mail_relance=e.target.value;S.templates=t;lsSet('ess-templates',S.templates);regen();});
+    cardR.appendChild(rMailTa);
+    cardR.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);"},"Variables disponibles : {civilite} {nom} {prenom} {date} {heure} {dateDemande} {demarche} {adresse} {commune}"));
+    wrap.appendChild(cardR);
 
     /* token GitHub */
     var card4=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px 20px;margin-bottom:14px;"});
@@ -4005,6 +4065,7 @@ function init(){
   S.orientations=ls('ess-orientations',[]);
   S.permanences=ls('ess-permanences',DEFAULT_PERMANENCES);
   S.calendarType=ls('ess-caltype','google');
+  S.relanceDelai=ls('ess-relance-delai',3);
   S.selectedCMS=last.selectedCMS||"";
   S.selectedDemarche=last.selectedDemarche||"";
   S.commune=last.commune||"";
@@ -4028,7 +4089,7 @@ function init(){
   /* rappel RDV en attente dépassés */
   setTimeout(function(){
     var _n2=new Date();var _td=_n2.getFullYear()+'-'+String(_n2.getMonth()+1).padStart(2,'0')+'-'+String(_n2.getDate()).padStart(2,'0');
-    var overdue=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&isInMyAgenda(h)&&Math.round((new Date(_td+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>3;});
+    var overdue=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&isInMyAgenda(h)&&Math.round((new Date(_td+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>(S.relanceDelai||3);});
     if(!overdue.length)return;
     var seen=localStorage.getItem('ess-rappel-seen');
     if(seen===_td)return;
