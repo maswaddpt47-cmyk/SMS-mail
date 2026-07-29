@@ -2348,6 +2348,32 @@ function renderAgenda(){
     } else {
       if(orphanBox)orphanBox.remove();
     }
+    /* encart "pas de retour" — scan historique direct car ces dates peuvent être hors fenêtre agenda */
+    var pdrBox=document.getElementById('ag-orphan-pdr');
+    if(statut==='pas_de_retour'){
+      var allPdr=S.history.filter(function(h){return h.statut==='pas_de_retour'&&isInMyAgenda(h);});
+      allPdr.sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
+      if(!pdrBox&&allPdr.length){
+        var pdrB=el('div',{id:'ag-orphan-pdr',style:"background:oklch(0.95 0.02 266);border:1.5px solid oklch(0.72 0.06 266);border-radius:14px;padding:12px 18px;margin-bottom:18px;"});
+        pdrB.appendChild(el('div',{style:"font-size:12px;font-weight:800;color:oklch(0.38 0.08 266);margin-bottom:8px;"},'📵 '+allPdr.length+' RDV sans retour :'));
+        allPdr.forEach(function(h){
+          var name=[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ');
+          var dateRdv=h.date?(h.date.split('-').reverse().join('/')):'—';
+          var dateRel=h.dateRelance?(h.dateRelance.split('-').reverse().join('/')):'pas encore relancé';
+          var row=el('div',{style:"display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:oklch(0.42 0.06 266);margin-top:5px;padding:5px 0;border-bottom:1px solid oklch(0.88 0.04 266);flex-wrap:wrap;"});
+          var info=el('span');info.textContent=name+' · RDV : '+dateRdv+(h.heure?' à '+h.heure:'')+(h.commune?' ('+h.commune+')':'')+(h.demarche?' — '+h.demarche:'');
+          var relInfo=el('span',{style:"font-size:11px;font-weight:700;color:"+(h.dateRelance?'oklch(0.42 0.12 155)':'oklch(0.5 0.16 25)')});
+          relInfo.textContent=h.dateRelance?('✓ Relancé '+dateRel):'⚠️ '+dateRel;
+          row.appendChild(info);row.appendChild(relInfo);
+          pdrB.appendChild(row);
+        });
+        var firstCard=document.querySelector('[id^="agenda-day-"]');
+        if(firstCard&&firstCard.parentNode)firstCard.parentNode.insertBefore(pdrB,firstCard);
+        else{var ap=document.getElementById('pane-agenda');if(ap)ap.appendChild(pdrB);}
+      } else if(pdrBox&&!allPdr.length){pdrBox.remove();}
+    } else {
+      if(pdrBox)pdrBox.remove();
+    }
   }
   function agFilterNom(q){_agNomFilter=q;agApplyFilters();}
   function agFilterStatut(v){_agStatutFilter=v;agApplyFilters();}
