@@ -2160,15 +2160,16 @@ function importPlanningJson(){
 }
 function lancerRelance(h){
   if(!h)return;
-  S.civilite=h.civilite||"";S.prenom=h.prenom||"";S.nom=h.nom||"";S.telephone=h.telephone||"";
-  S.commune=h.commune||"";S.selectedCMS=h.selectedCMS||"";
-  S.date=h.date||"";S.heure=h.heure||"";
-  S.dateDemande=h.dateDemande||"";
-  if(h.selectedDemarche)S.selectedDemarche=h.selectedDemarche;
-  if(h.demarcheAutre)S.demarcheAutre=h.demarcheAutre;
-  S.channel=h.channel||"sms";S.msgType="relance";S.selectedTemplate="__default__";
-  regen();S.activeTab="generate";showActivePane();renderTabs();renderGenerate();
-  showToast("📨 Formulaire pré-rempli pour relance");
+  /* génère le texte de relance sans modifier S ni l'historique */
+  var cms=S.cmsList.find(function(c){return String(c.id)===String(h.selectedCMS);});
+  var dem=h.selectedDemarche==="__autre__"?{nom:h.demarcheAutre||"Autre",documents:[]}:S.demarches.find(function(d){return String(d.id)===String(h.selectedDemarche);})||{nom:h.demarche||"",documents:[]};
+  var vars={civilite:h.civilite||"",prenom:h.prenom||"",nom:h.nom||"",demarche:dem.nom||"",date:h.date||"",heure:h.heure||"",adresse:cms?cms.adresse:"[adresse]",documents:dem.documents||[],commune:h.commune||"",dateDemande:h.dateDemande||"",lienCalendrier:""};
+  var canal=h.channel||"sms";
+  var bodyTpl=canal==="sms"?(S.templates.sms_relance||DEFAULT_TEMPLATES.sms_relance):(S.templates.mail_relance||DEFAULT_TEMPLATES.mail_relance);
+  var subjTpl=canal==="mail"?(S.templates.mail_relance_sujet||DEFAULT_TEMPLATES.mail_relance_sujet):"";
+  var body=fillTemplate(bodyTpl,vars);
+  var subj=canal==="mail"?fillTemplate(subjTpl,vars):"";
+  S.modal='relance';S._relanceCtx={h:h,body:body,subj:subj,canal:canal};renderModal();
 }
 function renderAgenda(){
   var pane=document.getElementById('pane-agenda');if(!pane)return;clear(pane);
@@ -2451,8 +2452,9 @@ function renderAgenda(){
         if(_ago&&_st!=='confirme')pill.appendChild(el('div',{style:"font-size:9px;font-weight:700;color:"+pillTxt+";background:rgba(0,0,0,0.07);border-radius:4px;padding:1px 4px;margin-top:1px;"},_ago));
       }
       if(_isDepasse){
-        var relBtn=el('button',{style:"margin-top:4px;font-family:inherit;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;border:1.5px solid oklch(0.62 0.18 266);background:oklch(0.94 0.06 266);color:oklch(0.38 0.18 266);cursor:pointer;width:100%;",title:"Relancer par SMS ou mail"});
-        relBtn.textContent='📨 Relancer';
+        var _dejáRelance=slot.taken.dateRelance;
+        var relBtn=el('button',{style:"margin-top:4px;font-family:inherit;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;border:1.5px solid "+(_dejáRelance?'oklch(0.62 0.12 155)':'oklch(0.62 0.18 266)')+";background:"+(_dejáRelance?'oklch(0.93 0.06 155)':'oklch(0.94 0.06 266)')+";color:"+(_dejáRelance?'oklch(0.38 0.12 155)':'oklch(0.38 0.18 266)')+";cursor:pointer;width:100%;",title:_dejáRelance?"Relance envoyée le "+_dejáRelance.split('-').reverse().join('/'):"Relancer par SMS ou mail"});
+        relBtn.textContent=_dejáRelance?('✓ Relancé '+_dejáRelance.slice(8,10)+'/'+_dejáRelance.slice(5,7)):'📨 Relancer';
         (function(t){relBtn.addEventListener('click',function(e){e.stopPropagation();lancerRelance(t);});})(slot.taken);
         pill.appendChild(relBtn);
       }
@@ -4012,6 +4014,35 @@ function renderModal(){
       }},'Enregistrer'));
       box.appendChild(btnRow2);
     }
+  }
+  else if(S.modal==='relance'){
+    var rc=S._relanceCtx||{};var rh=rc.h||{};
+    var who=[rh.civilite,rh.prenom,rh.nom].filter(Boolean).join(' ');
+    box.appendChild(header('📨 Relance — '+who));
+    if(rc.canal==='mail'&&rc.subj){
+      var rsd=el('div',{style:"margin-bottom:10px;"});
+      rsd.appendChild(el('div',{style:"font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--c-muted);margin-bottom:5px;"},"Objet"));
+      var rsi=el('input',{readonly:true,style:"width:100%;font-family:inherit;font-size:13.5px;font-weight:600;padding:10px 12px;border:1.5px solid var(--c-border-in);border-radius:11px;background:var(--c-subtle-bg);color:inherit;"});rsi.value=rc.subj;rsd.appendChild(rsi);box.appendChild(rsd);
+    }
+    var rta=el('textarea',{readonly:true,class:'gx-scroll',style:"width:100%;height:300px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.6;border:1.5px solid var(--c-border-in);border-radius:12px;padding:13px;resize:none;color:var(--c-dim);background:var(--c-subtle-bg);"});
+    rta.value=rc.body||"";box.appendChild(rta);
+    var rBtnRow=el('div',{style:"display:flex;gap:10px;margin-top:4px;"});
+    var rCopyBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13.5px;padding:12px;border-radius:12px;flex:1;"});
+    rCopyBtn.textContent=S.copied.relance?"✓ Copié !":"📋 Copier";
+    rCopyBtn.addEventListener('click',function(){
+      doCopy(rc.body).then(function(ok){
+        if(!ok)return;
+        /* marquer dateRelance dans l'entrée historique */
+        var today=new Date().toISOString().slice(0,10);
+        var idx=S.history.indexOf(rh);
+        if(idx===-1)idx=S.history.findIndex(function(x){return x.date===rh.date&&x.heure===rh.heure&&x.commune===rh.commune&&(x.nom||'').toLowerCase()===(rh.nom||'').toLowerCase();});
+        if(idx!==-1){S.history[idx].dateRelance=today;lsSet('ess-history',S.history);}
+        flashCopied('relance');showToast("✓ Relance copiée !");
+        renderModal();renderAgenda();
+      });
+    });
+    rBtnRow.appendChild(rCopyBtn);
+    box.appendChild(rBtnRow);
   }
   else if(S.modal==='hist'){
     var hi=S.histItem;
