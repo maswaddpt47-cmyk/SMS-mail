@@ -4027,6 +4027,16 @@ function renderModal(){
     var rc=S._relanceCtx||{};var rh=rc.h||{};
     var who=[rh.civilite,rh.prenom,rh.nom].filter(Boolean).join(' ');
     box.appendChild(header('📨 Relance — '+who));
+    if(rh.telephone){
+      var telRow=el('div',{style:"display:flex;align-items:center;gap:10px;margin-bottom:12px;background:var(--c-subtle-bg);border:1px solid var(--c-border);border-radius:10px;padding:9px 12px;"});
+      telRow.appendChild(el('span',{style:"font-size:13px;font-weight:700;color:var(--c-dim);flex:1;"},rh.telephone));
+      var telCopyBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;white-space:nowrap;"});
+      telCopyBtn.textContent='📋 Copier';
+      telCopyBtn.addEventListener('click',function(){doCopy(rh.telephone).then(function(ok){if(ok){telCopyBtn.textContent='✓ Copié !';setTimeout(function(){telCopyBtn.textContent='📋 Copier';},1500);}});});
+      telRow.appendChild(telCopyBtn);
+      telRow.appendChild(el('a',{href:'tel:'+rh.telephone.replace(/\s/g,''),style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;text-decoration:none;white-space:nowrap;"},'📞 Appeler'));
+      box.appendChild(telRow);
+    }
     if(rc.canal==='mail'&&rc.subj){
       var rsd=el('div',{style:"margin-bottom:10px;"});
       rsd.appendChild(el('div',{style:"font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--c-muted);margin-bottom:5px;"},"Objet"));
