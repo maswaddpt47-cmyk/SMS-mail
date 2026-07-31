@@ -828,9 +828,9 @@ function getSlots(commune,dateStr){
   var extraHeures=S.history.filter(function(x){return x.date===dateStr&&(x.commune===commune||!x.commune);}).map(function(x){return x.heure;});
   extraHeures.forEach(function(h){var p=h.split(':');var t=parseInt(p[0])*60+parseInt(p[1]||0);if(t<start)start=t;if(t>end)end=t;});
   var slots=[];
-  for(var t=start;t<=end;t+=perm.duree){
-    var hh=String(Math.floor(t/60)).padStart(2,'0'),mm=String(t%60).padStart(2,'0');
-    var heure=hh+':'+mm;
+  var seenHeures={};
+  function buildSlot(heure){
+    if(seenHeures[heure])return;seenHeures[heure]=true;
     var matches=S.history.filter(function(x){return x.date===dateStr&&x.heure===heure&&(x.commune===commune||!x.commune);});
     var confirmations=matches.filter(function(x){return x.msgType==='confirmation';});
     var propositions=matches.filter(function(x){return x.msgType==='proposition';});
@@ -842,6 +842,13 @@ function getSlots(commune,dateStr){
     var replaced=matches.filter(function(x){return x!==taken&&(x.statut==='pas_de_retour'||x.statut==='lapin'||x.statut==='excuse');});
     slots.push({heure:heure,taken:taken||null,freeAgain:!!freeAgain,multiPropo:multiPropo,allPropo:propositions,replaced:replaced});
   }
+  for(var t=start;t<=end;t+=perm.duree){
+    var hh=String(Math.floor(t/60)).padStart(2,'0'),mm=String(t%60).padStart(2,'0');
+    buildSlot(hh+':'+mm);
+  }
+  /* créneaux hors pas standard (heure modifiée manuellement) */
+  extraHeures.forEach(function(h){if(!seenHeures[h])buildSlot(h);});
+  slots.sort(function(a,b){return a.heure.localeCompare(b.heure);});
   return slots;
 }
 var FREE_AGAIN_STATUTS=['pas_de_retour','lapin','excuse'];
