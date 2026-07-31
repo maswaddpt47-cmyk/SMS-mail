@@ -980,7 +980,7 @@ function renderTabs(){
   var orientN=S.orientations.filter(function(o){return !o.done;}).length;
   var _nowTab=new Date();var _todayTab=_nowTab.getFullYear()+'-'+String(_nowTab.getMonth()+1).padStart(2,'0')+'-'+String(_nowTab.getDate()).padStart(2,'0');
   var depasseN=S.history.filter(function(h){return h.statut==='en_attente'&&h.dateDemande&&isInMyAgenda(h)&&Math.round((new Date(_todayTab+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>(S.relanceDelai||3);}).length;
-  var agTodayN=S.history.filter(function(h){return h.date===_todayTab&&isInMyAgenda(h)&&(h.statut==='en_attente'||h.statut==='realise'||h.statut==='excuse'||h.statut==='lapin');}).length;
+  var agTodayN=S.history.filter(function(h){return h.date===_todayTab&&isInMyAgenda(h)&&(h.statut==='en_attente'||h.statut==='confirme'||h.statut==='realise'||h.statut==='excuse'||h.statut==='lapin');}).length;
   var defs=[["generate","Générer"],["history","Historique"],["orientations","📋 Orientations"+(orientN>0?" ("+orientN+")":"")],["agenda","📅 Agenda"],["stats","📊 Stats"],["templates","Modèles"],["config","Configuration"],["mandat","Mandat"],["mandats","Mandats archivés"]];
   defs.forEach(function(d){
     var btn=el('button',{class:'gx-press',style:tabStyle(S.activeTab===d[0]),onClick:(function(key){return function(){S.activeTab=key;showActivePane();renderTabs();var m=document.querySelector('main');if(m)m.scrollTop=0;if(key==='stats')renderStats();if(key==='agenda')renderAgenda();if(key==='orientations')renderOrientations();};})(d[0])},d[1]);
