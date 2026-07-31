@@ -572,7 +572,7 @@ function fillTemplate(tpl,v){
     .replace(/Si oui, pensez à apporter :\n\{documents\}/g, docList?'Si oui, pensez à apporter :\n'+docList:'')
     .replace(/Pensez à apporter :\n\{documents\}/g, docList?'Pensez à apporter :\n'+docList:'')
     .replace(/merci de prévoir les documents suivants :\n\{documents\}/g, docList?'merci de prévoir les documents suivants :\n'+docList:'')
-    .replace(/{documents}/g,docList).replace(/{commune}/g,v.commune||"[commune]")
+    .replace(/{documents}/g,docList).replace(/{commune}/g,v.commune||"[commune]").replace(/{cms}/g,v.cms||v.commune||"[CMS]")
     .replace(/{dateDemande}/g,v.dateDemande?new Date(v.dateDemande).toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"}):"[date de proposition]")
     .replace(/\n📅 Ajouter à votre calendrier : \{lienCalendrier\}/g, v.lienCalendrier ? '\n📅 Ajouter à votre calendrier : '+v.lienCalendrier : '')
     .replace(/{lienCalendrier}/g,v.lienCalendrier||"");
@@ -2257,8 +2257,7 @@ function lancerLapin(h){
   if(!h)return;
   var cms=S.cmsList.find(function(c){return String(c.id)===String(h.selectedCMS);});
   var cmsNom=cms?cms.nom:(h.commune||'[CMS]');
-  var dateAff=(h.date||'').split('-').reverse().join('/');
-  var vars={civilite:h.civilite||"",prenom:h.prenom||"",nom:h.nom||"",date:dateAff,cms:cmsNom,commune:h.commune||""};
+  var vars={civilite:h.civilite||"",prenom:h.prenom||"",nom:h.nom||"",date:h.date||"",cms:cmsNom,commune:h.commune||""};
   var canal=h.channel||"sms";
   var bodyTpl=canal==="sms"?(S.templates.sms_lapin||DEFAULT_TEMPLATES.sms_lapin):(S.templates.mail_lapin||DEFAULT_TEMPLATES.mail_lapin);
   var subjTpl=canal==="mail"?(S.templates.mail_lapin_sujet||DEFAULT_TEMPLATES.mail_lapin_sujet):"";
