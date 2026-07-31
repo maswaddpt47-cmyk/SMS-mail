@@ -4077,7 +4077,7 @@ function renderModal(){
             var _today=new Date().toISOString().slice(0,10);
             S.history[idx].dateRelance=_today;t.dateRelance=_today;
           }
-          lsSet('ess-history',S.history);motifWrap.style.display=ev.target.value==='excuse'?'block':'none';renderAgenda();if(ghToken()){var _n=Date.now();if(_n-_ghLastAutoPush>120000){_ghLastAutoPush=_n;githubPush(true);}}
+          lsSet('ess-history',S.history);motifWrap.style.display=ev.target.value==='excuse'?'block':'none';renderAgenda();renderTabs();if(ghToken()){var _n=Date.now();if(_n-_ghLastAutoPush>120000){_ghLastAutoPush=_n;githubPush(true);}}
         }
       }});
       [['','— Statut —'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['realise','✅ Réalisé'],['excuse','🙏 Excusé'],['lapin','🐇 Lapin'],['pas_de_retour','📵 Pas de retour']].forEach(function(o){var opt=el('option',{value:o[0]},o[1]);if((t.statut||'')===(o[0]))opt.selected=true;stSel.appendChild(opt);});
