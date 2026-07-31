@@ -306,6 +306,9 @@ var DEFAULT_TEMPLATES={
   sms_relance:"Bonjour {civilite} {nom} {prenom},\n\nJe reviens vers vous suite à ma proposition de RDV du {dateDemande} concernant \"{demarche}\" prévu le {date} à {heure}.\n\nMerci de me confirmer rapidement votre venue par SMS.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
   mail_relance_sujet:"Rappel — Votre RDV du {date} — {demarche}",
   mail_relance:"Bonjour {civilite} {nom} {prenom},\n\nJe me permets de revenir vers vous suite à ma proposition de rendez-vous du {dateDemande} concernant votre démarche \"{demarche}\".\n\nVotre RDV est prévu le {date} à {heure} au :\n📍 {adresse}\n\nMerci de bien vouloir me confirmer par retour mail ou par SMS si ce créneau vous convient toujours.\n\nDans l'attente de votre retour, je reste à votre disposition.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+  sms_lapin:"Bonjour {civilite} {nom} {prenom},\n\nVous ne vous êtes pas présenté(e) à votre rendez-vous du {date} au {cms}. Nos créneaux étant très sollicités, nous aurions aimé être prévenus en cas d'empêchement afin de proposer le créneau à un autre usager.\n\nVotre collaboration nous aide à mieux servir chacun.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+  mail_lapin_sujet:"Absence à votre RDV du {date} — {cms}",
+  mail_lapin:"Bonjour {civilite} {nom} {prenom},\n\nNous avons constaté votre absence à votre rendez-vous du {date} au {cms}.\n\nNos créneaux étant très sollicités, nous aurions aimé être prévenus en cas d'empêchement afin de proposer le créneau à un autre usager.\n\nVotre collaboration nous aide à mieux servir chacun.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
 };
 var LABELS={
   sms_proposition:"💬 SMS — Proposition (non joint)",
@@ -320,6 +323,9 @@ var LABELS={
   mail_sans_appel:"✉️ Mail — Corps Proposition sans appel",
   mail_relance_sujet:"✉️ Mail — Objet Relance",
   mail_relance:"✉️ Mail — Corps Relance",
+  sms_lapin:"💬 SMS — Absence (Lapin)",
+  mail_lapin_sujet:"✉️ Mail — Objet Absence (Lapin)",
+  mail_lapin:"✉️ Mail — Corps Absence (Lapin)",
 };
 var HISTORY_MAX=99999;
 
@@ -2240,6 +2246,19 @@ function lancerRelance(h){
   var subj=canal==="mail"?fillTemplate(subjTpl,vars):"";
   S.modal='relance';S._relanceCtx={h:h,body:body,subj:subj,canal:canal};renderModal();
 }
+function lancerLapin(h){
+  if(!h)return;
+  var cms=S.cmsList.find(function(c){return String(c.id)===String(h.selectedCMS);});
+  var cmsNom=cms?cms.nom:(h.commune||'[CMS]');
+  var dateAff=(h.date||'').split('-').reverse().join('/');
+  var vars={civilite:h.civilite||"",prenom:h.prenom||"",nom:h.nom||"",date:dateAff,cms:cmsNom,commune:h.commune||""};
+  var canal=h.channel||"sms";
+  var bodyTpl=canal==="sms"?(S.templates.sms_lapin||DEFAULT_TEMPLATES.sms_lapin):(S.templates.mail_lapin||DEFAULT_TEMPLATES.mail_lapin);
+  var subjTpl=canal==="mail"?(S.templates.mail_lapin_sujet||DEFAULT_TEMPLATES.mail_lapin_sujet):"";
+  var body=fillTemplate(bodyTpl,vars);
+  var subj=canal==="mail"?fillTemplate(subjTpl,vars):"";
+  S.modal='lapin';S._lapinCtx={h:h,body:body,subj:subj,canal:canal};renderModal();
+}
 function renderAgenda(){
   var pane=document.getElementById('pane-agenda');if(!pane)return;clear(pane);
   var wrap=el('div',{style:"max-width:860px;margin:0 auto;padding:clamp(14px,3vw,32px) clamp(12px,4vw,40px);"});
@@ -2598,6 +2617,13 @@ function renderAgenda(){
         relBtn.textContent=_dejáRelance?('✓ Relancé '+_dejáRelance.slice(8,10)+'/'+_dejáRelance.slice(5,7)):'📨 Relancer';
         (function(t){relBtn.addEventListener('click',function(e){e.stopPropagation();lancerRelance(t);});})(slot.taken);
         pill.appendChild(relBtn);
+      }
+      if(_st==='lapin'){
+        var _dejáLapin=slot.taken.dateLapin;
+        var lapBtn=el('button',{style:"margin-top:4px;font-family:inherit;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;border:1.5px solid "+(_dejáLapin?'oklch(0.62 0.12 155)':'oklch(0.62 0.18 45)')+";background:"+(_dejáLapin?'oklch(0.93 0.06 155)':'oklch(0.95 0.08 85)')+";color:"+(_dejáLapin?'oklch(0.38 0.12 155)':'oklch(0.40 0.16 45)')+";cursor:pointer;width:100%;",title:_dejáLapin?"Message envoyé le "+_dejáLapin.split('-').reverse().join('/'):"Envoyer un message d'absence"});
+        lapBtn.textContent=_dejáLapin?('✓ Envoyé '+_dejáLapin.slice(8,10)+'/'+_dejáLapin.slice(5,7)):'🐇 Absence';
+        (function(t){lapBtn.addEventListener('click',function(e){e.stopPropagation();lancerLapin(t);});})(slot.taken);
+        pill.appendChild(lapBtn);
       }
       (function(s,d){
         pill.addEventListener('click',function(){
@@ -4188,6 +4214,45 @@ function renderModal(){
     });
     rBtnRow.appendChild(rCopyBtn);
     box.appendChild(rBtnRow);
+  }
+  else if(S.modal==='lapin'){
+    var lc=S._lapinCtx||{};var lh=lc.h||{};
+    var who=[lh.civilite,lh.prenom,lh.nom].filter(Boolean).join(' ');
+    box.appendChild(header('🐇 Absence — '+who));
+    if(lh.telephone){
+      var lTelRow=el('div',{style:"display:flex;align-items:center;gap:10px;margin-bottom:12px;background:var(--c-subtle-bg);border:1px solid var(--c-border);border-radius:10px;padding:9px 12px;"});
+      lTelRow.appendChild(el('span',{style:"font-size:13px;font-weight:700;color:var(--c-dim);flex:1;"},lh.telephone));
+      var lTelCopy=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;white-space:nowrap;"});
+      lTelCopy.textContent='📋 Copier';
+      lTelCopy.addEventListener('click',function(){doCopy(lh.telephone).then(function(ok){if(ok){lTelCopy.textContent='✓ Copié !';setTimeout(function(){lTelCopy.textContent='📋 Copier';},1500);}});});
+      lTelRow.appendChild(lTelCopy);
+      lTelRow.appendChild(el('a',{href:'tel:'+lh.telephone.replace(/\s/g,''),style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;text-decoration:none;white-space:nowrap;"},'📞 Appeler'));
+      box.appendChild(lTelRow);
+    }
+    if(lc.canal==='mail'&&lc.subj){
+      var lsd=el('div',{style:"margin-bottom:10px;"});
+      lsd.appendChild(el('div',{style:"font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--c-muted);margin-bottom:5px;"},"Objet"));
+      var lsi=el('input',{readonly:true,style:"width:100%;font-family:inherit;font-size:13.5px;font-weight:600;padding:10px 12px;border:1.5px solid var(--c-border-in);border-radius:11px;background:var(--c-subtle-bg);color:inherit;"});lsi.value=lc.subj;lsd.appendChild(lsi);box.appendChild(lsd);
+    }
+    var lta=el('textarea',{readonly:true,class:'gx-scroll',style:"width:100%;height:280px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.6;border:1.5px solid var(--c-border-in);border-radius:12px;padding:13px;resize:none;color:var(--c-dim);background:var(--c-subtle-bg);"});
+    lta.value=lc.body||"";box.appendChild(lta);
+    var lBtnRow=el('div',{style:"display:flex;gap:10px;margin-top:4px;"});
+    var lCopyBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13.5px;padding:12px;border-radius:12px;flex:1;"});
+    lCopyBtn.textContent='📋 Copier';
+    lCopyBtn.addEventListener('click',function(){
+      doCopy(lc.body).then(function(ok){
+        if(!ok)return;
+        var today=new Date().toISOString().slice(0,10);
+        var idx=S.history.indexOf(lh);
+        if(idx===-1)idx=S.history.findIndex(function(x){return x.date===lh.date&&x.heure===lh.heure&&x.commune===lh.commune&&(x.nom||'').toLowerCase()===(lh.nom||'').toLowerCase();});
+        if(idx!==-1){S.history[idx].dateLapin=today;lsSet('ess-history',S.history);}
+        lCopyBtn.textContent='✓ Copié !';setTimeout(function(){lCopyBtn.textContent='📋 Copier';},1500);
+        showToast("✓ Message absence copié !");
+        renderModal();renderAgenda();
+      });
+    });
+    lBtnRow.appendChild(lCopyBtn);
+    box.appendChild(lBtnRow);
   }
   else if(S.modal==='hist'){
     var hi=S.histItem;
