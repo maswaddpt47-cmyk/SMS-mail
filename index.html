@@ -4312,7 +4312,7 @@ function init(){
   S.secteurs=ls('ess-secteurs',DEFAULT_SECTEURS);
   S.templates=ls('ess-templates',DEFAULT_TEMPLATES);
   /* migration : forcer les templates builtin à la dernière version par défaut */
-  var _tplV='v4-sms-nocal';
+  var _tplV='v5-lapin-templates';
   if(ls('ess-tpl-version','')!==_tplV){
     S.templates=Object.assign({},DEFAULT_TEMPLATES);
     lsSet('ess-templates',S.templates);
