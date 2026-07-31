@@ -1973,20 +1973,26 @@ function renderStats(){
   /* ── Option 1 : activité par jour (style GitHub) ── */
   (function(){
     var now2=new Date();now2.setHours(0,0,0,0);
-    /* compter RDV par date sur 12 mois */
+    /* nombre de semaines selon la période */
+    var heatWeeks={'1m':5,'3m':13,'6m':26,'all':52}[S.statsPeriod]||52;
+    var heatLabel={'1m':'1 mois','3m':'3 mois','6m':'6 mois','all':'12 mois'}[S.statsPeriod]||'12 mois';
+    /* cutoff pour filtrer l'historique */
+    var heatCutoff=cutoff(S.statsPeriod);
+    /* compter RDV par date sur la période */
     var counts={};var maxV=0;
     S.history.filter(function(h){return h.date&&(!S.statsCMS||h.commune===S.statsCMS);}).forEach(function(h){
+      if(heatCutoff&&h.date&&h.date<heatCutoff.toISOString().slice(0,10))return;
       counts[h.date]=(counts[h.date]||0)+1;
       if(counts[h.date]>maxV)maxV=counts[h.date];
     });
     if(!maxV)return;
-    /* lundi de la semaine il y a 52 sem */
+    /* lundi de la semaine de départ */
     var startDate=new Date(now2);
-    startDate.setDate(now2.getDate()-((now2.getDay()+6)%7)-51*7);
+    startDate.setDate(now2.getDate()-((now2.getDay()+6)%7)-(heatWeeks-1)*7);
     var MOIS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
     var JOURS=['L','','M','','V','','D'];
     var ghCard=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:16px 18px;margin-top:16px;box-shadow:0 1px 3px oklch(0.5 0.05 264 / .06);"});
-    ghCard.appendChild(el('div',{style:"font-size:13px;font-weight:700;color:var(--c-dim);margin-bottom:10px;"},"📅 Activité par jour — 12 mois"));
+    ghCard.appendChild(el('div',{style:"font-size:13px;font-weight:700;color:var(--c-dim);margin-bottom:10px;"},"📅 Activité par jour — "+heatLabel));
     var ghWrap=el('div',{style:"overflow-x:auto;"});
     var ghInner=el('div',{style:"display:flex;gap:0;min-width:600px;"});
     /* labels jours */
@@ -1998,7 +2004,7 @@ function renderStats(){
     /* row mois */
     var moisRow=el('div',{style:"display:flex;margin-bottom:4px;"});
     var lastMo=-1;var moSpans=[];
-    for(var wi=0;wi<52;wi++){
+    for(var wi=0;wi<heatWeeks;wi++){
       var wd=new Date(startDate);wd.setDate(startDate.getDate()+wi*7);
       var mo=wd.getMonth();
       if(mo!==lastMo){moSpans.push({wi:wi,mo:mo});lastMo=mo;}
@@ -2011,7 +2017,7 @@ function renderStats(){
     });
     colsWrap.appendChild(moisRow);
     var weeksRow=el('div',{style:"display:flex;gap:2px;"});
-    for(var wi2=0;wi2<52;wi2++){
+    for(var wi2=0;wi2<heatWeeks;wi2++){
       var col2=el('div',{style:"display:flex;flex-direction:column;gap:2px;"});
       for(var di=0;di<7;di++){
         var d2=new Date(startDate);d2.setDate(startDate.getDate()+wi2*7+di);
