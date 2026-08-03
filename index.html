@@ -2617,7 +2617,7 @@ function renderAgenda(){
         }
         if(_ago&&_st!=='confirme')pill.appendChild(el('div',{style:"font-size:9px;font-weight:700;color:"+pillTxt+";background:rgba(0,0,0,0.07);border-radius:4px;padding:1px 4px;margin-top:1px;"},_ago));
       }
-      if(_isDepasse){
+      if(_isDepasse||slot.taken.dateRelance){
         var _dejáRelance=slot.taken.dateRelance;
         var relBtn=el('button',{style:"margin-top:4px;font-family:inherit;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;border:1.5px solid "+(_dejáRelance?'oklch(0.62 0.12 155)':'oklch(0.62 0.18 266)')+";background:"+(_dejáRelance?'oklch(0.93 0.06 155)':'oklch(0.94 0.06 266)')+";color:"+(_dejáRelance?'oklch(0.38 0.12 155)':'oklch(0.38 0.18 266)')+";cursor:pointer;width:100%;",title:_dejáRelance?"Relance envoyée le "+_dejáRelance.split('-').reverse().join('/'):"Relancer par SMS ou mail"});
         relBtn.textContent=_dejáRelance?('✓ Relancé '+_dejáRelance.slice(8,10)+'/'+_dejáRelance.slice(5,7)):'📨 Relancer';
