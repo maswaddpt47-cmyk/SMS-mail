@@ -2346,6 +2346,17 @@ function renderAgenda(){
       days.push({dateStr:perm.exceptDate,perm:perm,date:d,exceptional:true});
     }
   });
+  /* orphelins : entrées history sans permanence correspondante dans la fenêtre agenda */
+  var _agMin=toLocalDateStr(new Date(today.getTime()-8*7*86400000));
+  var _agMax=toLocalDateStr(new Date(today.getTime()+13*7*86400000));
+  S.history.forEach(function(h){
+    if(!h.date||!h.commune)return;
+    if(h.date<_agMin||h.date>_agMax)return;
+    if(days.find(function(x){return x.dateStr===h.date&&x.perm.commune===h.commune;}))return;
+    var regP=S.permanences.find(function(p){return p.commune===h.commune&&!p.exceptDate;});
+    var synP=regP||{commune:h.commune,debut:'09:00',fin:'12:00',duree:30,jour:new Date(h.date+'T12:00:00').getDay()};
+    days.push({dateStr:h.date,perm:synP,date:new Date(h.date+'T12:00:00'),exceptional:true,orphan:true});
+  });
   days.sort(function(a,b){return a.dateStr<b.dateStr?-1:a.dateStr>b.dateStr?1:0;});
   /* supprimer les doublons éventuels */
   var seen={};days=days.filter(function(d){var k=d.dateStr+d.perm.commune;if(seen[k])return false;seen[k]=1;return true;});
