@@ -3830,13 +3830,11 @@ function renderOrientations(){
       /* find matching demarche by motif */
       var mLow=normO(o.motif);
       var matched=S.demarches.find(function(d){return normO(d.nom).indexOf(mLow)!==-1||mLow.indexOf(normO(d.nom))!==-1;});
-      /* find CMS : essayer d'abord o.cms (colonne Structure), puis o.commune */
-      var communeKey=normO(o.commune);
+      /* find CMS : matching sur o.cms (colonne Structure) uniquement */
       var cmsKey=normO(o.cms||'');
       var cmsMatch=S.cmsList.find(function(c){
         var cn=normO(c.nom);
-        if(cmsKey&&(cn===cmsKey||cmsKey.indexOf(cn)!==-1||cn.indexOf(cmsKey)!==-1))return true;
-        return cn===communeKey||communeKey.indexOf(cn)!==-1||cn.indexOf(communeKey)!==-1;
+        return cmsKey&&(cn===cmsKey||cmsKey.indexOf(cn)!==-1||cn.indexOf(cmsKey)!==-1);
       });
       /* find secteur : chercher dans secteurs par nom (correspondance avec commune bénéf ou commune affichée) */
       var secteurKeys=[normO(o.commune),normO(o.communeBenef||'')];
