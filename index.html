@@ -795,7 +795,11 @@ function getPermanence(commune,dateStr){
     var exc=S.permanences.find(function(p){return p.commune===commune&&p.exceptDate===dateStr;});
     if(exc)return exc;
   }
-  return S.permanences.find(function(p){return p.commune===commune&&!p.exceptDate;});
+  var reg=S.permanences.find(function(p){return p.commune===commune&&!p.exceptDate;});
+  if(!reg)return null;
+  /* vérifier que la date correspond bien au jour de la semaine de la permanence */
+  if(dateStr){var dow=new Date(dateStr+'T12:00:00').getDay();if(dow!==reg.jour)return null;}
+  return reg;
 }
 function isInMyAgenda(h){
   /* vrai si le RDV tombe sur une permanence configurée (régulière ou exceptionnelle) */
