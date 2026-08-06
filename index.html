@@ -1155,9 +1155,18 @@ function renderGenerate(){
   }
   row2.appendChild(dd);
   var hh=el('div');hh.appendChild(el('label',{style:LABEL},"Heure *"));
-  if(perm&&isPermDay(perm,S.date)){
+  /* pour le slot picker : utiliser la permanence régulière même si la date est hors jour habituel */
+  var permForSlots=perm||S.permanences.find(function(p){return p.commune===S.commune&&!p.exceptDate;});
+  if(permForSlots&&S.date&&S.commune){
     /* slot picker visuel */
-    var slots=getSlots(S.commune,S.date);
+    var slots=getSlots(S.commune,S.date)||[];
+    if(!slots.length&&permForSlots){
+      /* date hors permanence : générer les créneaux depuis la permanence régulière */
+      var _sh=parseInt(permForSlots.debut),_sm=parseInt(permForSlots.debut.split(':')[1]||0);
+      var _eh=parseInt(permForSlots.fin),_em=parseInt(permForSlots.fin.split(':')[1]||0);
+      var _s=_sh*60+_sm,_e=_eh*60+_em;
+      slots=[];for(var _t=_s;_t<=_e;_t+=permForSlots.duree){slots.push({heure:String(Math.floor(_t/60)).padStart(2,'0')+':'+String(_t%60).padStart(2,'0'),taken:null,freeAgain:false});}
+    }
     var slotGrid=el('div',{style:"display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;"});
     slots.forEach(function(slot){
       var isSel=S.heure===slot.heure;
