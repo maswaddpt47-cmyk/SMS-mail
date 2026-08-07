@@ -2004,22 +2004,24 @@ function renderStats(){
   /* ── Option 1 : activité par jour (style GitHub) ── */
   (function(){
     var now2=new Date();now2.setHours(0,0,0,0);
-    /* nombre de semaines selon la période */
-    var heatWeeks={'1m':5,'3m':13,'6m':26,'all':52}[S.statsPeriod]||52;
-    var heatLabel={'1m':'1 mois','3m':'3 mois','6m':'6 mois','all':'12 mois'}[S.statsPeriod]||'12 mois';
-    /* cutoff pour filtrer l'historique */
-    var heatCutoff=cutoff(S.statsPeriod);
-    /* compter RDV par date sur la période */
+    /* départ fixé au 1er juillet de l'année courante (ou précédente si on est avant juillet) */
+    var heatYear=now2.getMonth()>=6?now2.getFullYear():now2.getFullYear()-1;
+    var july1=new Date(heatYear,6,1);
+    var july1dow=(july1.getDay()+6)%7;
+    var startDate=new Date(july1);startDate.setDate(july1.getDate()-july1dow);
+    /* semaines du 1er juillet à aujourd'hui + 1 */
+    var heatWeeks=Math.max(1,Math.ceil((now2-startDate)/(7*86400000))+1);
+    var heatLabel='depuis juillet '+heatYear;
+    /* cutoff = 1er juillet */
+    var heatCutoff=startDate.toISOString().slice(0,10);
+    /* compter RDV par date */
     var counts={};var maxV=0;
     S.history.filter(function(h){return h.date&&(!S.statsCMS||h.commune===S.statsCMS);}).forEach(function(h){
-      if(heatCutoff&&h.date&&h.date<heatCutoff.toISOString().slice(0,10))return;
+      if(h.date<heatCutoff)return;
       counts[h.date]=(counts[h.date]||0)+1;
       if(counts[h.date]>maxV)maxV=counts[h.date];
     });
     if(!maxV)return;
-    /* lundi de la semaine de départ */
-    var startDate=new Date(now2);
-    startDate.setDate(now2.getDate()-((now2.getDay()+6)%7)-(heatWeeks-1)*7);
     var MOIS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
     var JOURS=['L','','M','','V','','D'];
     var ghCard=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:16px 18px;margin-top:16px;box-shadow:0 1px 3px oklch(0.5 0.05 264 / .06);"});
