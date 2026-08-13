@@ -1193,7 +1193,15 @@ function renderGenerate(){
   col.appendChild(ddem);
 
   var comm=el('div');comm.appendChild(el('label',{style:LABEL},"CMS *"));
-  var commSel=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;",onChange:function(e){setFieldSave({commune:e.target.value});}});
+  var commSel=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;",onChange:function(e){
+    var v=e.target.value,patch={commune:v};
+    if(v){
+      var vn=v.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+      var cmsMatch=S.cmsList.find(function(c){var cn=(c.nom||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();return cn===vn||vn.indexOf(cn)!==-1||cn.indexOf(vn)!==-1;});
+      if(cmsMatch)patch.selectedCMS=String(cmsMatch.id);
+    }
+    setFieldSave(patch);
+  }});
   commSel.appendChild(el('option',{value:"",selected:S.commune===""},"— Sélectionner un CMS —"));
   selectOpts(commSel,S.secteurs.map(function(x){return{value:x,label:x};}),S.commune);
   comm.appendChild(commSel);col.appendChild(comm);
