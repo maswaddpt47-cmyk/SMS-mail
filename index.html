@@ -2535,6 +2535,34 @@ function renderAgenda(){
     var printBtn=el('button',{class:'gx-press no-print',title:'Imprimer / PDF',style:"cursor:pointer;font-family:inherit;font-size:11px;padding:3px 8px;border-radius:7px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-muted);margin-left:4px;",onClick:(function(dCard){return function(){var wrap=document.getElementById('ag-print-target');if(!wrap){wrap=document.createElement('div');wrap.id='ag-print-target';document.getElementById('pane-agenda').appendChild(wrap);}wrap.innerHTML='';wrap.appendChild(dCard.cloneNode(true));document.body.classList.add('print-agenda');window.print();document.body.classList.remove('print-agenda');};})(card)},'🖨️');
     dayHead.appendChild(printBtn);
     card.appendChild(dayHead);
+    if(day.orphan&&slots.length===0){
+      /* journée orpheline sans permanence associée : aucun créneau calculable — lister
+         directement les RDV de l'historique qui causent cette carte, avec suppression réelle */
+      var orphanEntries=S.history.filter(function(h){return h.date===day.dateStr&&h.commune===day.perm.commune;});
+      if(orphanEntries.length){
+        var orphanWrap=el('div',{style:"display:flex;flex-direction:column;gap:6px;"});
+        orphanEntries.forEach(function(h){
+          var who=[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ')||'—';
+          var row=el('div',{style:"display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid oklch(0.88 0.05 25);background:oklch(0.97 0.02 25);border-radius:10px;font-size:12.5px;"});
+          row.appendChild(el('span',{style:"font-weight:700;"},h.heure||'—'));
+          row.appendChild(el('span',{style:"flex:1;color:var(--c-dim);"},who));
+          var delBtn=el('button',{class:'gx-press',title:'Supprimer ce RDV',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.82 0.1 25);background:oklch(0.95 0.05 25);color:oklch(0.5 0.16 25);font-size:11px;font-weight:700;padding:3px 8px;border-radius:7px;"},'🗑');
+          (function(entry,label){delBtn.addEventListener('click',function(e){
+            e.stopPropagation();
+            if(!confirm('Supprimer ce RDV ("'+label+'" — '+(entry.date?entry.date.split('-').reverse().join('/'):'')+') ? Cette action est irréversible.'))return;
+            var idx=S.history.indexOf(entry);
+            if(idx===-1)return;
+            S.history.splice(idx,1);lsSet('ess-history',S.history);
+            renderAgenda();showToast('✓ RDV supprimé');
+          });})(h,who);
+          row.appendChild(delBtn);
+          orphanWrap.appendChild(row);
+        });
+        card.appendChild(orphanWrap);
+      } else {
+        card.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);padding:8px 0;"},"Aucun créneau — journée sans permanence associée."));
+      }
+    }
     /* grille des créneaux — colonnes fixes pour éviter les trous */
     var sg=el('div',{style:"display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;"});
     slots.forEach(function(slot){
