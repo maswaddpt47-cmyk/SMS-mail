@@ -862,7 +862,7 @@ function hasConflict(date,heure,commune){
 function addPerm(){
   var np=S.np;
   if(!np.commune.trim())return;
-  if(S.permanences.find(function(p){return p.commune===np.commune;})){showToast('⚠️ Permanence déjà définie pour '+np.commune,'warn');return;}
+  if(S.permanences.find(function(p){return p.commune===np.commune&&!p.exceptDate;})){showToast('⚠️ Permanence déjà définie pour '+np.commune,'warn');return;}
   S.permanences=S.permanences.concat([{id:Date.now(),commune:np.commune.trim(),jour:parseInt(np.jour),debut:np.debut,fin:np.fin,duree:parseInt(np.duree)}]);
   S.np={commune:'',jour:4,debut:'09:00',fin:'15:00',duree:30};
   lsSet('ess-permanences',S.permanences);renderConfig();showToast('✓ Permanence ajoutée');
@@ -3138,7 +3138,11 @@ function renderConfig(){
       } else {
         var row=el('div',{style:"display:flex;align-items:center;gap:10px;flex-wrap:wrap;"});
         row.appendChild(el('span',{style:"font-weight:800;font-size:14px;"},p.commune));
-        row.appendChild(el('span',{style:"font-size:13px;color:var(--c-muted);"},JFULL[p.jour]));
+        if(p.exceptDate){
+          row.appendChild(el('span',{style:"font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);"},'📌 Ponctuelle — '+p.exceptDate.split('-').reverse().join('/')));
+        } else {
+          row.appendChild(el('span',{style:"font-size:13px;color:var(--c-muted);"},JFULL[p.jour]));
+        }
         row.appendChild(el('span',{style:"font-size:12px;color:var(--c-dim);"},p.debut+" → "+p.fin+" ("+p.duree+" min)"));
         var acts=el('span',{style:"margin-left:auto;display:flex;gap:6px;"});
         acts.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:oklch(0.4 0.1 264);font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;",onClick:function(){S.editPerm={id:p.id,commune:p.commune,jour:p.jour,debut:p.debut,fin:p.fin,duree:p.duree};renderConfig();}},"✏️"));
