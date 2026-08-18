@@ -2552,18 +2552,31 @@ function renderAgenda(){
     dayHead.appendChild(focusBtn);
     var printBtn=el('button',{class:'gx-press no-print',title:'Imprimer / PDF',style:"cursor:pointer;font-family:inherit;font-size:11px;padding:3px 8px;border-radius:7px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-muted);margin-left:4px;",onClick:(function(dCard){return function(){var wrap=document.getElementById('ag-print-target');if(!wrap){wrap=document.createElement('div');wrap.id='ag-print-target';document.getElementById('pane-agenda').appendChild(wrap);}wrap.innerHTML='';wrap.appendChild(dCard.cloneNode(true));document.body.classList.add('print-agenda');window.print();document.body.classList.remove('print-agenda');};})(card)},'🖨️');
     dayHead.appendChild(printBtn);
-    if(slots.length&&freeCount>0){
+    var hasIndispo=slots.some(function(s){return s.taken&&s.taken.msgType==='indispo';});
+    if(slots.length&&(freeCount>0||hasIndispo)){
       var makeBlockBtn=function(label,tooltip,filterFn){
-        return el('button',{class:'gx-press',title:tooltip,style:"cursor:pointer;font-family:inherit;font-size:11px;padding:3px 8px;border-radius:7px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-muted);margin-left:4px;",onClick:(function(dCom,dStr,dSlots){return function(){
+        var target0=slots.filter(filterFn);
+        var isRelease=target0.filter(function(s){return !s.taken;}).length===0&&target0.some(function(s){return s.taken&&s.taken.msgType==='indispo';});
+        var btnLabel=isRelease?label.replace('🚫','🔓'):label;
+        var btnTitle=isRelease?"Libérer les créneaux bloqués de cette période":tooltip;
+        return el('button',{class:'gx-press',title:btnTitle,style:"cursor:pointer;font-family:inherit;font-size:11px;padding:3px 8px;border-radius:7px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-muted);margin-left:4px;",onClick:(function(dCom,dStr,dSlots){return function(){
           var target=dSlots.filter(filterFn);
           var freeTarget=target.filter(function(s){return !s.taken;});
-          if(!freeTarget.length){showToast('Aucun créneau libre sur cette plage','warn');return;}
-          var motif=prompt('Motif (facultatif) — ex. "Salon des maires à Agen" :','');
-          if(motif===null)return;
-          if(!confirm('Bloquer '+freeTarget.length+' créneau(x) libre(s) ?'))return;
-          blockWholeDay(dCom,dStr,target,motif);
-          renderAgenda();showToast('✓ Créneaux marqués indisponibles');
-        };})(day.perm.commune,day.dateStr,slots)},label);
+          var blockedTarget=target.filter(function(s){return s.taken&&s.taken.msgType==='indispo';});
+          if(freeTarget.length){
+            var motif=prompt('Motif (facultatif) — ex. "Salon des maires à Agen" :','');
+            if(motif===null)return;
+            if(!confirm('Bloquer '+freeTarget.length+' créneau(x) libre(s) ?'))return;
+            blockWholeDay(dCom,dStr,target,motif);
+            renderAgenda();showToast('✓ Créneaux marqués indisponibles');
+          } else if(blockedTarget.length){
+            if(!confirm('Libérer les '+blockedTarget.length+' créneau(x) bloqué(s) de cette période ?'))return;
+            blockedTarget.forEach(function(s){releaseSlot(s.taken);});
+            renderAgenda();showToast('✓ Créneaux libérés');
+          } else {
+            showToast('Aucun créneau libre ou bloqué sur cette plage','warn');
+          }
+        };})(day.perm.commune,day.dateStr,slots)},btnLabel);
       };
       dayHead.appendChild(makeBlockBtn('🚫 Matin',"Marquer la matinée indisponible (pas un usager)",function(s){return s.heure<'13:00';}));
       dayHead.appendChild(makeBlockBtn('🚫 Après-midi',"Marquer l'après-midi indisponible (pas un usager)",function(s){return s.heure>='13:00';}));
