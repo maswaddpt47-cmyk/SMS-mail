@@ -2239,17 +2239,22 @@ function downloadICS(icsText,filename){
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
+/* seuls les RDV confirmés ont vocation à apparaître sur un calendrier externe —
+   les propositions en attente, lapins/excusés/pas de retour ne sont pas
+   exportés ; les créneaux bloqués (indispo) le restent, ce n'est pas un statut
+   de RDV mais du temps réellement indisponible. */
+function icsExportable(h){return h.statut==='confirme'||h.msgType==='indispo';}
 function exportICS(){
-  var rdvs=S.history.filter(function(h){return h.date&&h.heure;});
-  if(!rdvs.length){showToast('Aucun RDV à exporter','warn');return;}
+  var rdvs=S.history.filter(function(h){return h.date&&h.heure&&icsExportable(h);});
+  if(!rdvs.length){showToast('Aucun RDV confirmé à exporter','warn');return;}
   downloadICS(buildICS(rdvs),'permanences-ess.ics');
   showToast('✅ '+rdvs.length+' RDV exportés');
 }
 /* export ICS d'une seule journée (commune+date) — pratique pour tester un import
    Google Agenda sur un périmètre limité avant de faire un export complet */
 function exportICSDay(commune,dateStr){
-  var rdvs=S.history.filter(function(h){return h.date===dateStr&&h.commune===commune&&h.heure;});
-  if(!rdvs.length){showToast('Aucun RDV à exporter pour cette journée','warn');return;}
+  var rdvs=S.history.filter(function(h){return h.date===dateStr&&h.commune===commune&&h.heure&&icsExportable(h);});
+  if(!rdvs.length){showToast('Aucun RDV confirmé à exporter pour cette journée','warn');return;}
   var safeCommune=(commune||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-');
   downloadICS(buildICS(rdvs),'permanence-'+safeCommune+'-'+dateStr+'.ics');
   showToast('✅ '+rdvs.length+' RDV exportés pour cette journée');
