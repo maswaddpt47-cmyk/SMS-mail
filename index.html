@@ -2565,8 +2565,8 @@ function renderAgenda(){
           renderAgenda();showToast('✓ Créneaux marqués indisponibles');
         };})(day.perm.commune,day.dateStr,slots)},label);
       };
-      dayHead.appendChild(makeBlockBtn('🚫 Matin',"Marquer la matinée indisponible (pas un usager)",function(s){return s.heure<'12:00';}));
-      dayHead.appendChild(makeBlockBtn('🚫 Après-midi',"Marquer l'après-midi indisponible (pas un usager)",function(s){return s.heure>='12:00';}));
+      dayHead.appendChild(makeBlockBtn('🚫 Matin',"Marquer la matinée indisponible (pas un usager)",function(s){return s.heure<'13:00';}));
+      dayHead.appendChild(makeBlockBtn('🚫 Après-midi',"Marquer l'après-midi indisponible (pas un usager)",function(s){return s.heure>='13:00';}));
       dayHead.appendChild(makeBlockBtn('🚫 Journée',"Marquer toute la journée indisponible (pas un usager)",function(){return true;}));
     }
     card.appendChild(dayHead);
