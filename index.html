@@ -840,7 +840,8 @@ function getSlots(commune,dateStr){
     var propositions=matches.filter(function(x){return x.msgType==='proposition';});
     var sansAppels=matches.filter(function(x){return x.msgType==='sans_appel';});
     var relances=matches.filter(function(x){return x.msgType==='relance';});
-    var taken=confirmations[0]||propositions[0]||sansAppels[0]||relances[0]||null;
+    var indispos=matches.filter(function(x){return x.msgType==='indispo';});
+    var taken=confirmations[0]||propositions[0]||sansAppels[0]||relances[0]||indispos[0]||null;
     var freeAgain=taken&&(taken.statut==='pas_de_retour'||taken.statut==='lapin'||taken.statut==='excuse');
     var multiPropo=confirmations.length===0&&propositions.length>1;
     var replaced=matches.filter(function(x){return x!==taken&&(x.statut==='pas_de_retour'||x.statut==='lapin'||x.statut==='excuse');});
@@ -858,6 +859,22 @@ function getSlots(commune,dateStr){
 var FREE_AGAIN_STATUTS=['pas_de_retour','lapin','excuse'];
 function hasConflict(date,heure,commune){
   return S.history.some(function(h){return h.date===date&&h.heure===heure&&(h.commune===commune||!h.commune)&&FREE_AGAIN_STATUTS.indexOf(h.statut)===-1;});
+}
+/* bloque un créneau libre pour indisponibilité (pas un usager) */
+function blockSlot(commune,dateStr,heure,motif){
+  if(hasConflict(dateStr,heure,commune))return;
+  S.history.push({channel:'sms',msgType:'indispo',commune:commune,date:dateStr,heure:heure,nom:motif||'Indisponible',ts:new Date().toLocaleString('fr-FR')});
+  lsSet('ess-history',S.history);
+}
+/* libère un créneau bloqué */
+function releaseSlot(entry){
+  var idx=S.history.indexOf(entry);
+  if(idx===-1)return;
+  S.history.splice(idx,1);lsSet('ess-history',S.history);
+}
+/* bloque tous les créneaux encore libres d'une journée en une fois */
+function blockWholeDay(commune,dateStr,slots,motif){
+  slots.forEach(function(s){if(!s.taken)blockSlot(commune,dateStr,s.heure,motif);});
 }
 function addPerm(){
   var np=S.np;
@@ -971,7 +988,7 @@ function selectOpts(selectEl,opts,selected){
 function renderHeader(){
   document.getElementById('saveStatus').textContent=S.saveStatus;
   var ctr=document.getElementById('rdvCounter');
-  if(ctr){var n=S.history.filter(function(h){return h.date;}).length;ctr.textContent=n>0?'· '+n+' RDV':'';}
+  if(ctr){var n=S.history.filter(function(h){return h.date&&h.msgType!=='indispo';}).length;ctr.textContent=n>0?'· '+n+' RDV':'';}
 
   var bannerRoot=document.getElementById('gh-banner-root');
   if(!bannerRoot)return;
@@ -1518,6 +1535,7 @@ function renderHistoryList(){
   while(container.firstChild)container.removeChild(container.firstChild);
   var q=(S.historySearch||"").trim().toLowerCase();
   var filtered=S.history.filter(function(h){
+    if(h.msgType==='indispo')return false;
     if(S.historyFilter!=='all'&&h.channel!==S.historyFilter)return false;
     if(!q)return true;
     return ([h.civilite,h.prenom,h.nom,h.demarche,h.telephone,h.notes].join(" ").toLowerCase().indexOf(q)!==-1);
@@ -2293,7 +2311,7 @@ function renderAgenda(){
   var wrap=el('div',{style:"max-width:860px;margin:0 auto;padding:clamp(14px,3vw,32px) clamp(12px,4vw,40px);"});
   var head=el('div',{style:"display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:20px;flex-wrap:wrap;"});
   head.appendChild(el('h2',{style:"margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;"},"Agenda des permanences"));
-  head.appendChild(el('div',{style:"font-size:13px;color:var(--c-muted);font-weight:600;"},S.history.filter(function(h){return h.date;}).length+' RDV'));
+  head.appendChild(el('div',{style:"font-size:13px;color:var(--c-muted);font-weight:600;"},S.history.filter(function(h){return h.date&&h.msgType!=='indispo';}).length+' RDV'));
   wrap.appendChild(head);
 
   /* bannière dépassements */
@@ -2534,6 +2552,23 @@ function renderAgenda(){
     dayHead.appendChild(focusBtn);
     var printBtn=el('button',{class:'gx-press no-print',title:'Imprimer / PDF',style:"cursor:pointer;font-family:inherit;font-size:11px;padding:3px 8px;border-radius:7px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-muted);margin-left:4px;",onClick:(function(dCard){return function(){var wrap=document.getElementById('ag-print-target');if(!wrap){wrap=document.createElement('div');wrap.id='ag-print-target';document.getElementById('pane-agenda').appendChild(wrap);}wrap.innerHTML='';wrap.appendChild(dCard.cloneNode(true));document.body.classList.add('print-agenda');window.print();document.body.classList.remove('print-agenda');};})(card)},'🖨️');
     dayHead.appendChild(printBtn);
+    if(slots.length&&freeCount>0){
+      var makeBlockBtn=function(label,tooltip,filterFn){
+        return el('button',{class:'gx-press',title:tooltip,style:"cursor:pointer;font-family:inherit;font-size:11px;padding:3px 8px;border-radius:7px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-muted);margin-left:4px;",onClick:(function(dCom,dStr,dSlots){return function(){
+          var target=dSlots.filter(filterFn);
+          var freeTarget=target.filter(function(s){return !s.taken;});
+          if(!freeTarget.length){showToast('Aucun créneau libre sur cette plage','warn');return;}
+          var motif=prompt('Motif (facultatif) — ex. "Salon des maires à Agen" :','');
+          if(motif===null)return;
+          if(!confirm('Bloquer '+freeTarget.length+' créneau(x) libre(s) ?'))return;
+          blockWholeDay(dCom,dStr,target,motif);
+          renderAgenda();showToast('✓ Créneaux marqués indisponibles');
+        };})(day.perm.commune,day.dateStr,slots)},label);
+      };
+      dayHead.appendChild(makeBlockBtn('🚫 Matin',"Marquer la matinée indisponible (pas un usager)",function(s){return s.heure<'12:00';}));
+      dayHead.appendChild(makeBlockBtn('🚫 Après-midi',"Marquer l'après-midi indisponible (pas un usager)",function(s){return s.heure>='12:00';}));
+      dayHead.appendChild(makeBlockBtn('🚫 Journée',"Marquer toute la journée indisponible (pas un usager)",function(){return true;}));
+    }
     card.appendChild(dayHead);
     if(day.orphan&&slots.length===0){
       /* journée orpheline sans permanence associée : aucun créneau calculable — lister
@@ -2571,6 +2606,7 @@ function renderAgenda(){
       var _st=slot.taken&&slot.taken.statut;
       /* créneaux libres : pastille compacte + dropzone drag&drop */
       if(!slot.taken){
+        var freeWrap=el('div',{style:"display:flex;align-items:center;gap:2px;"});
         var freePill=el('button',{style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:600;padding:3px 7px;border-radius:6px;border:1px dashed oklch(0.78 0.06 155);background:oklch(0.97 0.02 155);color:oklch(0.62 0.08 155);",'data-nom':'','data-statut':'libre','data-depasse':'0',title:'🟢 Créneau libre — '+slot.heure,onClick:(function(s,d){return function(){S.modal='agenda-new';S.agendaNew={heure:s.heure,dateStr:d.dateStr,commune:d.perm.commune,civilite:'',prenom:'',nom:'',telephone:'',selectedCMS:S.selectedCMS||'',selectedDemarche:S.selectedDemarche||'',demarcheAutre:'',channel:S.channel||'sms'};renderModal();};})(slot,day)},slot.heure);
         (function(s,d){
           freePill.addEventListener('dragover',function(e){e.preventDefault();freePill.style.background='oklch(0.88 0.08 155)';freePill.style.borderStyle='solid';});
@@ -2586,12 +2622,25 @@ function renderAgenda(){
             if(ghToken()){var _n=Date.now();if(_n-_ghLastAutoPush>120000){_ghLastAutoPush=_n;githubPush(true);}}
           });
         })(slot,day);
-        sg.appendChild(freePill);
+        freeWrap.appendChild(freePill);
+        var blockBtn=el('button',{title:"Marquer ce créneau indisponible (pas un usager)",style:"cursor:pointer;font-family:inherit;font-size:9px;padding:3px 4px;border-radius:6px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-muted);"},'🚫');
+        (function(s,d){blockBtn.addEventListener('click',function(e){
+          e.stopPropagation();
+          var motif=prompt('Motif (facultatif) :','');
+          if(motif===null)return;
+          blockSlot(d.perm.commune,d.dateStr,s.heure,motif);
+          renderAgenda();showToast('✓ Créneau marqué indisponible');
+        });})(slot,day);
+        freeWrap.appendChild(blockBtn);
+        sg.appendChild(freeWrap);
         return;
       }
       /* couleurs selon statut : rose=en_attente, bleu=confirmé */
+      var isIndispo=slot.taken&&slot.taken.msgType==='indispo';
       var pillBorder,pillBg,pillTxt;
-      if(slot.multiPropo){
+      if(isIndispo){
+        pillBorder='oklch(0.6 0.02 264)';pillBg='oklch(0.9 0.01 264)';pillTxt='oklch(0.42 0.02 264)';
+      } else if(slot.multiPropo){
         pillBorder='oklch(0.62 0.2 25)';pillBg='oklch(0.92 0.08 25)';pillTxt='oklch(0.42 0.2 25)';
       } else if(_st==='confirme'){
         pillBorder='oklch(0.48 0.2 266)';pillBg='oklch(0.82 0.14 266)';pillTxt='oklch(0.2 0.15 266)';
@@ -2695,7 +2744,9 @@ function renderAgenda(){
       }
       (function(s,d){
         pill.addEventListener('click',function(){
-          if(s.taken){
+          if(s.taken&&s.taken.msgType==='indispo'){
+            if(confirm('Libérer ce créneau ('+s.heure+') ?')){releaseSlot(s.taken);renderAgenda();showToast('✓ Créneau libéré');}
+          } else if(s.taken){
             S.modal='agenda-rdv';S.agendaRdv={slot:s,day:d};renderModal();
           } else {
             S.modal='agenda-new';
