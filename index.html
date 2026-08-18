@@ -2212,9 +2212,7 @@ function icsUidFor(h){
   var hash=0;for(var i=0;i<key.length;i++){hash=((hash<<5)-hash+key.charCodeAt(i))|0;}
   return 'smsmail-'+Math.abs(hash)+'@ess';
 }
-function exportICS(){
-  var rdvs=S.history.filter(function(h){return h.date&&h.heure;});
-  if(!rdvs.length){showToast('Aucun RDV à exporter','warn');return;}
+function buildICS(rdvs){
   var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SMS-Mail//FR','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
   rdvs.forEach(function(h){
     var dtStart=icsDate(h.date,h.heure);
@@ -2234,10 +2232,27 @@ function exportICS(){
     lines.push('END:VEVENT');
   });
   lines.push('END:VCALENDAR');
-  var blob=new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'});
+  return lines.join('\r\n');
+}
+function downloadICS(icsText,filename){
+  var blob=new Blob([icsText],{type:'text/calendar;charset=utf-8'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='permanences-ess.ics';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+function exportICS(){
+  var rdvs=S.history.filter(function(h){return h.date&&h.heure;});
+  if(!rdvs.length){showToast('Aucun RDV à exporter','warn');return;}
+  downloadICS(buildICS(rdvs),'permanences-ess.ics');
   showToast('✅ '+rdvs.length+' RDV exportés');
+}
+/* export ICS d'une seule journée (commune+date) — pratique pour tester un import
+   Google Agenda sur un périmètre limité avant de faire un export complet */
+function exportICSDay(commune,dateStr){
+  var rdvs=S.history.filter(function(h){return h.date===dateStr&&h.commune===commune&&h.heure;});
+  if(!rdvs.length){showToast('Aucun RDV à exporter pour cette journée','warn');return;}
+  var safeCommune=(commune||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-');
+  downloadICS(buildICS(rdvs),'permanence-'+safeCommune+'-'+dateStr+'.ics');
+  showToast('✅ '+rdvs.length+' RDV exportés pour cette journée');
 }
 function importICSText(text){
   var events=text.split('BEGIN:VEVENT').slice(1);
@@ -2555,6 +2570,8 @@ function renderAgenda(){
     dayHead.appendChild(focusBtn);
     var printBtn=el('button',{class:'gx-press no-print',title:'Imprimer / PDF',style:"cursor:pointer;font-family:inherit;font-size:11px;padding:3px 8px;border-radius:7px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-muted);margin-left:4px;",onClick:(function(dCard){return function(){var wrap=document.getElementById('ag-print-target');if(!wrap){wrap=document.createElement('div');wrap.id='ag-print-target';document.getElementById('pane-agenda').appendChild(wrap);}wrap.innerHTML='';wrap.appendChild(dCard.cloneNode(true));document.body.classList.add('print-agenda');window.print();document.body.classList.remove('print-agenda');};})(card)},'🖨️');
     dayHead.appendChild(printBtn);
+    var icsDayBtn=el('button',{class:'gx-press no-print',title:"Exporter cette journée en .ics",style:"cursor:pointer;font-family:inherit;font-size:11px;padding:3px 8px;border-radius:7px;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-muted);margin-left:4px;",onClick:(function(dCom,dStr){return function(){exportICSDay(dCom,dStr);};})(day.perm.commune,day.dateStr)},'📅');
+    dayHead.appendChild(icsDayBtn);
     var hasIndispo=slots.some(function(s){return s.taken&&s.taken.msgType==='indispo';});
     if(slots.length&&(freeCount>0||hasIndispo)){
       var makeBlockBtn=function(label,tooltip,filterFn){
