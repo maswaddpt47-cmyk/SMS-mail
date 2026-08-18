@@ -2203,11 +2203,20 @@ function icsDate(dateStr,heureStr){
   /* dateStr=YYYY-MM-DD heureStr=HH:MM → 20260717T090000 (heure locale) */
   return (dateStr||'').replace(/-/g,'')+'T'+(heureStr||'00:00').replace(':','')+'00';
 }
+/* UID stable par RDV (indépendant de sa position dans S.history, qui change à
+   chaque ajout puisque addHistory() insère en tête) — mêmes champs d'identité
+   que la détection de doublon dans addHistory(), pour permettre à un logiciel
+   de calendrier respectant l'UID de reconnaître un RDV déjà importé. */
+function icsUidFor(h){
+  var key=(h.date||'')+'|'+(h.heure||'')+'|'+(h.commune||'')+'|'+(h.nom||'').toLowerCase()+'|'+(h.prenom||'').toLowerCase();
+  var hash=0;for(var i=0;i<key.length;i++){hash=((hash<<5)-hash+key.charCodeAt(i))|0;}
+  return 'smsmail-'+Math.abs(hash)+'@ess';
+}
 function exportICS(){
   var rdvs=S.history.filter(function(h){return h.date&&h.heure;});
   if(!rdvs.length){showToast('Aucun RDV à exporter','warn');return;}
   var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SMS-Mail//FR','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
-  rdvs.forEach(function(h,i){
+  rdvs.forEach(function(h){
     var dtStart=icsDate(h.date,h.heure);
     /* durée 30 min par défaut */
     var parts=h.heure.split(':');var endMin=(parseInt(parts[0])*60+parseInt(parts[1]||0)+30);
@@ -2216,7 +2225,7 @@ function exportICS(){
     var summary='RDV '+(h.commune||'')+(h.commune?' — ':'')+who;
     var desc=(h.demarche||'')+(h.telephone?'\\nTél : '+h.telephone:'')+(h.notes?'\\nNotes : '+h.notes:'');
     lines.push('BEGIN:VEVENT');
-    lines.push('UID:smsmail-'+i+'-'+dtStart+'@ess');
+    lines.push('UID:'+icsUidFor(h));
     lines.push('DTSTART;TZID=Europe/Paris:'+dtStart);
     lines.push('DTEND;TZID=Europe/Paris:'+dtEnd);
     lines.push('SUMMARY:'+summary);
