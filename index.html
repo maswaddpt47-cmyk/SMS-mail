@@ -2220,7 +2220,7 @@ function buildICS(rdvs){
     var parts=h.heure.split(':');var endMin=(parseInt(parts[0])*60+parseInt(parts[1]||0)+30);
     var dtEnd=icsDate(h.date,String(Math.floor(endMin/60)).padStart(2,'0')+':'+String(endMin%60).padStart(2,'0'));
     var who=[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ')||'Bénéficiaire';
-    var summary='RDV '+(h.commune||'')+(h.commune?' — ':'')+who;
+    var summary=who+(h.commune?' — RDV '+h.commune:' — RDV');
     var desc=(h.demarche||'')+(h.telephone?'\\nTél : '+h.telephone:'')+(h.notes?'\\nNotes : '+h.notes:'');
     lines.push('BEGIN:VEVENT');
     lines.push('UID:'+icsUidFor(h));
