@@ -823,8 +823,8 @@ function isPermDay(perm,dateStr){
   /* parse avec T12:00 pour éviter le décalage UTC */
   return new Date(dateStr+'T12:00:00').getDay()===perm.jour;
 }
-function getSlots(commune,dateStr){
-  var perm=getPermanence(commune,dateStr);if(!perm)return[];
+function getSlots(commune,dateStr,permOverride){
+  var perm=permOverride||getPermanence(commune,dateStr);if(!perm)return[];
   var sh=parseInt(perm.debut),sm=parseInt(perm.debut.split(':')[1]||0);
   var eh=parseInt(perm.fin),em=parseInt(perm.fin.split(':')[1]||0);
   var start=sh*60+sm,end=eh*60+em;
@@ -1175,15 +1175,9 @@ function renderGenerate(){
   /* pour le slot picker : utiliser la permanence régulière même si la date est hors jour habituel */
   var permForSlots=perm||S.permanences.find(function(p){return p.commune===S.commune&&!p.exceptDate;});
   if(permForSlots&&S.date&&S.commune){
-    /* slot picker visuel */
-    var slots=getSlots(S.commune,S.date)||[];
-    if(!slots.length&&permForSlots){
-      /* date hors permanence : générer les créneaux depuis la permanence régulière */
-      var _sh=parseInt(permForSlots.debut),_sm=parseInt(permForSlots.debut.split(':')[1]||0);
-      var _eh=parseInt(permForSlots.fin),_em=parseInt(permForSlots.fin.split(':')[1]||0);
-      var _s=_sh*60+_sm,_e=_eh*60+_em;
-      slots=[];for(var _t=_s;_t<=_e;_t+=permForSlots.duree){slots.push({heure:String(Math.floor(_t/60)).padStart(2,'0')+':'+String(_t%60).padStart(2,'0'),taken:null,freeAgain:false});}
-    }
+    /* slot picker visuel — permForSlots en override pour couvrir aussi les dates hors
+       jour habituel (le calcul reste basé sur l'historique réel : RDV et indispos) */
+    var slots=getSlots(S.commune,S.date,permForSlots)||[];
     var slotGrid=el('div',{style:"display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;"});
     slots.forEach(function(slot){
       var isSel=S.heure===slot.heure;
