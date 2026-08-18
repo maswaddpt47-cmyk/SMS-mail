@@ -2212,6 +2212,14 @@ function icsUidFor(h){
   var hash=0;for(var i=0;i<key.length;i++){hash=((hash<<5)-hash+key.charCodeAt(i))|0;}
   return 'smsmail-'+Math.abs(hash)+'@ess';
 }
+/* couleur par CMS (ou par date si la commune manque) — propriété COLOR (RFC 7986),
+   non garantie respectée par tous les logiciels de calendrier à l'import */
+var ICS_COLOR_PALETTE=['red','blue','green','orange','purple','brown','teal','magenta','olive','navy'];
+function icsColorFor(h){
+  var key=h.commune||h.date||'';
+  var hash=0;for(var i=0;i<key.length;i++){hash=((hash<<5)-hash+key.charCodeAt(i))|0;}
+  return ICS_COLOR_PALETTE[Math.abs(hash)%ICS_COLOR_PALETTE.length];
+}
 function buildICS(rdvs){
   var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SMS-Mail//FR','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
   rdvs.forEach(function(h){
@@ -2227,6 +2235,7 @@ function buildICS(rdvs){
     lines.push('DTSTART;TZID=Europe/Paris:'+dtStart);
     lines.push('DTEND;TZID=Europe/Paris:'+dtEnd);
     lines.push('SUMMARY:'+summary);
+    lines.push('COLOR:'+icsColorFor(h));
     if(desc)lines.push('DESCRIPTION:'+desc);
     if(h.commune)lines.push('LOCATION:'+h.commune);
     lines.push('END:VEVENT');
