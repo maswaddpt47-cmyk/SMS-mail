@@ -19,14 +19,18 @@ function extractFunctions(src) {
     const name = m[1];
     const braceStart = src.indexOf('{', m.index);
     if (braceStart === -1) continue;
-    let depth = 0, i = braceStart, inStr = null;
+    let depth = 0, i = braceStart, inStr = null, inLineComment = false, inBlockComment = false;
     for (; i < src.length; i++) {
-      const c = src[i];
+      const c = src[i], c2 = src[i + 1];
+      if (inLineComment) { if (c === '\n') inLineComment = false; continue; }
+      if (inBlockComment) { if (c === '*' && c2 === '/') { inBlockComment = false; i++; } continue; }
       if (inStr) {
         if (c === '\\') { i++; continue; }
         if (c === inStr) inStr = null;
         continue;
       }
+      if (c === '/' && c2 === '/') { inLineComment = true; i++; continue; }
+      if (c === '/' && c2 === '*') { inBlockComment = true; i++; continue; }
       if (c === '"' || c === "'" || c === '`') { inStr = c; continue; }
       if (c === '{') depth++;
       else if (c === '}') { depth--; if (depth === 0) { i++; break; } }
