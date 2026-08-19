@@ -1621,7 +1621,7 @@ function renderStats(){
     wrap.appendChild(cmsRow);
   }
 
-  var hist=S.history.filter(function(h){return inPeriod(h)&&(!S.statsCMS||h.commune===S.statsCMS);});
+  var hist=S.history.filter(function(h){return h.msgType!=='indispo'&&inPeriod(h)&&(!S.statsCMS||h.commune===S.statsCMS);});
 
   /* ── Tableau de bord KPI ── */
   (function(){
@@ -1631,9 +1631,10 @@ function renderStats(){
     function toDateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
     var weekStartStr=toDateStr(weekStart);var weekEndStr=toDateStr(weekEnd);
     var monthStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-    var countToday=S.history.filter(function(h){return h.date&&h.date===todayStr;}).length;
-    var countWeek=S.history.filter(function(h){return h.date&&h.date>=weekStartStr&&h.date<=weekEndStr;}).length;
-    var countMonth=S.history.filter(function(h){return h.date&&h.date.substring(0,7)===monthStr;}).length;
+    function isCountedRdv(h){return h.statut==='confirme'||h.statut==='realise';}
+    var countToday=S.history.filter(function(h){return h.date&&h.date===todayStr&&isCountedRdv(h);}).length;
+    var countWeek=S.history.filter(function(h){return h.date&&h.date>=weekStartStr&&h.date<=weekEndStr&&isCountedRdv(h);}).length;
+    var countMonth=S.history.filter(function(h){return h.date&&h.date.substring(0,7)===monthStr&&isCountedRdv(h);}).length;
     /* taux d'occupation sur 30 jours */
     var occStr='—';
     if(S.permanences&&S.permanences.length){
@@ -1659,11 +1660,16 @@ function renderStats(){
     var grid=el('div',{style:"display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"});
     var realiseN=S.history.filter(function(h){return h.statut==='realise';}).length;
     var lapinN=S.history.filter(function(h){return h.statut==='lapin';}).length;
-    var concretN=S.history.filter(function(h){return h.date&&h.date<=todayStr;}).length;
+    var concretN=S.history.filter(function(h){return h.date&&h.date<=todayStr&&h.msgType!=='indispo';}).length;
     var concretStr=concretN>0?Math.round(realiseN/concretN*100)+'%':'—';
     var lapinStr=concretN>0?Math.round(lapinN/concretN*100)+'%':'—';
-    [[countToday,"RDV aujourd'hui",null,null],[countWeek,"RDV cette semaine",null,null],[countMonth,"RDV ce mois",null,null],[occStr,"Taux d'occupation (30j)",null,"Créneaux pris / créneaux totaux sur les 30 prochains jours. Indique la charge à venir dans votre agenda."],[concretStr,"Taux de concrétisation",'oklch(0.38 0.14 155)',"% de RDV passés marqués Réalisé. Calculé uniquement sur les RDV dont la date est déjà passée."],[lapinStr,"Taux de lapin 🐇",'oklch(0.45 0.18 45)',"% de RDV passés où l'usager ne s'est pas présenté (statut Lapin). Calculé sur les RDV dont la date est déjà passée."]].forEach(function(kpi){
-      var tile=el('div',{style:kpiStyle});
+    function openLapinList(){
+      S._statListCtx={title:'🐇 Lapin — usagers ne s\'étant pas présentés',items:S.history.filter(function(h){return h.statut==='lapin';}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'');})};
+      S.modal='stat-list';renderModal();
+    }
+    [[countToday,"RDV aujourd'hui",null,null,null],[countWeek,"RDV cette semaine",null,null,null],[countMonth,"RDV ce mois",null,null,null],[occStr,"Taux d'occupation (30j)",null,"Créneaux pris / créneaux totaux sur les 30 prochains jours. Indique la charge à venir dans votre agenda.",null],[concretStr,"Taux de concrétisation",'oklch(0.38 0.14 155)',"% de RDV passés marqués Réalisé. Calculé uniquement sur les RDV dont la date est déjà passée.",null],[lapinStr,"Taux de lapin 🐇",'oklch(0.45 0.18 45)',"% de RDV passés où l'usager ne s'est pas présenté (statut Lapin). Calculé sur les RDV dont la date est déjà passée.",openLapinList]].forEach(function(kpi){
+      var tile=el('div',{style:kpiStyle+(kpi[4]?'cursor:pointer;':'')});
+      if(kpi[4])tile.addEventListener('click',kpi[4]);
       tile.appendChild(el('div',{style:kpiNumStyle.replace('oklch(0.45 0.18 266)',kpi[2]||'oklch(0.45 0.18 266)')},String(kpi[0])));
       var lblRow=el('div',{style:"display:flex;align-items:center;justify-content:center;gap:4px;"});
       lblRow.appendChild(el('span',{style:kpiLblStyle},kpi[1]));
@@ -1683,8 +1689,13 @@ function renderStats(){
     ];
     var statGrid=el('div',{style:"display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px;"});
     statuts.forEach(function(s){
-      var n=S.history.filter(function(h){return (h.statut||'en_attente')===s.k;}).length;
-      var tile=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:12px;padding:10px 6px;text-align:center;"});
+      var entries=S.history.filter(function(h){return h.msgType!=='indispo'&&(h.statut||'en_attente')===s.k;});
+      var n=entries.length;
+      var tile=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:12px;padding:10px 6px;text-align:center;"+(s.k==='lapin'?'cursor:pointer;':'')});
+      if(s.k==='lapin')tile.addEventListener('click',function(){
+        S._statListCtx={title:'🐇 Lapin — usagers ne s\'étant pas présentés',items:entries.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');})};
+        S.modal='stat-list';renderModal();
+      });
       tile.appendChild(el('div',{style:"font-size:16px;"},s.icon));
       tile.appendChild(el('div',{style:"font-size:22px;font-weight:900;color:"+s.col+";line-height:1.2;"},String(n)));
       tile.appendChild(el('div',{style:"font-size:10px;font-weight:700;color:var(--c-muted);letter-spacing:.03em;margin-top:2px;"},s.lbl));
@@ -4045,6 +4056,24 @@ function renderModal(){
     });
     box.appendChild(ovList);
     box.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;margin-top:14px;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:12px;width:100%;",onClick:closeModal},'Compris'));
+  }
+  else if(S.modal==='stat-list'){
+    var slCtx=S._statListCtx||{title:'',items:[]};
+    box.appendChild(header(slCtx.title));
+    box.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:12px;"},slCtx.items.length+' usager(s)'));
+    var slList=el('div',{style:"display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;"});
+    if(!slCtx.items.length)slList.appendChild(el('div',{style:"color:var(--c-muted);font-size:13px;"},'Aucun élément.'));
+    slCtx.items.forEach(function(h){
+      var row=el('div',{style:"background:var(--c-hover);border:1px solid var(--c-border);border-radius:10px;padding:10px 12px;"});
+      var name=[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ')||'—';
+      var dateRdv=(h.date||'').split('-').reverse().join('/');
+      row.appendChild(el('div',{style:"font-weight:800;font-size:13px;color:var(--c-text);"},name));
+      row.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);margin-top:2px;"},[h.commune,dateRdv&&('le '+dateRdv),h.heure].filter(Boolean).join(' · ')));
+      if(h.telephone)row.appendChild(el('div',{style:"font-size:11px;color:var(--c-dim);margin-top:2px;"},'📞 '+h.telephone));
+      slList.appendChild(row);
+    });
+    box.appendChild(slList);
+    box.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;margin-top:14px;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:12px;width:100%;",onClick:closeModal},'Fermer'));
   }
   else if(S.modal==='data'){
     box.appendChild(header('💾 Gestion des données'));
