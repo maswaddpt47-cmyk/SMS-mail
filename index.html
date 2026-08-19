@@ -2308,7 +2308,8 @@ function buildICS(rdvs){
     if(desc)lines.push('DESCRIPTION:'+desc);
     if(h.commune){
       var cmsEntry=S.cmsList.find(function(c){return String(c.id)===String(h.selectedCMS);});
-      var loc=h.commune+(cmsEntry&&cmsEntry.adresse?', '+cmsEntry.adresse:'');
+      /* l'adresse du CMS mentionne déjà la commune (ex: "Centre Médico-Social de Fumel - ...") — ne pas la répéter */
+      var loc=(cmsEntry&&cmsEntry.adresse)?cmsEntry.adresse:h.commune;
       lines.push('LOCATION:'+icsEscapeText(loc));
     }
     lines.push('END:VEVENT');
