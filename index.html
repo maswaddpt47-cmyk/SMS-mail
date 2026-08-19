@@ -344,7 +344,7 @@ var S={
   selectedCMS:"", selectedDemarche:"", commune:"",
   civilite:"", prenom:"", nom:"", telephone:"", date:"", heure:"", demarcheAutre:"", dateDemande:new Date().toISOString().slice(0,10),
   generatedBody:"", generatedSubject:"",
-  activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all", historySearch:"", historyGrouped:false,
+  activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all", historySearch:"", historyGrouped:false, historyDateFrom:"", historyDateTo:"",
   statsCMS:"", calendarType:"google",
   cmsList:[], demarches:[], secteurs:[], templates:{}, customTemplates:[], customVars:[], hiddenBuiltinKeys:[], history:[], mandats:[], favDemarches:[], permanences:[], collapsedThemes:[], orientations:[], orientSearch:"", orientFilter:"all", orientAddOpen:false, orientNew:null,
   editPerm:null, np:{commune:'',jour:4,debut:'09:00',fin:'15:00',duree:30}, agendaRdv:null, _ghNewerBackup:null,
@@ -997,6 +997,15 @@ var BTNDEL="cursor:pointer;font-family:inherit;border:none;background:oklch(0.96
 function chanBadgeStyle(ch){return badge(ch==="sms"?'oklch(0.93 0.05 264)':'oklch(0.93 0.05 300)',ch==="sms"?'oklch(0.45 0.15 266)':'oklch(0.45 0.15 300)');}
 function typeBadgeStyle(t){return badge(t==="proposition"?'oklch(0.95 0.05 85)':t==="confirmation"?'oklch(0.94 0.05 155)':'oklch(0.93 0.04 264)',t==="proposition"?'oklch(0.48 0.1 70)':t==="confirmation"?'oklch(0.42 0.11 155)':'oklch(0.45 0.06 264)');}
 var TLABEL={proposition:"Proposition",confirmation:"Confirmation",sans_appel:"Sans appel"};
+var STATUT_META={
+  confirme:{icon:'✓',lbl:'Confirmé',bg:'oklch(0.93 0.05 266)',fg:'oklch(0.42 0.16 266)'},
+  en_attente:{icon:'⏳',lbl:'En attente',bg:'oklch(0.95 0.04 350)',fg:'oklch(0.48 0.16 350)'},
+  realise:{icon:'✅',lbl:'Réalisé',bg:'oklch(0.93 0.06 155)',fg:'oklch(0.36 0.13 155)'},
+  excuse:{icon:'🙏',lbl:'Excusé',bg:'oklch(0.94 0.05 85)',fg:'oklch(0.42 0.13 85)'},
+  lapin:{icon:'🐇',lbl:'Lapin',bg:'oklch(0.93 0.06 45)',fg:'oklch(0.42 0.17 45)'},
+  pas_de_retour:{icon:'📵',lbl:'Pas de retour',bg:'oklch(0.92 0.02 266)',fg:'oklch(0.4 0.06 266)'}
+};
+function statutBadgeStyle(statut){var m=STATUT_META[statut];return m?badge(m.bg,m.fg):'';}
 
 function selectOpts(selectEl,opts,selected){
   opts.forEach(function(o){selectEl.appendChild(el('option',{value:o.value,selected:String(o.value)===String(selected)},o.label));});
@@ -1519,6 +1528,7 @@ function renderHistoryCard(h,realIdx,container){
   var meta=el('div',{style:"display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;"});
   meta.appendChild(el('span',{style:chanBadgeStyle(h.channel)},h.channel==="sms"?"💬 SMS":"✉️ Mail"));
   meta.appendChild(el('span',{style:typeBadgeStyle(h.msgType)},TLABEL[h.msgType]||h.msgType));
+  if(h.statut&&STATUT_META[h.statut])meta.appendChild(el('span',{style:statutBadgeStyle(h.statut)},STATUT_META[h.statut].icon+' '+STATUT_META[h.statut].lbl));
   var ago=timeAgo(h.ts);
   meta.appendChild(el('span',{style:"font-size:11.5px;color:var(--c-subtle);"},h.ts+(ago?' · '+ago:'')));
   var actWrap=el('span',{style:"margin-left:auto;display:flex;gap:6px;"});
@@ -1573,6 +1583,8 @@ function renderHistoryList(){
   var filtered=S.history.filter(function(h){
     if(h.msgType==='indispo')return false;
     if(S.historyFilter!=='all'&&h.channel!==S.historyFilter)return false;
+    if(S.historyDateFrom&&(!h.date||h.date<S.historyDateFrom))return false;
+    if(S.historyDateTo&&(!h.date||h.date>S.historyDateTo))return false;
     if(!q)return true;
     return ([h.civilite,h.prenom,h.nom,h.demarche,h.telephone,h.notes].join(" ").toLowerCase().indexOf(q)!==-1);
   });
@@ -2932,6 +2944,21 @@ headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-fa
   searchRow.appendChild(el('span',{style:"position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;"},"🔍"));
   searchRow.appendChild(searchIn);
   wrap.appendChild(searchRow);
+  var dateRow=el('div',{style:"display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;"});
+  dateRow.appendChild(el('span',{style:"font-size:12px;font-weight:700;color:var(--c-dim);"},"📅 RDV entre"));
+  var dateFromIn=el('input',{class:'gx-in',type:"date",style:"font-family:inherit;font-size:12.5px;padding:6px 9px;border:1.5px solid var(--c-border-in);border-radius:9px;background:var(--c-card);color:inherit;"});
+  dateFromIn.value=S.historyDateFrom||"";
+  dateFromIn.addEventListener('change',function(e){S.historyDateFrom=e.target.value;renderHistoryList();});
+  dateRow.appendChild(dateFromIn);
+  dateRow.appendChild(el('span',{style:"font-size:12px;color:var(--c-muted);"},"et"));
+  var dateToIn=el('input',{class:'gx-in',type:"date",style:"font-family:inherit;font-size:12.5px;padding:6px 9px;border:1.5px solid var(--c-border-in);border-radius:9px;background:var(--c-card);color:inherit;"});
+  dateToIn.value=S.historyDateTo||"";
+  dateToIn.addEventListener('change',function(e){S.historyDateTo=e.target.value;renderHistoryList();});
+  dateRow.appendChild(dateToIn);
+  if(S.historyDateFrom||S.historyDateTo){
+    dateRow.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:9px;",onClick:function(){S.historyDateFrom="";S.historyDateTo="";renderHistory();}},"✕ Réinitialiser"));
+  }
+  wrap.appendChild(dateRow);
   var filt=el('div',{style:"display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;"});
   [["all","Tous"],["sms","💬 SMS"],["mail","✉️ Mail"]].forEach(function(f){
     filt.appendChild(el('button',{class:'gx-press',style:pillStyle(S.historyFilter===f[0]),onClick:function(){S.historyFilter=f[0];renderHistoryList();this.parentNode.querySelectorAll('button').forEach(function(b,i){b.style.cssText=pillStyle([["all","Tous"],["sms","💬 SMS"],["mail","✉️ Mail"]][i][0]===S.historyFilter);});}},(f[1])));
