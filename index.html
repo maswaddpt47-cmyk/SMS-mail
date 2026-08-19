@@ -1663,8 +1663,22 @@ function renderStats(){
     var concretN=S.history.filter(function(h){return h.date&&h.date<=todayStr&&h.msgType!=='indispo';}).length;
     var concretStr=concretN>0?Math.round(realiseN/concretN*100)+'%':'—';
     var lapinStr=concretN>0?Math.round(lapinN/concretN*100)+'%':'—';
+    function groupByUsager(entries){
+      var groups={};
+      entries.forEach(function(h){
+        var key=((h.nom||'')+'|'+(h.prenom||'')).toLowerCase();
+        if(!groups[key])groups[key]={civilite:h.civilite,prenom:h.prenom,nom:h.nom,commune:h.commune,telephone:h.telephone,heure:h.heure,date:h.date,_count:0,_entries:[]};
+        groups[key]._count++;
+        groups[key]._entries.push(h);
+        if((h.date||'')>(groups[key].date||'')){groups[key].commune=h.commune;groups[key].telephone=h.telephone;groups[key].heure=h.heure;groups[key].date=h.date;}
+      });
+      return Object.keys(groups).map(function(k){
+        groups[k]._entries.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+        return groups[k];
+      }).sort(function(a,b){return b._count-a._count||(b.date||'').localeCompare(a.date||'');});
+    }
     function openLapinList(){
-      S._statListCtx={title:'🐇 Lapin — usagers ne s\'étant pas présentés',items:S.history.filter(function(h){return h.statut==='lapin';}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'');})};
+      S._statListCtx={title:'🐇 Lapin — usagers ne s\'étant pas présentés',items:groupByUsager(S.history.filter(function(h){return h.statut==='lapin';}))};
       S.modal='stat-list';renderModal();
     }
     [[countToday,"RDV aujourd'hui",null,null,null],[countWeek,"RDV cette semaine",null,null,null],[countMonth,"RDV ce mois",null,null,null],[occStr,"Taux d'occupation (30j)",null,"Créneaux pris / créneaux totaux sur les 30 prochains jours. Indique la charge à venir dans votre agenda.",null],[concretStr,"Taux de concrétisation",'oklch(0.38 0.14 155)',"% de RDV passés marqués Réalisé. Calculé uniquement sur les RDV dont la date est déjà passée.",null],[lapinStr,"Taux de lapin 🐇",'oklch(0.45 0.18 45)',"% de RDV passés où l'usager ne s'est pas présenté (statut Lapin). Calculé sur les RDV dont la date est déjà passée.",openLapinList]].forEach(function(kpi){
@@ -1693,7 +1707,7 @@ function renderStats(){
       var n=entries.length;
       var tile=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:12px;padding:10px 6px;text-align:center;"+(s.k==='lapin'?'cursor:pointer;':'')});
       if(s.k==='lapin')tile.addEventListener('click',function(){
-        S._statListCtx={title:'🐇 Lapin — usagers ne s\'étant pas présentés',items:entries.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');})};
+        S._statListCtx={title:'🐇 Lapin — usagers ne s\'étant pas présentés',items:groupByUsager(entries)};
         S.modal='stat-list';renderModal();
       });
       tile.appendChild(el('div',{style:"font-size:16px;"},s.icon));
@@ -4064,12 +4078,32 @@ function renderModal(){
     var slList=el('div',{style:"display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;"});
     if(!slCtx.items.length)slList.appendChild(el('div',{style:"color:var(--c-muted);font-size:13px;"},'Aucun élément.'));
     slCtx.items.forEach(function(h){
-      var row=el('div',{style:"background:var(--c-hover);border:1px solid var(--c-border);border-radius:10px;padding:10px 12px;"});
+      var hasDetail=h._entries&&h._entries.length>1;
+      var row=el('div',{style:"background:var(--c-hover);border:1px solid var(--c-border);border-radius:10px;padding:10px 12px;"+(hasDetail?'cursor:pointer;':'')});
       var name=[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ')||'—';
       var dateRdv=(h.date||'').split('-').reverse().join('/');
-      row.appendChild(el('div',{style:"font-weight:800;font-size:13px;color:var(--c-text);"},name));
-      row.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);margin-top:2px;"},[h.commune,dateRdv&&('le '+dateRdv),h.heure].filter(Boolean).join(' · ')));
+      var nameRow=el('div',{style:"display:flex;align-items:center;gap:7px;"});
+      nameRow.appendChild(el('div',{style:"font-weight:800;font-size:13px;color:var(--c-text);"},name));
+      if(h._count>1)nameRow.appendChild(el('span',{style:"font-size:10.5px;font-weight:800;background:oklch(0.45 0.18 45);color:#fff;padding:2px 8px;border-radius:20px;flex-shrink:0;"},'×'+h._count));
+      if(hasDetail)nameRow.appendChild(el('span',{class:'sl-chevron',style:"margin-left:auto;font-size:10px;color:var(--c-muted);transition:transform .15s;"},'▾'));
+      row.appendChild(nameRow);
+      row.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);margin-top:2px;"},[h.commune,dateRdv&&((h._count>1?'dernier le ':'le ')+dateRdv),h.heure].filter(Boolean).join(' · ')));
       if(h.telephone)row.appendChild(el('div',{style:"font-size:11px;color:var(--c-dim);margin-top:2px;"},'📞 '+h.telephone));
+      if(hasDetail){
+        var detail=el('div',{style:"margin-top:8px;padding-top:8px;border-top:1px solid var(--c-border);flex-direction:column;gap:5px;"});
+        detail.style.display='none';
+        h._entries.forEach(function(e){
+          var d=(e.date||'').split('-').reverse().join('/');
+          detail.appendChild(el('div',{style:"font-size:11px;color:var(--c-dim);"},[d,e.commune,e.heure].filter(Boolean).join(' · ')));
+        });
+        row.appendChild(detail);
+        row.addEventListener('click',function(){
+          var open=detail.style.display!=='none';
+          detail.style.display=open?'none':'flex';
+          var chev=nameRow.querySelector('.sl-chevron');
+          if(chev)chev.style.transform=open?'':'rotate(180deg)';
+        });
+      }
       slList.appendChild(row);
     });
     box.appendChild(slList);
