@@ -357,7 +357,7 @@ var S={
   editCms:null, editSect:null, editVar:null, editTpl:null,
   exportText:"", importText:"", importError:"",
   copied:{}, toast:null,
-  relanceDelai:3, lapinAlertEnabled:true,
+  relanceDelai:3, includeLapinMention:true,
   mandatSource:"",
   mandatCivilite:"", mandatPrenom:"", mandatNom:"", mandatCommune:"", mandatNum:"",  helpMandatOpen:false,
 };
@@ -603,12 +603,17 @@ function buildCalLink(){
   return 'Google : '+googleUrl+'\nOutlook : '+outlookUrl;
 }
 function normTel(t){return (t||'').replace(/\D/g,'');}
-/* match nom + téléphone (pas nom seul) pour éviter les faux positifs sur homonymes */
-function hasLapinHistory(nom,telephone){
+/* vrai seulement si le RDV résolu le plus récent (nom + téléphone, pas nom seul) est un lapin —
+   un lapin honoré ensuite ne doit plus déclencher l'alerte */
+var LAPIN_RESOLVED_STATUTS=['realise','lapin','excuse','pas_de_retour'];
+function lastRdvIsLapin(nom,telephone){
   var v=(nom||'').trim().toLowerCase();
   var t=normTel(telephone);
   if(!v||!t)return false;
-  return S.history.some(function(h){return (h.nom||'').toLowerCase()===v&&normTel(h.telephone)===t&&h.statut==='lapin';});
+  var matches=S.history.filter(function(h){return (h.nom||'').toLowerCase()===v&&normTel(h.telephone)===t&&LAPIN_RESOLVED_STATUTS.indexOf(h.statut)!==-1;});
+  if(!matches.length)return false;
+  matches.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  return matches[0].statut==='lapin';
 }
 var LAPIN_MENTION="⚠️ Nous avons remarqué que vous ne vous étiez pas présenté(e) à votre dernier rendez-vous. Nous vous remercions par avance de bien vouloir nous prévenir en cas d'empêchement, afin que nous puissions proposer le créneau à un autre usager.";
 function compute(){
@@ -627,7 +632,7 @@ function compute(){
     body=fillTemplate(tpl,vars);
     if(S.channel==="mail")subject=fillTemplate(S.templates[sk[S.msgType]]||DEFAULT_TEMPLATES[sk[S.msgType]]||"",vars);
   }
-  if(S.lapinAlertEnabled&&S.msgType!=='lapin'&&hasLapinHistory(S.nom,S.telephone)){
+  if(S.includeLapinMention&&S.msgType!=='lapin'&&lastRdvIsLapin(S.nom,S.telephone)){
     body=/\n\nCordialement/.test(body)?body.replace(/\n\nCordialement/,"\n\n"+LAPIN_MENTION+"\n\nCordialement"):body+"\n\n"+LAPIN_MENTION;
   }
   return {body:body,subject:subject,dem:dem,cms:cms};
@@ -671,7 +676,8 @@ function handleGenerate(){
   renderGenerate();renderHistory();renderMandat();renderAgenda();
 }
 function onReset(){
-  Object.assign(S,{civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",demarcheAutre:"",selectedCMS:"",selectedDemarche:"",commune:"",dateDemande:new Date().toISOString().slice(0,10),genNotes:""});
+  Object.assign(S,{civilite:"",prenom:"",nom:"",telephone:"",date:"",heure:"",demarcheAutre:"",selectedCMS:"",selectedDemarche:"",commune:"",dateDemande:new Date().toISOString().slice(0,10),genNotes:"",includeLapinMention:true});
+  S._lastLapinDetected=false;
   regen();renderGenerate();
 }
 function addHistory(item){
@@ -1108,26 +1114,36 @@ function renderGenerate(){
   noms.appendChild(nomIn);
   var lapinHint=el('div',{style:"font-size:11px;color:oklch(0.52 0.18 45);font-weight:700;margin-top:3px;display:none;"});
   noms.appendChild(lapinHint);
+  var lapinChkRow=el('label',{style:"display:none;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;font-weight:600;color:oklch(0.45 0.18 45);cursor:pointer;"});
+  var lapinChk=el('input',{type:'checkbox'});
+  lapinChkRow.appendChild(lapinChk);
+  lapinChkRow.appendChild(document.createTextNode('Inclure la mention "absence au dernier RDV" dans le message'));
+  noms.appendChild(lapinChkRow);
+  lapinChk.addEventListener('change',function(){S.includeLapinMention=lapinChk.checked;regen();updatePreviewOnly();});
   function updateLapinHint(){
     var v=(nomIn.value||'').trim().toLowerCase();
-    if(v.length<2){lapinHint.style.display='none';lapinBadge.style.display='none';return;}
+    if(v.length<2){lapinHint.style.display='none';lapinBadge.style.display='none';lapinChkRow.style.display='none';S._lastLapinDetected=false;return;}
     var matches=S.history.filter(function(h){return (h.nom||'').toLowerCase()===v;});
     if(matches.length>0){
       var last=matches[0];
-      var tel=normTel(S.telephone);
-      var lapinMatches=tel?matches.filter(function(h){return h.statut==='lapin'&&normTel(h.telephone)===tel;}):[];
+      var isLapin=lastRdvIsLapin(nomIn.value,S.telephone);
       var lastInfo=[last.prenom,last.demarche,last.statut?({'en_attente':'⏳','confirme':'✓','realise':'✅','excuse':'🙏','lapin':'🐇','pas_de_retour':'📵'}[last.statut]||''):''].filter(Boolean).join(' · ');
-      lapinBadge.style.display=lapinMatches.length>0?'inline':'none';
-      if(lapinMatches.length>0){
+      lapinBadge.style.display=isLapin?'inline':'none';
+      if(isLapin){
+        if(!S._lastLapinDetected)S.includeLapinMention=true;
         lapinHint.style.color='oklch(0.45 0.18 45)';
-        lapinHint.textContent='🐇 A déjà posé un lapin ('+lapinMatches.length+'x) — '+lastInfo;
+        lapinHint.textContent='🐇 N\'a pas honoré son dernier RDV — '+lastInfo;
+        lapinChk.checked=S.includeLapinMention;
+        lapinChkRow.style.display='flex';
       } else {
         lapinHint.style.color='oklch(0.52 0.18 45)';
         lapinHint.textContent='⚠️ Déjà dans l\'historique ('+matches.length+'x) — '+lastInfo;
+        lapinChkRow.style.display='none';
       }
+      S._lastLapinDetected=isLapin;
       lapinHint.style.display='block';
     } else {
-      lapinHint.style.display='none';lapinBadge.style.display='none';
+      lapinHint.style.display='none';lapinBadge.style.display='none';lapinChkRow.style.display='none';S._lastLapinDetected=false;
     }
   }
   nomIn.addEventListener('input',updateLapinHint);
@@ -3330,22 +3346,6 @@ function renderConfig(){
     cardR.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);"},"Les modèles SMS et Mail de relance sont éditables dans l'onglet Modèles."));
     wrap.appendChild(cardR);
 
-    /* alerte lapin */
-    var cardL=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px 20px;margin-bottom:14px;"});
-    cardL.appendChild(el('div',{style:"font-weight:800;font-size:14px;margin-bottom:6px;"},"🐇 Alerte lapin"));
-    cardL.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:12px;line-height:1.5;"},"Quand un usager (nom + téléphone) a déjà posé un lapin, une mention le rappelant est ajoutée automatiquement dans le message généré."));
-    var lapinToggleRow=el('div',{style:"display:flex;align-items:center;gap:10px;"});
-    var lapinToggleBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid "+(S.lapinAlertEnabled?'oklch(0.5 0.16 266)':'var(--c-border)')+";background:"+(S.lapinAlertEnabled?'oklch(0.94 0.08 266)':'var(--c-card)')+";color:"+(S.lapinAlertEnabled?'oklch(0.4 0.16 266)':'var(--c-dim)')+";font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;"});
-    function refreshLapinToggle(){
-      lapinToggleBtn.textContent=S.lapinAlertEnabled?'✓ Activée':'Désactivée';
-      lapinToggleBtn.style.cssText="cursor:pointer;font-family:inherit;border:1px solid "+(S.lapinAlertEnabled?'oklch(0.5 0.16 266)':'var(--c-border)')+";background:"+(S.lapinAlertEnabled?'oklch(0.94 0.08 266)':'var(--c-card)')+";color:"+(S.lapinAlertEnabled?'oklch(0.4 0.16 266)':'var(--c-dim)')+";font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;";
-    }
-    lapinToggleBtn.addEventListener('click',function(){S.lapinAlertEnabled=!S.lapinAlertEnabled;lsSet('ess-lapin-alert',S.lapinAlertEnabled);refreshLapinToggle();regen();});
-    refreshLapinToggle();
-    lapinToggleRow.appendChild(lapinToggleBtn);
-    cardL.appendChild(lapinToggleRow);
-    wrap.appendChild(cardL);
-
     /* token GitHub */
     var card4=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px 20px;margin-bottom:14px;"});
     card4.appendChild(el('div',{style:"font-weight:800;font-size:14px;margin-bottom:6px;"},"☁️ Token GitHub"));
@@ -4597,7 +4597,6 @@ function init(){
   S.permanences=ls('ess-permanences',DEFAULT_PERMANENCES);
   S.calendarType=ls('ess-caltype','google');
   S.relanceDelai=ls('ess-relance-delai',3);
-  S.lapinAlertEnabled=ls('ess-lapin-alert',true);
   S.selectedCMS=last.selectedCMS||"";
   S.selectedDemarche=last.selectedDemarche||"";
   S.commune=last.commune||"";
