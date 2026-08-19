@@ -2320,6 +2320,7 @@ function buildICS(rdvs){
     lines.push('DTEND;TZID=Europe/Paris:'+dtEnd);
     lines.push('SUMMARY:'+summary);
     if(ICS_CANCEL_STATUTS.indexOf(h.statut)!==-1)lines.push('STATUS:CANCELLED');
+    else if(h.statut==='realise')lines.push('STATUS:CONFIRMED');
     lines.push('COLOR:'+icsColorFor(h));
     if(desc)lines.push('DESCRIPTION:'+desc);
     if(h.commune){
