@@ -1736,20 +1736,20 @@ function renderStats(){
     dashboard.appendChild(grid);
     /* ── Répartition par statut ── */
     var statuts=[
-      {k:'confirme',  lbl:'Confirmé',  icon:'✓',  col:'oklch(0.48 0.2 266)'},
-      {k:'en_attente',lbl:'En attente',icon:'⏳', col:'oklch(0.52 0.18 350)'},
-      {k:'realise',   lbl:'Réalisé',   icon:'✅', col:'oklch(0.38 0.14 155)'},
-      {k:'excuse',    lbl:'Excusé',    icon:'🙏', col:'oklch(0.45 0.14 85)'},
-      {k:'lapin',     lbl:'Lapin',     icon:'🐇', col:'oklch(0.45 0.18 45)'},
-      {k:'pas_de_retour',lbl:'Pas de retour',icon:'📵',col:'oklch(0.42 0.06 266)'}
+      {k:'confirme',  lbl:'Confirmé',  icon:'✓',  col:'oklch(0.48 0.2 266)',  titre:'✓ Confirmé'},
+      {k:'en_attente',lbl:'En attente',icon:'⏳', col:'oklch(0.52 0.18 350)', titre:'⏳ En attente'},
+      {k:'realise',   lbl:'Réalisé',   icon:'✅', col:'oklch(0.38 0.14 155)', titre:'✅ Réalisé'},
+      {k:'excuse',    lbl:'Excusé',    icon:'🙏', col:'oklch(0.45 0.14 85)',  titre:'🙏 Excusé'},
+      {k:'lapin',     lbl:'Lapin',     icon:'🐇', col:'oklch(0.45 0.18 45)',  titre:'🐇 Lapin — usagers ne s\'étant pas présentés'},
+      {k:'pas_de_retour',lbl:'Pas de retour',icon:'📵',col:'oklch(0.42 0.06 266)', titre:'📵 Pas de retour'}
     ];
     var statGrid=el('div',{style:"display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px;"});
     statuts.forEach(function(s){
       var entries=S.history.filter(function(h){return h.msgType!=='indispo'&&(h.statut||'en_attente')===s.k;});
       var n=entries.length;
-      var tile=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:12px;padding:10px 6px;text-align:center;"+(s.k==='lapin'?'cursor:pointer;':'')});
-      if(s.k==='lapin')tile.addEventListener('click',function(){
-        S._statListCtx={title:'🐇 Lapin — usagers ne s\'étant pas présentés',items:groupByUsager(entries)};
+      var tile=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:12px;padding:10px 6px;text-align:center;"+(n>0?'cursor:pointer;':'')});
+      if(n>0)tile.addEventListener('click',function(){
+        S._statListCtx={title:s.titre,items:groupByUsager(entries)};
         S.modal='stat-list';renderModal();
       });
       tile.appendChild(el('div',{style:"font-size:16px;"},s.icon));
