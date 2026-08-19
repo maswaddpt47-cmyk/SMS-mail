@@ -2287,6 +2287,8 @@ function icsColorFor(h){
   var hash=0;for(var i=0;i<key.length;i++){hash=((hash<<5)-hash+key.charCodeAt(i))|0;}
   return ICS_COLOR_PALETTE[Math.abs(hash)%ICS_COLOR_PALETTE.length];
 }
+/* échappe virgule/point-virgule/backslash pour une valeur de champ ICS (RFC 5545) */
+function icsEscapeText(s){return String(s).replace(/\\/g,'\\\\').replace(/,/g,'\\,').replace(/;/g,'\\;');}
 function buildICS(rdvs){
   var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SMS-Mail//FR','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
   rdvs.forEach(function(h){
@@ -2304,7 +2306,11 @@ function buildICS(rdvs){
     lines.push('SUMMARY:'+summary);
     lines.push('COLOR:'+icsColorFor(h));
     if(desc)lines.push('DESCRIPTION:'+desc);
-    if(h.commune)lines.push('LOCATION:'+h.commune);
+    if(h.commune){
+      var cmsEntry=S.cmsList.find(function(c){return String(c.id)===String(h.selectedCMS);});
+      var loc=h.commune+(cmsEntry&&cmsEntry.adresse?', '+cmsEntry.adresse:'');
+      lines.push('LOCATION:'+icsEscapeText(loc));
+    }
     lines.push('END:VEVENT');
   });
   lines.push('END:VCALENDAR');
