@@ -2926,22 +2926,6 @@ function renderHistory(){
 headBtns.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid oklch(0.88 0.05 25);background:var(--c-card);color:oklch(0.55 0.16 25);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:11px;",onClick:function(){if(S.history.length===0)return;if(confirm("Vider tout l'historique ? Cette action est irréversible."))clearHistory();}},"Vider"));
   head.appendChild(headBtns);
   wrap.appendChild(head);
-  if(S.history.length>0){
-    var h=S.history;
-    var smsN=h.filter(function(x){return x.channel==="sms";}).length;
-    var mailN=h.filter(function(x){return x.channel==="mail";}).length;
-    var demCnt={};h.forEach(function(x){if(x.demarche)demCnt[x.demarche]=(demCnt[x.demarche]||0)+1;});
-    var topDem=Object.keys(demCnt).sort(function(a,b){return demCnt[b]-demCnt[a];})[0]||"—";
-    var statRow=el('div',{style:"display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px;"});
-    [{label:"Messages",value:h.length,icon:"📊",col:"oklch(0.5 0.16 266)"},{label:"SMS",value:smsN,icon:"💬",col:"oklch(0.5 0.14 155)"},{label:"Mails",value:mailN,icon:"✉️",col:"oklch(0.5 0.13 264)"},{label:"Démarche principale",value:topDem,icon:"📋",col:"oklch(0.52 0.14 38)",small:true}].forEach(function(s){
-      var card=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:14px;padding:12px 15px;"});
-      card.appendChild(el('div',{style:"font-size:18px;margin-bottom:4px;"},s.icon));
-      card.appendChild(el('div',{style:(s.small?"font-size:13px;font-weight:700;":"font-size:20px;font-weight:800;")+"color:"+s.col+";line-height:1.3;"},String(s.value)));
-      card.appendChild(el('div',{style:"font-size:11px;color:var(--c-muted);margin-top:3px;font-weight:600;"},s.label));
-      statRow.appendChild(card);
-    });
-    wrap.appendChild(statRow);
-  }
   var searchRow=el('div',{style:"position:relative;margin-bottom:14px;"});
   var searchIn=el('input',{class:'gx-in',id:"hist-search-input",style:INPUT+"padding-left:36px;",placeholder:"Rechercher un nom…",value:S.historySearch});
   searchIn.addEventListener('input',function(e){S.historySearch=e.target.value;renderHistoryList();});
