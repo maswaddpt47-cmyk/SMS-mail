@@ -2304,6 +2304,7 @@ function buildICS(rdvs){
     lines.push('DTSTART;TZID=Europe/Paris:'+dtStart);
     lines.push('DTEND;TZID=Europe/Paris:'+dtEnd);
     lines.push('SUMMARY:'+summary);
+    if(ICS_CANCEL_STATUTS.indexOf(h.statut)!==-1)lines.push('STATUS:CANCELLED');
     lines.push('COLOR:'+icsColorFor(h));
     if(desc)lines.push('DESCRIPTION:'+desc);
     if(h.commune){
@@ -2322,12 +2323,16 @@ function downloadICS(icsText,filename){
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
-/* seuls les RDV confirmés (à venir) ou réalisés (passés) ont vocation à
-   apparaître sur un calendrier externe — les propositions en attente,
-   lapins/excusés/pas de retour ne sont pas exportés ; les créneaux bloqués
-   (indispo) le restent, ce n'est pas un statut de RDV mais du temps
-   réellement indisponible. */
-function icsExportable(h){return h.statut==='confirme'||h.statut==='realise'||h.msgType==='indispo';}
+/* statuts qui annulent un RDV auparavant confirmé — exportés en STATUS:CANCELLED
+   plutôt qu'omis, pour que la ré-importation dans Google Agenda retire l'événement
+   déjà présent (hypothèse non vérifiée : à confirmer par un test réel d'import) */
+var ICS_CANCEL_STATUTS=['excuse','lapin','pas_de_retour'];
+/* seuls les RDV confirmés (à venir), réalisés (passés) ou annulés après coup
+   (excusé/lapin/pas de retour, exportés en CANCELLED) ont vocation à apparaître
+   sur un calendrier externe — les propositions encore en attente ne sont pas
+   exportées ; les créneaux bloqués (indispo) le restent, ce n'est pas un statut
+   de RDV mais du temps réellement indisponible. */
+function icsExportable(h){return h.statut==='confirme'||h.statut==='realise'||h.msgType==='indispo'||ICS_CANCEL_STATUTS.indexOf(h.statut)!==-1;}
 function exportICS(){
   var rdvs=S.history.filter(function(h){return h.date&&h.heure&&icsExportable(h);});
   if(!rdvs.length){showToast('Aucun RDV confirmé à exporter','warn');return;}
