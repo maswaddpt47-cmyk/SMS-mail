@@ -602,6 +602,12 @@ function buildCalLink(){
   /* les deux */
   return 'Google : '+googleUrl+'\nOutlook : '+outlookUrl;
 }
+function hasLapinHistory(nom){
+  var v=(nom||'').trim().toLowerCase();
+  if(!v)return false;
+  return S.history.some(function(h){return (h.nom||'').toLowerCase()===v&&h.statut==='lapin';});
+}
+var LAPIN_MENTION="⚠️ Nous avons remarqué que vous ne vous étiez pas présenté(e) à votre dernier rendez-vous. Nous vous remercions par avance de bien vouloir nous prévenir en cas d'empêchement, afin que nous puissions proposer le créneau à un autre usager.";
 function compute(){
   var cms=S.cmsList.find(function(c){return String(c.id)===String(S.selectedCMS);});
   var dem=S.selectedDemarche==="__autre__"?{nom:S.demarcheAutre||"Autre",documents:[]}:S.demarches.find(function(d){return String(d.id)===String(S.selectedDemarche);});
@@ -617,6 +623,9 @@ function compute(){
     var tpl=S.templates[bodyKey]||DEFAULT_TEMPLATES[bodyKey]||"";
     body=fillTemplate(tpl,vars);
     if(S.channel==="mail")subject=fillTemplate(S.templates[sk[S.msgType]]||DEFAULT_TEMPLATES[sk[S.msgType]]||"",vars);
+  }
+  if(S.msgType!=='lapin'&&hasLapinHistory(S.nom)){
+    body=/\n\nCordialement/.test(body)?body.replace(/\n\nCordialement/,"\n\n"+LAPIN_MENTION+"\n\nCordialement"):body+"\n\n"+LAPIN_MENTION;
   }
   return {body:body,subject:subject,dem:dem,cms:cms};
 }
@@ -1087,25 +1096,39 @@ function renderGenerate(){
   var pre=el('div');pre.appendChild(el('label',{style:LABEL},"Prénom"));
   pre.appendChild(el('input',{class:'gx-in',style:INPUT,value:S.prenom,placeholder:"Sophie",onInput:function(e){S.prenom=e.target.value;regen();updatePreviewOnly();}}));
   row1.appendChild(pre);
-  var noms=el('div');noms.appendChild(el('label',{style:LABEL},"Nom *"));
+  var nomsLblRow=el('div',{style:"display:flex;align-items:center;gap:5px;"});
+  nomsLblRow.appendChild(el('label',{style:LABEL},"Nom *"));
+  var lapinBadge=el('span',{title:"A déjà posé un lapin",style:"display:none;font-size:13px;"},'🐇');
+  nomsLblRow.appendChild(lapinBadge);
+  var noms=el('div');noms.appendChild(nomsLblRow);
   var nomIn=el('input',{class:'gx-in',style:INPUT,value:S.nom,placeholder:"Dupont",onInput:function(e){S.nom=e.target.value;regen();updatePreviewOnly();},onBlur:function(){renderGenerate();}});
   noms.appendChild(nomIn);
   (function(){
     var hint=el('div',{style:"font-size:11px;color:oklch(0.52 0.18 45);font-weight:700;margin-top:3px;display:none;"});
     noms.appendChild(hint);
-    nomIn.addEventListener('input',function(){
+    function updateHint(){
       var v=(nomIn.value||'').trim().toLowerCase();
-      if(v.length<2){hint.style.display='none';return;}
+      if(v.length<2){hint.style.display='none';lapinBadge.style.display='none';return;}
       var matches=S.history.filter(function(h){return (h.nom||'').toLowerCase()===v;});
       if(matches.length>0){
         var last=matches[0];
+        var lapinMatches=matches.filter(function(h){return h.statut==='lapin';});
         var lastInfo=[last.prenom,last.demarche,last.statut?({'en_attente':'⏳','confirme':'✓','realise':'✅','excuse':'🙏','lapin':'🐇','pas_de_retour':'📵'}[last.statut]||''):''].filter(Boolean).join(' · ');
-        hint.textContent='⚠️ Déjà dans l\'historique ('+matches.length+'x) — '+lastInfo;
+        lapinBadge.style.display=lapinMatches.length>0?'inline':'none';
+        if(lapinMatches.length>0){
+          hint.style.color='oklch(0.45 0.18 45)';
+          hint.textContent='🐇 A déjà posé un lapin ('+lapinMatches.length+'x) — '+lastInfo;
+        } else {
+          hint.style.color='oklch(0.52 0.18 45)';
+          hint.textContent='⚠️ Déjà dans l\'historique ('+matches.length+'x) — '+lastInfo;
+        }
         hint.style.display='block';
       } else {
-        hint.style.display='none';
+        hint.style.display='none';lapinBadge.style.display='none';
       }
-    });
+    }
+    nomIn.addEventListener('input',updateHint);
+    updateHint();
   })();
   row1.appendChild(noms);
   col.appendChild(row1);
