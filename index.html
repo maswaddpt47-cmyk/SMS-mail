@@ -2325,10 +2325,9 @@ function buildICS(rdvs){
     lines.push('COLOR:'+icsColorFor(h));
     if(desc)lines.push('DESCRIPTION:'+desc);
     if(h.commune){
-      var cmsEntry=S.cmsList.find(function(c){return String(c.id)===String(h.selectedCMS);});
-      /* l'adresse du CMS mentionne déjà la commune (ex: "Centre Médico-Social de Fumel - ...") — ne pas la répéter */
-      var loc=(cmsEntry&&cmsEntry.adresse)?cmsEntry.adresse:h.commune;
-      lines.push('LOCATION:'+icsEscapeText(loc));
+      /* "CMS de [commune]" sans accent ni caractère spécial, pour la segmentation d'envoi de SMS Reminder */
+      var cleanCommune=h.commune.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9 -]/g,'').trim();
+      lines.push('LOCATION:'+icsEscapeText('CMS de '+cleanCommune));
     }
     lines.push('END:VEVENT');
   });
