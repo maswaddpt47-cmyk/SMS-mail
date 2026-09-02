@@ -1,5 +1,37 @@
 # Règles de travail — SMS-mail
 
+## ⚠️ Point critique RGPD — exposition de données personnelles (en cours de remédiation)
+
+Constat vérifié le 20/08/2026 : le repo `maswaddpt47-cmyk/sms-mail` est **public**, et le
+dossier `backups/` — contenant les exports JSON complets de l'historique (nom, prénom,
+téléphone, démarche, date/heure de RDV, statut de vrais usagers) — est commité en clair
+sur les branches `main` **et** `backups`. Ces données personnelles sont donc consultables
+par n'importe qui sur github.com, sans authentification.
+
+**Plan de remédiation validé par l'utilisateur (tous les points sauf le 3, pour l'instant) :**
+1. Créer un repo **privé** dédié (`sms-mail-backups`) et rediriger `githubPush()` /
+   `GH_REPO` vers celui-ci — le repo public actuel garde uniquement le code (nécessaire
+   pour GitHub Pages gratuit), plus aucune donnée personnelle n'y est poussée.
+   **Bloqué en attente** : l'utilisateur doit créer ce repo privé lui-même sur github.com
+   (l'intégration GitHub de la session n'a pas le droit de créer un nouveau repo), puis
+   l'ajouter à la session pour que Claude puisse y pousser.
+2. Purger l'historique git existant (`git filter-repo` sur `backups/`, branches `main` et
+   `backups`) puis `push --force` — opération destructive, à faire seulement après le
+   point 1, avec confirmation explicite avant exécution à chaque session qui la reprend.
+   Ne garantit pas l'effacement de copies déjà potentiellement récupérées pendant que le
+   repo était exposé.
+3. *(Reporté, pas encore validé par l'utilisateur)* Politique de rétention — `HISTORY_MAX`
+   est actuellement illimité (99999) ; chaque sauvegarde duplique tout l'historique.
+4. Point hors code, à charge de l'utilisateur : vérifier avec son employeur (Conseil
+   Départemental) si ce traitement est couvert par un registre RGPD / DPO informé.
+5. Ajouter un avertissement discret près du champ Notes (texte libre) du formulaire
+   Générer, pour dissuader d'y saisir des informations de santé/sensibles.
+
+**Pour toute session reprenant ce travail** : relire l'état réel avant d'agir (quel repo
+privé existe déjà, quels points sont faits) — ne pas présumer que la migration a eu lieu.
+Ne jamais committer `backups/` (ou tout fichier contenant des données d'usagers) vers un
+repo public, même temporairement pour tester.
+
 ## Workflow obligatoire avant toute intervention
 
 ### 1. Git pull depuis main
