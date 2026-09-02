@@ -1352,6 +1352,7 @@ function renderGenerate(){
   notesIn.value=S.genNotes||'';
   notesIn.addEventListener('input',function(e){S.genNotes=e.target.value;});
   notesDiv.appendChild(notesIn);
+  notesDiv.appendChild(el('div',{style:"font-size:10.5px;color:var(--c-muted);margin-top:3px;"},"Évitez d'y saisir des informations de santé ou autres données sensibles."));
   col.appendChild(notesDiv);
 
   c2.appendChild(col);
