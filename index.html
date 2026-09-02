@@ -383,8 +383,11 @@ function persist(){
 function saveLast(){lsSet('ess-last',{selectedCMS:S.selectedCMS,selectedDemarche:S.selectedDemarche,commune:S.commune});}
 
 /* ============================== GITHUB BACKUP ============================== */
-var GH_REPO='maswaddpt47-cmyk/sms-mail';
-var GH_BRANCH='backups';
+/* repo PRIVÉ dédié — les sauvegardes contiennent des données personnelles
+   d'usagers (nom, téléphone, démarche...) et ne doivent jamais être poussées
+   vers le repo public qui héberge le code/GitHub Pages */
+var GH_REPO='maswaddpt47-cmyk/sms-mail-backups';
+var GH_BRANCH='main';
 var GH_BACKUP_DIR='backups';
 function ghToken(){return localStorage.getItem('ess-gh-token')||'';}
 function ghHeaders(token){return{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github+json'};}
