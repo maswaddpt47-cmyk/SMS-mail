@@ -1352,7 +1352,7 @@ function renderGenerate(){
   notesIn.value=S.genNotes||'';
   notesIn.addEventListener('input',function(e){S.genNotes=e.target.value;});
   notesDiv.appendChild(notesIn);
-  notesDiv.appendChild(el('div',{style:"font-size:10.5px;color:var(--c-muted);margin-top:3px;"},"Évitez d'y saisir des informations de santé ou autres données sensibles."));
+  notesDiv.appendChild(el('div',{style:"font-size:10.5px;color:var(--c-muted);margin-top:3px;"},"Selon le RGPD, évitez d'y saisir des informations de santé ou autres données sensibles."));
   col.appendChild(notesDiv);
 
   c2.appendChild(col);
@@ -4402,7 +4402,7 @@ function renderModal(){
       var motifIn=el('input',{type:'text',placeholder:'Motif de l\'excuse…',value:t.motifExcuse||'',style:"width:100%;font-family:inherit;font-size:12px;padding:7px 10px;border-radius:8px;border:1.5px solid oklch(0.78 0.1 85);background:var(--c-card);color:var(--c-dim);box-sizing:border-box;"});
       motifIn.addEventListener('input',function(){var idx=S.history.findIndex(function(h){return h===t;});if(idx!==-1){S.history[idx].motifExcuse=motifIn.value;t.motifExcuse=motifIn.value;lsSet('ess-history',S.history);}});
       motifWrap.appendChild(motifIn);
-      motifWrap.appendChild(el('div',{style:"font-size:10.5px;color:var(--c-muted);margin-top:3px;"},"Évitez d'y saisir des informations de santé ou autres données sensibles."));
+      motifWrap.appendChild(el('div',{style:"font-size:10.5px;color:var(--c-muted);margin-top:3px;"},"Selon le RGPD, évitez d'y saisir des informations de santé ou autres données sensibles."));
       var stSel=el('select',{style:"width:100%;font-family:inherit;font-size:13px;font-weight:700;padding:8px 10px;border-radius:10px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);box-sizing:border-box;margin-bottom:10px;",onChange:function(ev){
         var idx=S.history.findIndex(function(h){return h===t;});
         if(idx!==-1){
@@ -4475,7 +4475,7 @@ function renderModal(){
       notesIn2.value=e2.notes||'';
       var notesWrap2=field2('Notes',notesIn2);
       notesWrap2.style.marginBottom="8px";
-      notesWrap2.appendChild(el('div',{style:"font-size:10.5px;color:var(--c-muted);margin-top:3px;"},"Évitez d'y saisir des informations de santé ou autres données sensibles."));
+      notesWrap2.appendChild(el('div',{style:"font-size:10.5px;color:var(--c-muted);margin-top:3px;"},"Selon le RGPD, évitez d'y saisir des informations de santé ou autres données sensibles."));
       box.appendChild(notesWrap2);
       var btnRow2=el('div',{style:"display:flex;gap:8px;margin-top:4px;"});
       btnRow2.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){ar.editing=false;renderModal();}},'← Retour'));
