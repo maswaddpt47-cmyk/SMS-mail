@@ -8,7 +8,7 @@ téléphone, démarche, date/heure de RDV, statut de vrais usagers) — était c
 sur les branches `main` **et** `backups`. Ces données personnelles étaient donc consultables
 par n'importe qui sur github.com, sans authentification.
 
-**Plan de remédiation validé par l'utilisateur (tous les points sauf le 3, pour l'instant) :**
+**Plan de remédiation validé par l'utilisateur (tous les points) :**
 1. ✅ **Fait** — Repo **privé** dédié créé (`sms-mail-backups`), `githubPush()` / `GH_REPO`
    redirigés vers celui-ci dans `index.html`. Les sauvegardes existantes ont été migrées
    dans ce repo privé avant la purge du point 2, pour ne pas casser "Restaurer depuis
@@ -19,8 +19,15 @@ par n'importe qui sur github.com, sans authentification.
    Vérifié via clones frais indépendants (`--depth 1`) : `backups/` absent de l'arbre et de
    l'historique complet des deux branches. Ne garantit pas l'effacement de copies déjà
    potentiellement récupérées pendant que le repo était exposé (20/08 → 02/09/2026).
-3. *(Reporté, pas encore validé par l'utilisateur)* Politique de rétention — `HISTORY_MAX`
-   est actuellement illimité (99999) ; chaque sauvegarde duplique tout l'historique.
+3. ✅ **Fait (02/09/2026)** — Politique de rétention, approche validée : "année en cours +
+   backup année pour les stats". Nouveau bouton "Gestion des données → RGPD — Rétention" :
+   pour chaque année révolue encore présente dans l'historique, archivage manuel (confirmation
+   obligatoire) qui calcule des statistiques agrégées et **anonymisées** (aucun nom/téléphone
+   — `entryYear`/`computeYearArchive`/`archiveYear` dans `index.html`) puis supprime
+   définitivement le détail nominatif de cette année de l'historique (irréversible). Archive
+   consultable via un sélecteur d'année dans l'onglet Stats (`ess-yearly-stats`, incluse dans
+   `exportData()`/`doImport()` donc dans les sauvegardes). Testé en navigateur réel
+   (Playwright) : archivage, purge, agrégats, sélecteur d'année tous vérifiés fonctionnels.
 4. Point hors code, à charge de l'utilisateur : vérifier avec son employeur (Conseil
    Départemental) si ce traitement est couvert par un registre RGPD / DPO informé.
 5. ✅ **Fait (02/09/2026)** — Avertissement discret ajouté sur les 3 champs de saisie libre
