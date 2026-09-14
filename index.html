@@ -1213,6 +1213,13 @@ function renderGenerate(){
           var d=new Date(dateStr+'T12:00:00');
           var jour=d.getDay();
           var existing=S.permanences.find(function(p){return p.commune===commune&&!p.exceptDate;});
+          if(!existing){
+            /* garde-fou : une permanence régulière existe peut-être pour cette commune mais avec une
+               orthographe légèrement différente (espace/tiret…) — avertir plutôt que de silencieusement
+               retomber sur des valeurs par défaut (09:00-15:00, 30 min) qui ne correspondent à rien */
+            var similar=S.permanences.find(function(p){return !p.exceptDate&&p.commune.trim().toLowerCase()===commune.trim().toLowerCase();});
+            if(similar&&!confirm('⚠️ Une permanence régulière existe pour "'+similar.commune+'" mais son orthographe ne correspond pas exactement à "'+commune+'".\n\nSans correction, ce jour exceptionnel sera créé avec des valeurs par défaut (09:00-15:00, 30 min) au lieu d\'hériter de "'+similar.commune+'" ('+similar.debut+'-'+similar.fin+', '+similar.duree+' min).\n\nCréer quand même avec les valeurs par défaut ?'))return;
+          }
           var debut=existing?existing.debut:'09:00';
           var fin=existing?existing.fin:'15:00';
           var duree=existing?existing.duree:30;
