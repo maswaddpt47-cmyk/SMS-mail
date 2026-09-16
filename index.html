@@ -857,15 +857,20 @@ function getSlots(commune,dateStr,permOverride){
   function buildSlot(heure){
     if(seenHeures[heure])return;seenHeures[heure]=true;
     var matches=S.history.filter(function(x){return x.date===dateStr&&x.heure===heure&&(x.commune===commune||!x.commune);});
-    var confirmations=matches.filter(function(x){return x.msgType==='confirmation';});
-    var propositions=matches.filter(function(x){return x.msgType==='proposition';});
-    var sansAppels=matches.filter(function(x){return x.msgType==='sans_appel';});
-    var relances=matches.filter(function(x){return x.msgType==='relance';});
-    var indispos=matches.filter(function(x){return x.msgType==='indispo';});
+    /* une réservation libérée (excusé/lapin/pas de retour) ne doit jamais l'emporter face à une
+       nouvelle réservation active sur le même créneau, quel que soit son type de message — sinon
+       une relance (priorité basse) reste masquée derrière l'ancienne excusée (ex: proposition) */
+    var activeMatches=matches.filter(function(x){return FREE_AGAIN_STATUTS.indexOf(x.statut)===-1;});
+    var pool=activeMatches.length?activeMatches:matches;
+    var confirmations=pool.filter(function(x){return x.msgType==='confirmation';});
+    var propositions=pool.filter(function(x){return x.msgType==='proposition';});
+    var sansAppels=pool.filter(function(x){return x.msgType==='sans_appel';});
+    var relances=pool.filter(function(x){return x.msgType==='relance';});
+    var indispos=pool.filter(function(x){return x.msgType==='indispo';});
     var taken=confirmations[0]||propositions[0]||sansAppels[0]||relances[0]||indispos[0]||null;
-    var freeAgain=taken&&(taken.statut==='pas_de_retour'||taken.statut==='lapin'||taken.statut==='excuse');
+    var freeAgain=taken&&FREE_AGAIN_STATUTS.indexOf(taken.statut)!==-1;
     var multiPropo=confirmations.length===0&&propositions.length>1;
-    var replaced=matches.filter(function(x){return x!==taken&&(x.statut==='pas_de_retour'||x.statut==='lapin'||x.statut==='excuse');});
+    var replaced=matches.filter(function(x){return x!==taken&&FREE_AGAIN_STATUTS.indexOf(x.statut)!==-1;});
     slots.push({heure:heure,taken:taken||null,freeAgain:!!freeAgain,multiPropo:multiPropo,allPropo:propositions,replaced:replaced});
   }
   for(var t=start;t<=end;t+=perm.duree){
