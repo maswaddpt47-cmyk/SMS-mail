@@ -1256,6 +1256,13 @@ function renderGenerate(){
       slotGrid.appendChild(pill);
     });
     hh.appendChild(slotGrid);
+    /* heure libre — hors grille de périodicité (ex: décalage ponctuel d'un créneau) */
+    var customRow=el('div',{style:"display:flex;align-items:center;gap:6px;margin-top:6px;"});
+    customRow.appendChild(el('span',{style:"font-size:11px;color:var(--c-muted);font-weight:600;"},"Autre heure :"));
+    var customTimeIn=el('input',{type:'time',class:'gx-in',style:"font-family:inherit;font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;",value:S.heure||''});
+    customTimeIn.addEventListener('change',function(e){if(e.target.value)setFieldSave({heure:e.target.value});});
+    customRow.appendChild(customTimeIn);
+    hh.appendChild(customRow);
   } else {
     var timeSlots=[];for(var h=7;h<=19;h++){timeSlots.push(String(h).padStart(2,'0')+":00");timeSlots.push(String(h).padStart(2,'0')+":30");}
     var timeSel=el('select',{class:'gx-in',style:INPUT+"padding:11px 8px;cursor:pointer;",onChange:function(e){setFieldSave({heure:e.target.value});}});
