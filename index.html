@@ -221,6 +221,9 @@ function el(tag, attrs, children){
 }
 function clear(node){ while(node.firstChild) node.removeChild(node.firstChild); }
 function ls(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+/* échappe une valeur avant de l'interpoler dans du HTML brut (innerHTML) — à utiliser
+   partout où une saisie usager (nom, prénom...) est mêlée à du balisage construit à la main */
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 /* ============================== DEFAULTS ============================== */
 var DEFAULT_CMS=[
@@ -3847,7 +3850,7 @@ function buildMandatDoc(){
   var user=mandatUserStr();
 
   // ── Intro ──
-  var p1=el('p');p1.innerHTML="Je soussigné, <b>"+user+"</b>, le mandant, autorise le <b>Conseil Départemental du Lot-et-Garonne</b>, le mandataire, à réaliser en mon nom, mes démarches sur Internet et outils numériques, conformément aux dispositions des articles 1984 et suivants du Code civil.";
+  var p1=el('p');p1.innerHTML="Je soussigné, <b>"+escHtml(user)+"</b>, le mandant, autorise le <b>Conseil Départemental du Lot-et-Garonne</b>, le mandataire, à réaliser en mon nom, mes démarches sur Internet et outils numériques, conformément aux dispositions des articles 1984 et suivants du Code civil.";
   page.appendChild(p1);
 
   // ── Section Missions ──
