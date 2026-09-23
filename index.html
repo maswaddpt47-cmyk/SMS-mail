@@ -457,10 +457,17 @@ function ghCleanOldBackups(token){
         var d=new Date(+m[1],+m[2]-1,+m[3],m[4]?+m[4]:0,m[5]?+m[5]:0);
         return d.getTime()<cutoff;
       });
-      toDelete.forEach(function(f){
-        fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+f.path,{method:'DELETE',headers:ghHeaders(token),body:JSON.stringify({message:'backup: nettoyage >48h',sha:f.sha,branch:GH_BRANCH})});
-      });
-    }).catch(function(){});
+      /* suppressions en séquentiel (pas en parallèle) — un lot de deletes simultanés déclenche
+         le rate-limit secondaire de GitHub sur les écritures rapprochées, ce qui les faisait
+         échouer silencieusement et laissait les sauvegardes s'accumuler indéfiniment */
+      return toDelete.reduce(function(chain,f){
+        return chain.then(function(){
+          return fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+f.path,{method:'DELETE',headers:ghHeaders(token),body:JSON.stringify({message:'backup: nettoyage >48h',sha:f.sha,branch:GH_BRANCH})})
+            .then(function(r){if(!r.ok)console.warn('ghCleanOldBackups: échec suppression '+f.path+' ('+r.status+')');})
+            .catch(function(e){console.warn('ghCleanOldBackups: erreur réseau suppression '+f.path,e);});
+        });
+      },Promise.resolve());
+    }).catch(function(e){console.warn('ghCleanOldBackups: échec listing',e);});
 }
 
 /* liste les backups disponibles sur GitHub */
