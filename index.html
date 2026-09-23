@@ -1199,7 +1199,7 @@ function renderGenerate(){
   var btnS="cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);font-weight:600;font-size:12px;padding:8px 10px;border-radius:10px;white-space:nowrap;flex-shrink:0;";
   telRow.appendChild(el('button',{class:'gx-press',title:"Formater le numéro",style:btnS,onClick:function(){applyTelFormat(telIn.value);showToast("✓ Numéro formaté");}},"# Fmt"));
   telRow.appendChild(el('button',{class:'gx-press',title:"Copier le numéro",style:btnS,onClick:function(){if(!S.telephone)return;navigator.clipboard.writeText(S.telephone);showToast("✓ Numéro copié");}},"📋"));
-  telRow.appendChild(el('button',{class:'gx-press',title:"Ouvrir WhatsApp",style:btnS,onClick:function(){if(!S.telephone)return;var num=S.telephone.replace(/\s/g,'').replace(/^0/,'33');window.open('https://wa.me/'+num,'_blank');}},"💬 WA"));
+  telRow.appendChild(el('button',{class:'gx-press',title:"Ouvrir WhatsApp",style:btnS,onClick:function(){if(!S.telephone)return;var num=S.telephone.replace(/\D/g,'').replace(/^0/,'33');window.open('https://wa.me/'+num,'_blank');}},"💬 WA"));
   telRow.appendChild(el('a',{class:'gx-press',title:"Appeler",href:"#",style:btnS+"text-decoration:none;",onClick:function(e){e.preventDefault();if(!S.telephone)return;window.location.href='tel:'+S.telephone.replace(/\s/g,'');}},"📞"));
   tel.appendChild(telRow);
   col.appendChild(tel);
