@@ -39,6 +39,42 @@ privé existe déjà, quels points sont faits) — ne pas présumer que la migra
 Ne jamais committer `backups/` (ou tout fichier contenant des données d'usagers) vers un
 repo public, même temporairement pour tester.
 
+## Reprise de session — CHANTIERS.md
+
+Lire **`CHANTIERS.md`** (racine) au démarrage : état du travail, décisions à
+trancher, points à ne pas défaire. Le mettre à jour à chaque avancée
+significative, pas en fin de session. Une tâche terminée en sort ; ce qui ne
+doit pas être défait remonte dans sa dernière section.
+
+## AGORA — faire contredire une décision par une autre session
+
+Fichier : **`AGORA.md`** (racine) — gabarit et règles de réponse.
+
+**Soumettre d'office** (sans demander) dès qu'un de ces faits est constaté :
+1. La décision **ferme une porte** : format de stockage localStorage, format
+   d'export/sauvegarde, nouvelle dépendance, contrat entre modules.
+2. **Deux options envisagées, une seule écrite**, sans arbitrage extérieur.
+3. **Trois itérations sans résolution** sur le même problème.
+4. **Défaire un existant dont la raison d'être n'est pas retrouvée.**
+5. La proposition **contredit une note datée** du dépôt (`CLAUDE.md`,
+   `CHANTIERS.md`, commentaire de décision).
+6. **Coût irréversible côté usager** : suppression de données, migration,
+   rupture de la PWA déjà installée.
+
+Toute entrée « décision à trancher » de `CHANTIERS.md` est candidate : dire en
+l'écrivant pourquoi on ouvre un bloc ou non.
+
+**Ne va PAS à l'AGORA** : changement de rendu pur (couleur, libellé, CSS) ;
+correctif localisé appuyé sur une preuve ; tout ce qui se défait en un commit.
+
+**Fonctionnement** : écrire le bloc au moment du choix, pas après
+l'implémentation ; le commiter et le **pousser directement sur `main`**
+(`git pull --rebase origin main` avant — exception au workflow de branche :
+c'est du texte, ça ne casse aucun déploiement) ; annoncer en une ligne
+« ⚖️ AGORA : critère N — … » avec la phrase à coller dans l'autre session.
+**Ne jamais bloquer** : continuer le travail, aucune réponse n'est garantie.
+L'utilisateur tranche.
+
 ## Workflow obligatoire avant toute intervention
 
 ### 1. Git pull depuis main
