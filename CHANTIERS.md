@@ -22,11 +22,6 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
    (`normCommune`, `exportHistoryCSV`, `exportOrientationsCSV` en partie : son
    analyseur prend l'apostrophe de la regex `/[-\s']+/` pour une chaîne). Le
    reste des écarts est voulu (multi-profil) ou cosmétique. **Reste ouvert :**
-   - **À trancher par l'utilisateur** (pas d'AGORA : c'est une définition
-     métier, pas un choix technique) : dénominateur des taux de
-     concrétisation et de lapin (SMS-mail : RDV passés ; multi : RDV ayant un
-     statut, futurs compris) ; mois de rattachement de la courbe de tendance
-     (SMS-mail : date d'envoi du message ; multi : date du RDV).
    - **Non jugé** : fenêtre Agenda 8 sem. passées/12 futures (SMS-mail)
      contre 4/8 (multi) ; `handleGenerate` compare la commune strictement
      dans SMS-mail, avec tolérance « commune vide » dans multi.
@@ -52,3 +47,10 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   #88 à #94 de sms-mail-multi, branche `sms-mail-to-multi-port`) vont de
   SMS-mail vers sms-mail-multi. Quand un sujet est contesté entre les deux,
   écrire ici lequel fait référence plutôt que de converger au hasard.
+- **Définitions des stats, tranchées par l'utilisateur le 27/09/2026**,
+  identiques dans les deux apps (live et `computeYearArchive`) : taux de
+  concrétisation et de lapin = ÷ RDV dont la date est passée, hors créneaux
+  bloqués (les RDV à venir ne peuvent pas encore être réalisés ni manqués) ;
+  courbe Lapin/Excusé/Pas de retour rattachée au **mois du RDV**, pas au
+  mois d'envoi du message. Les archives annuelles calculées avant cette date
+  gardent l'ancienne définition (plus recalculables).
