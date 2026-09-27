@@ -697,12 +697,12 @@ function addHistory(item){
     var di=S.history.findIndex(function(h){
       return h.date===item.date&&h.heure===item.heure&&h.commune===item.commune&&(h.nom||'').toLowerCase()===(item.nom||'').toLowerCase()&&(h.prenom||'').toLowerCase()===(item.prenom||'').toLowerCase();
     });
-    if(di!==-1){var merged=Object.assign({},S.history[di],item);if(merged.body&&(!merged.statut||merged.statut==='libre'))merged.statut='en_attente';S.history.splice(di,1,merged);lsSet('ess-history',S.history);ensureDayOpen(item.commune,item.date,item.heure);return;}
+    if(di!==-1){var merged=Object.assign({},S.history[di],item);if(merged.body&&(!merged.statut||merged.statut==='libre'))merged.statut='en_attente';S.history.splice(di,1,merged);lsSet('ess-history',S.history);ensureDayOpen(item.commune,item.date);return;}
   }
   if(item.body&&!item.statut)item.statut='en_attente';
   var h=[item].concat(S.history);if(h.length>HISTORY_MAX)h.pop();
   S.history=h;lsSet('ess-history',h);
-  ensureDayOpen(item.commune,item.date,item.heure);
+  ensureDayOpen(item.commune,item.date);
   /* auto-backup GitHub immédiat après chaque nouveau RDV (throttlé 2 min) */
   if(ghToken()){var nowMs=Date.now();if(nowMs-_ghLastAutoPush>120000){_ghLastAutoPush=nowMs;githubPush(true);}}
   /* Rappel export tous les 5 messages */
@@ -834,7 +834,7 @@ function migratePermanences(perms,history){
     var key=h.commune+'|'+h.date;
     if(byKey[key])return;
     byKey[key]=true;
-    kept.push({id:Date.now()+Math.random(),commune:h.commune,exceptDate:h.date,debut:h.heure||'09:00',fin:h.heure||'16:30'});
+    kept.push({id:Date.now()+Math.random(),commune:h.commune,exceptDate:h.date,debut:'09:00',fin:'16:30'});
   });
   return kept;
 }
@@ -852,10 +852,14 @@ function isInMyAgenda(h){
 /* ouvre une journée à la volée si elle n'existe pas encore — appelé à chaque RDV/indispo
    enregistré (addHistory, blockSlot) et par l'ouverture manuelle (addPerm). Non destructif :
    si la journée existe déjà, ne touche pas ses horaires. */
-function ensureDayOpen(commune,dateStr,heure){
+function ensureDayOpen(commune,dateStr){
+  /* la journée s'ouvre toujours sur la grille standard (09:00-16:30) — jamais sur l'heure
+     du RDV qui la déclenche : sinon un premier RDV à 14h retire les créneaux du matin du
+     sélecteur (bug AG-001, constaté le 27/09/2026). L'heure du RDV déclencheur reste de
+     toute façon couverte par extraHeures dans getSlots si elle tombe hors grille. */
   if(!commune||!dateStr)return;
   if(S.permanences.some(function(p){return p.commune===commune&&p.exceptDate===dateStr;}))return;
-  S.permanences=S.permanences.concat([{id:Date.now()+Math.random(),commune:commune,exceptDate:dateStr,debut:heure||'09:00',fin:heure||'16:30'}]);
+  S.permanences=S.permanences.concat([{id:Date.now()+Math.random(),commune:commune,exceptDate:dateStr,debut:'09:00',fin:'16:30'}]);
   lsSet('ess-permanences',S.permanences);
 }
 /* RDV en attente depuis plus de S.relanceDelai jours sans relance envoyée —
@@ -874,7 +878,7 @@ function getSlots(commune,dateStr,permOverride){
   var perm=permOverride||getPermanence(commune,dateStr)||{debut:'09:00',fin:String(Math.floor(FIN_AFFICHAGE_DEFAUT/60)).padStart(2,'0')+':30'};
   var sh=parseInt(perm.debut),sm=parseInt(perm.debut.split(':')[1]||0);
   var eh=parseInt(perm.fin),em=parseInt(perm.fin.split(':')[1]||0);
-  var start=sh*60+sm,end=Math.max(eh*60+em,FIN_AFFICHAGE_DEFAUT);
+  var start=Math.min(sh*60+sm,9*60),end=Math.max(eh*60+em,FIN_AFFICHAGE_DEFAUT);
   /* inclure aussi les RDV hors plage horaire — y compris une heure choisie « à la main »
      hors grille standard (ex: 9h15) */
   var extraHeures=S.history.filter(function(x){return x.date===dateStr&&(x.commune===commune||!x.commune);}).map(function(x){return x.heure;});
@@ -916,7 +920,7 @@ function hasConflict(date,heure,commune){
 /* bloque un créneau libre pour indisponibilité (pas un usager) */
 function blockSlot(commune,dateStr,heure,motif){
   if(hasConflict(dateStr,heure,commune))return;
-  ensureDayOpen(commune,dateStr,heure);
+  ensureDayOpen(commune,dateStr);
   S.history.push({channel:'sms',msgType:'indispo',commune:commune,date:dateStr,heure:heure,nom:motif||'Indisponible',ts:new Date().toLocaleString('fr-FR')});
   lsSet('ess-history',S.history);
 }
