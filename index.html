@@ -1702,7 +1702,7 @@ function computeYearArchive(year){
   hist.forEach(function(h){var k=h.statut||'en_attente';if(arc.statuts[k]===undefined)arc.statuts[k]=0;arc.statuts[k]++;});
   arc.realiseN=arc.statuts.realise||0;
   arc.lapinN=arc.statuts.lapin||0;
-  var concretN=hist.filter(function(h){return h.date;}).length;
+  var concretN=hist.filter(function(h){return h.date&&h.msgType!=='indispo';}).length;
   arc.concretPct=concretN>0?Math.round(arc.realiseN/concretN*100):null;
   arc.lapinPct=concretN>0?Math.round(arc.lapinN/concretN*100):null;
   var reactDiffs=[];hist.forEach(function(h){
@@ -1732,10 +1732,8 @@ function computeYearArchive(year){
   arc.byMonth=monthMap;
   var trendMap={};
   hist.forEach(function(h){
-    if(h.statut!=='lapin'&&h.statut!=='excuse'&&h.statut!=='pas_de_retour')return;
-    var raw=h.ts||'';var m=raw.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-    var key=m?(m[3]+'-'+m[2]):raw.substring(0,7);
-    if(!key||key.length<7)return;
+    if(!h.date||(h.statut!=='lapin'&&h.statut!=='excuse'&&h.statut!=='pas_de_retour'))return;
+    var key=h.date.substring(0,7);
     if(!trendMap[key])trendMap[key]={lapin:0,excuse:0,pas_de_retour:0};
     trendMap[key][h.statut]++;
   });
