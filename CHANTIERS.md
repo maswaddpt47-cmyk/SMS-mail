@@ -1,6 +1,6 @@
 # CHANTIERS — SMS-mail
 
-État au **27/09/2026**, commit de référence `76b3558` (`main`).
+État au **27/09/2026**, commit de référence `8517269` (`main`).
 
 Carnet de reprise : ce qu'une session sans historique doit savoir pour
 continuer. Mis à jour à chaque avancée, pas en fin de session. Une tâche
@@ -9,23 +9,29 @@ ne doit pas être défait remonte dans la dernière section.
 
 ## Décisions à trancher
 
-- **AGORA AG-001, ouvert le 27/09/2026** : refonte du calendrier des
-  permanences (hebdomadaire → journées ouvertes à la volée par commune+date).
-  Détail dans `AGORA.md`. Critères 1 (ferme une porte) et 6 (coût
-  irréversible côté usager, PWA déjà installée avec 82 RDV réels).
+- **Taux d'occupation (30j et 90j), sujet ouvert par AGORA AG-001 (tranché
+  le 27/09/2026, ce point reste à part).** Avec le calendrier « à la volée »,
+  les deux calculs ne comptent plus que les journées réellement ouvertes
+  (au moins un RDV/blocage), alors qu'avant ils comptaient toute la grille
+  hebdomadaire — y compris les jours jamais utilisés, qui tiraient le taux
+  vers le bas. Le chiffre n'est donc plus comparable à celui d'avant la
+  refonte, dans le sens d'une hausse. Pas d'AGORA nécessaire pour ce point :
+  c'est une définition métier comme celles du 27/09/2026 ci-dessous, à
+  trancher par l'utilisateur, pas un choix technique.
 
 ## Chantiers restants (par priorité)
 
 1. **Calendrier « à la volée » — à valider en conditions réelles
-   (27/09/2026).** Implémenté sur SMS-mail (solo) uniquement, testé par un
-   script Node isolé (migration + `getSlots`, données synthétiques), **pas
-   encore vérifié dans le navigateur ni sur les vraies données de
-   l'utilisateur** (82 RDV, communes Marmande/Saint-Pardoux-d'Isaac/Fumel).
+   (27/09/2026).** Implémenté sur SMS-mail (solo) uniquement. Un bug réel
+   (grille rétrécie par l'heure du premier RDV) a été trouvé par contradiction
+   AGORA (AG-001) puis corrigé (`8517269`) et revérifié par un script Node —
+   toujours **aucun test dans un navigateur réel, ni sur les vraies données
+   de l'utilisateur** (82 RDV, communes Marmande/Saint-Pardoux-d'Isaac/Fumel).
    Étapes restantes, dans l'ordre : 1) l'utilisateur recharge SMS-mail et
    confirme que l'agenda affiche toujours ses RDV existants (migration) et
-   qu'un nouveau RDV ouvre bien sa journée ; 2) une fois confirmé, ne porter
-   vers sms-mail-multi qu'après cette validation — pas avant, l'utilisateur
-   l'a explicitement demandé ainsi.
+   qu'un nouveau RDV ouvre bien sa journée avec la grille complète 09:00-16:30 ;
+   2) une fois confirmé, ne porter vers sms-mail-multi qu'après cette
+   validation — pas avant, l'utilisateur l'a explicitement demandé ainsi.
 2. **RGPD point 4 — à charge de l'utilisateur** : vérifier avec le Conseil
    Départemental si ce traitement figure au registre RGPD / si le DPO est
    informé. Seul point du plan de remédiation encore ouvert (`CLAUDE.md`).
@@ -63,6 +69,13 @@ ne doit pas être défait remonte dans la dernière section.
   #88 à #94 de sms-mail-multi, branche `sms-mail-to-multi-port`) vont de
   SMS-mail vers sms-mail-multi. Quand un sujet est contesté entre les deux,
   écrire ici lequel fait référence plutôt que de converger au hasard.
+- **Une journée s'ouvre toujours sur 09:00-16:30, jamais sur l'heure du RDV
+  qui la déclenche** (`ensureDayOpen`/`migratePermanences`, trouvé par
+  contradiction AGORA AG-001 le 27/09/2026) : figer `debut`/`fin` sur cette
+  heure rétrécit silencieusement la grille du sélecteur (un RDV à 14h faisait
+  disparaître les créneaux du matin). `getSlots()` a en plus un filet de
+  sécurité (`start=Math.min(start,09:00)`), mais ne pas en dépendre pour
+  réintroduire cette écriture ailleurs.
 - **Définitions des stats, tranchées par l'utilisateur le 27/09/2026**,
   identiques dans les deux apps (live et `computeYearArchive`) : taux de
   concrétisation et de lapin = ÷ RDV dont la date est passée, hors créneaux
