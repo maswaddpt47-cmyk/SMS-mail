@@ -1,6 +1,6 @@
 # CHANTIERS — SMS-mail
 
-État au **26/09/2026**, commit de référence `a5cc88c` (`main`).
+État au **27/09/2026**, commit de référence `a5cc88c` (`main`).
 
 Carnet de reprise : ce qu'une session sans historique doit savoir pour
 continuer. Mis à jour à chaque avancée, pas en fin de session. Une tâche
@@ -17,34 +17,19 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
 1. **RGPD point 4 — à charge de l'utilisateur** : vérifier avec le Conseil
    Départemental si ce traitement figure au registre RGPD / si le DPO est
    informé. Seul point du plan de remédiation encore ouvert (`CLAUDE.md`).
-2. **Dérive SMS-mail ↔ sms-mail-multi — audit fait le 26/09/2026** (sur
-   `a5cc88c` / `7dc108c`). 47 fonctions signalées par `check-drift.js` : 3
-   sont des faux positifs de l'outil (`normCommune`, `exportHistoryCSV`,
-   `exportOrientationsCSV` en partie — son analyseur prend l'apostrophe de la
-   regex `/[-\s']+/` pour une chaîne). ~27 sont voulues (multi-profil :
-   `pk()`, sauvegarde par profil, sélecteur d'agenda, attribution des
-   orientations). ~8 cosmétiques (couleurs, emoji 🙏/🙅, mise en forme).
-   **Reste à traiter, rien n'est corrigé :**
-   - **Bug confirmé (multi)** : `fillTemplate` ne remplace pas `{cms}` → le
-     sujet du mail « Lapin » part avec « CMS {cms} » en clair (reproduit en
-     node sur le modèle par défaut). SMS-mail est correct.
-   - **À trancher — chiffres différents pour les mêmes données** : taux de
-     concrétisation et taux de lapin (SMS-mail : ÷ RDV passés ; multi : ÷ RDV
-     ayant un statut) ; tendance mensuelle (SMS-mail : par date d'envoi ;
-     multi : par date du RDV).
-   - **Multi, probables oublis de portage** : délai de relance écrit « 3
-     jours » en dur (bannière Agenda, badge d'onglet) alors qu'il est
-     réglable ; compteurs de dépassement non filtrés sur les communes de
-     l'agenda (`isInMyAgenda`) ; pas d'encart « dépassements sans créneau
-     agenda » ; import GDIN sans remise du 0 initial des téléphones à 9
-     chiffres.
-   - **SMS-mail, probables oublis dans l'autre sens** : dupliquer un modèle
-     « relance » le transforme en « proposition » (`duplicateBuiltin`) ;
-     copie du téléphone via `navigator.clipboard` direct au lieu de
-     `doCopy()` (échoue hors HTTPS — hypothèse non vérifiée en réel).
-   - **Différences non jugées** : fenêtre Agenda 8 sem. passées/12 futures
-     (SMS-mail) contre 4/8 (multi) ; `handleGenerate` compare la commune
-     strictement dans SMS-mail, avec tolérance « commune vide » dans multi.
+2. **Dérive SMS-mail ↔ sms-mail-multi — audit du 26/09/2026, oublis de
+   portage corrigés le 27/09/2026.** `check-drift.js` donne 3 faux positifs
+   (`normCommune`, `exportHistoryCSV`, `exportOrientationsCSV` en partie : son
+   analyseur prend l'apostrophe de la regex `/[-\s']+/` pour une chaîne). Le
+   reste des écarts est voulu (multi-profil) ou cosmétique. **Reste ouvert :**
+   - **À trancher par l'utilisateur** (pas d'AGORA : c'est une définition
+     métier, pas un choix technique) : dénominateur des taux de
+     concrétisation et de lapin (SMS-mail : RDV passés ; multi : RDV ayant un
+     statut, futurs compris) ; mois de rattachement de la courbe de tendance
+     (SMS-mail : date d'envoi du message ; multi : date du RDV).
+   - **Non jugé** : fenêtre Agenda 8 sem. passées/12 futures (SMS-mail)
+     contre 4/8 (multi) ; `handleGenerate` compare la commune strictement
+     dans SMS-mail, avec tolérance « commune vide » dans multi.
 3. **Script de ménage de ce fichier** (`scripts/check-chantiers.sh`, hook
    `SessionStart`) : à copier depuis `ATELIERS_NEWGEN` — reporté le
    26/09/2026 par l'utilisateur, utile quand ce fichier aura grossi.
