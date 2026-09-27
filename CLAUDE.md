@@ -150,6 +150,8 @@ de nouvelles entrées.
 8. Avant de pousser un changement visuel (CSS/layout), vérifier mentalement les interactions connues à risque (stacking context, overflow, position sticky/fixed) sur les zones sensibles existantes.
 8bis. Utiliser des dates explicites (JJ/MM ou JJ/MM/AAAA) plutôt que des termes relatifs ("hier", "aujourd'hui", "la semaine dernière") dans les messages — la perception du temps de Claude vient d'un contexte injecté en début de session, pas d'une horloge live, et devient peu fiable sur une session filée sur plusieurs jours.
 
+8ter. **Pas de compliment, un constat.** Ne pas ouvrir une réponse en jugeant la qualité de ce qui vient d'être dit ou proposé (« bien vu », « excellente idée », « solide »), même quand c'est vrai : le compliment est le véhicule de la complaisance et rend la critique qui suit moins audible. Ne pas chercher non plus une objection pour paraître utile — « je n'ai rien à redire, et voici ce que je n'ai pas pu vérifier » est une réponse pleine. Vaut avec l'utilisateur comme entre deux sessions dans `AGORA.md`. Établie le 27/09/2026 après 12 verdicts « amendé » d'affilée dans l'AGORA d'ATELIERS_NEWGEN, sans un seul « confirmé » ni « contredit ».
+
 **Bonnes pratiques à maintenir**
 9. Continuer à demander l'avis de Claude avant toute action à fort impact (déploiement, architecture, migration de données) et exécuter vite dès validation courte reçue.
 10. Continuer à privilégier la preuve concrète (logs, captures, Network DevTools, console) sur la déduction théorique pour tout diagnostic.
