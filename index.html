@@ -4411,7 +4411,7 @@ function renderModal(){
   if(S.modal==='rappel-overdue'){
     var ov=S.rappelOverdue||[];
     box.appendChild(header('⚠️ RDV en attente — sans réponse'));
-    box.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:12px;"},ov.length+' RDV sans réponse depuis plus de 3 jours'));
+    box.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:12px;"},ov.length+' RDV sans réponse depuis plus de '+(S.relanceDelai||3)+' jours'));
     var ovList=el('div',{style:"display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;"});
     ov.forEach(function(h){
       var row=el('div',{style:"background:oklch(0.96 0.04 25);border:1px solid oklch(0.88 0.08 25);border-radius:10px;padding:10px 12px;"});
