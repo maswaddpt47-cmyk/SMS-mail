@@ -1965,17 +1965,24 @@ function renderStats(){
     var countWeek=S.history.filter(function(h){return h.date&&h.date>=weekStartStr&&h.date<=weekEndStr&&isCountedRdv(h);}).length;
     var countMonth=S.history.filter(function(h){return h.date&&h.date.substring(0,7)===monthStr&&isCountedRdv(h);}).length;
     /* taux d'occupation sur 30 jours */
-    var occStr='—';
+    var occStr='—',occJours=0;
     if(S.permanences&&S.permanences.length){
       var occEnd=toDateStr(new Date(now.getTime()+30*86400000));
       var totalSlots=0,takenSlots=0;
+      var occJoursSet={};
       S.permanences.filter(function(p){return p.exceptDate&&!p.archived&&p.exceptDate>=todayStr&&p.exceptDate<=occEnd;}).forEach(function(p){
         var sls=getSlots(p.commune,p.exceptDate);
         totalSlots+=sls.length;
         takenSlots+=sls.filter(function(sl){return sl.taken&&!sl.freeAgain;}).length;
+        occJoursSet[p.exceptDate+'|'+p.commune]=1;
       });
+      occJours=Object.keys(occJoursSet).length;
       if(totalSlots>0)occStr=Math.round(takenSlots/totalSlots*100)+'%';
     }
+    /* le taux ne compte que les journées réellement ouvertes (pas toute une grille hebdomadaire
+       comme avant) : un taux élevé sur très peu de jours ouverts peut donner une fausse impression
+       de charge — le nombre de jours sert de contexte, décision utilisateur du 27/09/2026 */
+    var occSub=occJours?(occJours+' jour'+(occJours>1?'s':'')+' ouvert'+(occJours>1?'s':'')):'';
     var kpiStyle="background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px 16px;box-shadow:0 1px 3px oklch(0.5 0.05 264 / .06);text-align:center;";
     var kpiNumStyle="font-size:32px;font-weight:900;color:oklch(0.45 0.18 266);line-height:1.1;margin-bottom:6px;";
     var kpiLblStyle="font-size:12px;font-weight:700;color:var(--c-muted);letter-spacing:.04em;text-transform:uppercase;";
@@ -2005,7 +2012,7 @@ function renderStats(){
       S._statListCtx={title:'🐇 Lapin — usagers ne s\'étant pas présentés',items:groupByUsager(S.history.filter(function(h){return h.statut==='lapin';}))};
       S.modal='stat-list';renderModal();
     }
-    [[countToday,"RDV aujourd'hui",null,null,null],[countWeek,"RDV cette semaine",null,null,null],[countMonth,"RDV ce mois",null,null,null],[occStr,"Taux d'occupation (30j)",null,"Créneaux pris / créneaux totaux sur les 30 prochains jours. Indique la charge à venir dans votre agenda.",null],[concretStr,"Taux de concrétisation",'oklch(0.38 0.14 155)',"% de RDV passés marqués Réalisé. Calculé uniquement sur les RDV dont la date est déjà passée.",null],[lapinStr,"Taux de lapin 🐇",'oklch(0.45 0.18 45)',"% de RDV passés où l'usager ne s'est pas présenté (statut Lapin). Calculé sur les RDV dont la date est déjà passée.",openLapinList]].forEach(function(kpi){
+    [[countToday,"RDV aujourd'hui",null,null,null],[countWeek,"RDV cette semaine",null,null,null],[countMonth,"RDV ce mois",null,null,null],[occStr,"Taux d'occupation (30j)",null,"Créneaux pris / créneaux totaux sur les journées ouvertes des 30 prochains jours. Indique la charge à venir dans votre agenda.",null,occSub],[concretStr,"Taux de concrétisation",'oklch(0.38 0.14 155)',"% de RDV passés marqués Réalisé. Calculé uniquement sur les RDV dont la date est déjà passée.",null],[lapinStr,"Taux de lapin 🐇",'oklch(0.45 0.18 45)',"% de RDV passés où l'usager ne s'est pas présenté (statut Lapin). Calculé sur les RDV dont la date est déjà passée.",openLapinList]].forEach(function(kpi){
       var tile=el('div',{style:kpiStyle+(kpi[4]?'cursor:pointer;':'')});
       if(kpi[4])tile.addEventListener('click',kpi[4]);
       tile.appendChild(el('div',{style:kpiNumStyle.replace('oklch(0.45 0.18 266)',kpi[2]||'oklch(0.45 0.18 266)')},String(kpi[0])));
@@ -2013,6 +2020,7 @@ function renderStats(){
       lblRow.appendChild(el('span',{style:kpiLblStyle},kpi[1]));
       if(kpi[3])lblRow.appendChild(el('span',{title:kpi[3],style:"cursor:help;font-size:11px;color:var(--c-muted);"},'ℹ️'));
       tile.appendChild(lblRow);
+      if(kpi[5])tile.appendChild(el('div',{style:"font-size:10.5px;color:var(--c-muted);margin-top:3px;"},kpi[5]));
       grid.appendChild(tile);
     });
     dashboard.appendChild(grid);
@@ -3577,7 +3585,14 @@ function renderConfig(){
     pf.appendChild(el('div',{style:"font-weight:700;font-size:14px;margin-bottom:6px;"},"Ouvrir une journée à l'avance"));
     pf.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:13px;line-height:1.5;"},"Pas indispensable : le premier RDV enregistré sur une commune/date ouvre automatiquement la journée. Utile seulement pour bloquer des créneaux avant toute prise de RDV."));
     var pg=el('div',{style:"display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;"});
-    var pComm=el('input',{class:'gx-in',placeholder:"Marmande",style:INPUT,onInput:function(e){S.np.commune=e.target.value;}});pComm.value=S.np.commune;pg.appendChild(pComm);
+    /* commune en liste déroulante (comme dans Générer) plutôt qu'en texte libre : une faute de
+       frappe ici crée une journée sous un nom légèrement différent, invisible depuis Générer et
+       jamais retrouvée — risque réel avec le modèle « à la volée » (tout dépend de l'égalité
+       exacte de la chaîne commune), qu'un champ texte n'avait pas avec l'ancien modèle. */
+    var pComm=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;",onChange:function(e){S.np.commune=e.target.value;}});
+    pComm.appendChild(el('option',{value:"",selected:S.np.commune===""},"— Sélectionner un CMS —"));
+    selectOpts(pComm,S.secteurs.map(function(x){return{value:x,label:x};}),S.np.commune);
+    pg.appendChild(pComm);
     var pDate=el('input',{class:'gx-in',type:"date",style:INPUT,value:S.np.date,onChange:function(e){S.np.date=e.target.value;}});pg.appendChild(pDate);
     pf.appendChild(pg);
     pf.appendChild(el('button',{class:'gx-press',style:BTNP,onClick:addPerm},"+ Ouvrir"));
