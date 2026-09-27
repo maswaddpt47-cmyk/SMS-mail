@@ -31,6 +31,31 @@ AG-00N, tu es la session B »), l'autre session répond, l'utilisateur tranche.
 **Aucune notification ne passe d'un compte à l'autre** : le relais par
 l'utilisateur est obligatoire, et c'est pour ça que l'AGORA ne bloque jamais.
 
+## Sincérité — trois contraintes contre la politesse
+
+Sur ATELIERS_NEWGEN, 12 blocs tranchés d'affilée ont reçu « amendé », aucun
+« confirmé » ni « contredit » (27/09/2026). Un contradicteur qui n'emploie
+jamais les deux autres verdicts a cessé de contredire : il rend un service de
+politesse qui donne une fausse garantie.
+
+1. **« Amendé » n'est valable que s'il nomme ce qui serait faux, manquant ou
+   coûteux si la proposition était appliquée telle quelle.** Un amendement qui
+   ne change ni le code, ni une décision, ni un chiffre n'est pas un
+   amendement : le verdict est **« confirmé »**.
+2. **« Confirmé » est une réponse pleine et utile**, pas un aveu d'inutilité :
+   elle libère l'auteur pour agir. Ne jamais chercher un amendement pour
+   justifier sa présence.
+3. **Aucune appréciation de la proposition ni de son auteur** — ni compliment,
+   ni « bien vu ». Une réponse commence par un constat : le compliment est le
+   véhicule de la complaisance.
+
+Porter le **verdict** de chaque bloc tranché et le total des trois issues sous
+« Blocs tranchés » : le biais se voit au lieu d'être deviné. **Le total est une
+alerte, pas un objectif** : ne jamais rendre « confirmé » pour casser une
+série — le verdict découle de la contrainte 1 appliquée au bloc. Une série se
+juge en relisant ce que chaque « amendé » a changé (code, décision, chiffre) ;
+celui qui n'a rien changé était un « confirmé ».
+
 ## Gabarit
 
 ```markdown
@@ -65,6 +90,8 @@ récit reste dans `git log`.
 Aucun.
 
 # Blocs tranchés
+
+**Total au 27/09/2026 : 1 amendé, 0 confirmé, 0 contredit.**
 
 - **AG-001** — Permanences : grille hebdomadaire → calendrier « à la volée ».
   Ouvert le 27/09/2026, **tranché le 27/09/2026 : amendé.** Le modèle
