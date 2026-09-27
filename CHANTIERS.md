@@ -9,15 +9,8 @@ ne doit pas être défait remonte dans la dernière section.
 
 ## Décisions à trancher
 
-- **Taux d'occupation (30j et 90j), sujet ouvert par AGORA AG-001 (tranché
-  le 27/09/2026, ce point reste à part).** Avec le calendrier « à la volée »,
-  les deux calculs ne comptent plus que les journées réellement ouvertes
-  (au moins un RDV/blocage), alors qu'avant ils comptaient toute la grille
-  hebdomadaire — y compris les jours jamais utilisés, qui tiraient le taux
-  vers le bas. Le chiffre n'est donc plus comparable à celui d'avant la
-  refonte, dans le sens d'une hausse. Pas d'AGORA nécessaire pour ce point :
-  c'est une définition métier comme celles du 27/09/2026 ci-dessous, à
-  trancher par l'utilisateur, pas un choix technique.
+Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
+`AGORA.md` ou non, et pourquoi.
 
 ## Chantiers restants (par priorité)
 
@@ -85,6 +78,12 @@ ne doit pas être défait remonte dans la dernière section.
   disparaître les créneaux du matin). `getSlots()` a en plus un filet de
   sécurité (`start=Math.min(start,09:00)`), mais ne pas en dépendre pour
   réintroduire cette écriture ailleurs.
+- **Taux d'occupation (30j et 90j), tranché par l'utilisateur le
+  27/09/2026** : ne compte que les journées réellement ouvertes (au moins
+  un RDV/blocage), pas toute la grille hebdomadaire y compris les jours
+  jamais utilisés — reflète l'occupation des jours effectivement
+  travaillés. C'est déjà le comportement du calendrier « à la volée »,
+  aucun changement de code n'était nécessaire.
 - **Définitions des stats, tranchées par l'utilisateur le 27/09/2026**,
   identiques dans les deux apps (live et `computeYearArchive`) : taux de
   concrétisation et de lapin = ÷ RDV dont la date est passée, hors créneaux
