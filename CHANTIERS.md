@@ -1,6 +1,6 @@
 # CHANTIERS — SMS-mail
 
-État au **27/09/2026**, commit de référence `8517269` (`main`).
+État au **27/09/2026**, commit de référence `c911586` (`main`).
 
 Carnet de reprise : ce qu'une session sans historique doit savoir pour
 continuer. Mis à jour à chaque avancée, pas en fin de session. Une tâche
@@ -65,6 +65,15 @@ ne doit pas être défait remonte dans la dernière section.
 - **Migrations localStorage** : une migration non testée a déjà réduit 11 CMS
   à 6 sur sms-mail-multi. Toute migration/fusion de données délicate mérite
   un test ciblé avant commit.
+- **Rétention des sauvegardes GitHub portée à 30 jours** (`GH_BACKUP_RETENTION_JOURS`,
+  27/09/2026 — demande utilisateur : « au moins 14 jours, ou plus, le
+  maximum », 30 j retenu comme compromis avec la minimisation RGPD déjà
+  pratiquée ailleurs). `ghCleanOldBackups()` garde toujours la plus récente
+  quel que soit son âge, supprime le reste au-delà du seuil, et affiche
+  désormais un toast si une suppression échoue (avant : silencieux —
+  `backup-2026-09-18-0709.json` a survécu 9 jours/14 nettoyages sans que
+  rien ne le signale, cause non identifiée). Si le toast d'échec réapparaît,
+  c'est le prochain point à creuser (sha stale, permissions du token…).
 - **Portage entre jumeaux** : les derniers portages (PR #44 à #50 de SMS-mail,
   #88 à #94 de sms-mail-multi, branche `sms-mail-to-multi-port`) vont de
   SMS-mail vers sms-mail-multi. Quand un sujet est contesté entre les deux,
