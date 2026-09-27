@@ -398,7 +398,7 @@ function ghNowFile(){
   return GH_BACKUP_DIR+'/backup-'+d+'-'+h+'.json';
 }
 
-/* pousse un fichier daté, puis nettoie les anciens (garde GH_MAX_VERSIONS) */
+/* pousse un fichier daté, puis nettoie les anciens (garde GH_BACKUP_RETENTION_JOURS) */
 function githubPush(silent,onSuccess){
   var token=ghToken();
   if(!token){if(!silent)showToast('⚠️ Token GitHub manquant — ajoutez-le dans Configuration','warn');return;}
@@ -440,6 +440,10 @@ function ghRestoreLatest(token,onSuccess){
   });
 }
 
+/* rétention : au moins 30 jours de sauvegardes conservées (demandé par l'utilisateur le
+   27/09/2026 : « au moins 14 jours ou plus, le maximum » — 30 j retenu comme compromis avec
+   la minimisation RGPD des données déjà appliquée ailleurs dans l'app ; à ajuster si besoin). */
+var GH_BACKUP_RETENTION_JOURS=30;
 function ghCleanOldBackups(token){
   fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+GH_BACKUP_DIR+'?ref='+GH_BRANCH,{headers:ghHeaders(token)})
     .then(function(r){return r.ok?r.json():[];})
@@ -447,7 +451,7 @@ function ghCleanOldBackups(token){
       if(!Array.isArray(files))return;
       var backups=files.filter(function(f){return f.name.match(/^backup-\d{4}-\d{2}-\d{2}-\d{4}\.json$|^backup-\d{4}-\d{2}-\d{2}\.json$/);});
       backups.sort(function(a,b){return b.name.localeCompare(a.name);}); /* du plus récent au plus ancien */
-      var cutoff=Date.now()-48*3600*1000;
+      var cutoff=Date.now()-GH_BACKUP_RETENTION_JOURS*24*3600*1000;
       var toDelete=backups.slice(1).filter(function(f){ /* toujours garder le plus récent [0] */
         var m=f.name.match(/backup-(\d{4})-(\d{2})-(\d{2})(?:-(\d{2})(\d{2}))?\.json/);
         if(!m)return false;
@@ -457,13 +461,22 @@ function ghCleanOldBackups(token){
       /* suppressions en séquentiel (pas en parallèle) — un lot de deletes simultanés déclenche
          le rate-limit secondaire de GitHub sur les écritures rapprochées, ce qui les faisait
          échouer silencieusement et laissait les sauvegardes s'accumuler indéfiniment */
+      var failed=[];
       return toDelete.reduce(function(chain,f){
         return chain.then(function(){
-          return fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+f.path,{method:'DELETE',headers:ghHeaders(token),body:JSON.stringify({message:'backup: nettoyage >48h',sha:f.sha,branch:GH_BRANCH})})
-            .then(function(r){if(!r.ok)console.warn('ghCleanOldBackups: échec suppression '+f.path+' ('+r.status+')');})
-            .catch(function(e){console.warn('ghCleanOldBackups: erreur réseau suppression '+f.path,e);});
+          return fetch('https://api.github.com/repos/'+GH_REPO+'/contents/'+f.path,{method:'DELETE',headers:ghHeaders(token),body:JSON.stringify({message:'backup: nettoyage >'+GH_BACKUP_RETENTION_JOURS+'j',sha:f.sha,branch:GH_BRANCH})})
+            .then(function(r){if(!r.ok){console.warn('ghCleanOldBackups: échec suppression '+f.path+' ('+r.status+')');failed.push(f.name+' ('+r.status+')');}})
+            .catch(function(e){console.warn('ghCleanOldBackups: erreur réseau suppression '+f.path,e);failed.push(f.name+' (réseau)');});
         });
-      },Promise.resolve());
+      },Promise.resolve()).then(function(){
+        /* signalé une fois, pas à chaque sauvegarde silencieuse suivante — sinon ça reviendrait
+           en boucle tant que le blocage n'est pas résolu côté GitHub (cause déjà vue : suppression
+           qui échoue silencieusement sur un fichier précis pendant des jours sans qu'on le sache) */
+        if(failed.length&&localStorage.getItem('ess-gh-clean-fail-seen')!==failed.join(',')){
+          localStorage.setItem('ess-gh-clean-fail-seen',failed.join(','));
+          showToast('⚠️ Nettoyage des sauvegardes : '+failed.length+' suppression(s) ont échoué ('+failed[0]+(failed.length>1?'…':'')+')','warn');
+        }
+      });
     }).catch(function(e){console.warn('ghCleanOldBackups: échec listing',e);});
 }
 
