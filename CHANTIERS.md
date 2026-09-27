@@ -58,6 +58,12 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
 - **Migrations localStorage** : une migration non testée a déjà réduit 11 CMS
   à 6 sur sms-mail-multi. Toute migration/fusion de données délicate mérite
   un test ciblé avant commit.
+- **La commune de « Ouvrir une journée » (Config → Journées) est une liste
+  déroulante, pas un champ texte** (27/09/2026) : avec le modèle « à la
+  volée », une faute de frappe y créerait une journée invisible depuis
+  Générer (tout dépend de l'égalité exacte de la chaîne commune). Le champ
+  d'édition d'une journée existante reste en texte libre — une valeur
+  migrée depuis l'historique peut ne pas être dans `S.secteurs`.
 - **Rétention des sauvegardes GitHub portée à 30 jours** (`GH_BACKUP_RETENTION_JOURS`,
   27/09/2026 — demande utilisateur : « au moins 14 jours, ou plus, le
   maximum », 30 j retenu comme compromis avec la minimisation RGPD déjà
