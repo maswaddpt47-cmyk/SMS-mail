@@ -1205,7 +1205,7 @@ function renderGenerate(){
   updateLapinHint();
   var btnS="cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);font-weight:600;font-size:12px;padding:8px 10px;border-radius:10px;white-space:nowrap;flex-shrink:0;";
   telRow.appendChild(el('button',{class:'gx-press',title:"Formater le numéro",style:btnS,onClick:function(){applyTelFormat(telIn.value);showToast("✓ Numéro formaté");}},"# Fmt"));
-  telRow.appendChild(el('button',{class:'gx-press',title:"Copier le numéro",style:btnS,onClick:function(){if(!S.telephone)return;navigator.clipboard.writeText(S.telephone);showToast("✓ Numéro copié");}},"📋"));
+  telRow.appendChild(el('button',{class:'gx-press',title:"Copier le numéro",style:btnS,onClick:function(){if(!S.telephone)return;doCopy(S.telephone).then(function(ok){if(ok)showToast("✓ Numéro copié");});}},"📋"));
   telRow.appendChild(el('button',{class:'gx-press',title:"Ouvrir WhatsApp",style:btnS,onClick:function(){if(!S.telephone)return;var num=S.telephone.replace(/\D/g,'').replace(/^0/,'33');window.open('https://wa.me/'+num,'_blank');}},"💬 WA"));
   telRow.appendChild(el('a',{class:'gx-press',title:"Appeler",href:"#",style:btnS+"text-decoration:none;",onClick:function(e){e.preventDefault();if(!S.telephone)return;window.location.href='tel:'+S.telephone.replace(/\s/g,'');}},"📞"));
   tel.appendChild(telRow);
@@ -1658,7 +1658,7 @@ function renderHistoryList(){
       if(lastDem)grpHead.appendChild(el('span',{style:"font-size:11px;color:var(--c-dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"},lastDem));
       if(tel){
         var telSpan=el('span',{style:"font-size:11px;font-weight:700;color:oklch(0.42 0.12 266);cursor:pointer;white-space:nowrap;",title:'Copier le téléphone'},tel);
-        telSpan.addEventListener('click',function(e){e.stopPropagation();navigator.clipboard.writeText(tel).then(function(){showToast('📋 '+tel+' copié');});});
+        telSpan.addEventListener('click',function(e){e.stopPropagation();doCopy(tel).then(function(ok){if(ok)showToast('📋 '+tel+' copié');});});
         grpHead.appendChild(telSpan);
       }
       grpWrap.appendChild(grpHead);
