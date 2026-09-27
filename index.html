@@ -773,9 +773,9 @@ function restoreAllBuiltin(){S.hiddenBuiltinKeys=[];persist();renderTemplates();
 function duplicateBuiltin(k){
   if(k.indexOf("sujet")>=0){showToast("Les objets mail ne peuvent pas être dupliqués seuls","warn");return;}
   var canal=k.indexOf("sms")===0?"sms":"mail";
-  var type=["proposition","confirmation","sans_appel"].find(function(t){return k.indexOf(t)>=0;})||"proposition";
+  var type=["proposition","confirmation","sans_appel","relance"].find(function(t){return k.indexOf(t)>=0;})||"proposition";
   var body=S.templates[k]||DEFAULT_TEMPLATES[k]||"";
-  var sk={proposition:"mail_proposition_sujet",confirmation:"mail_confirmation_sujet",sans_appel:"mail_sans_appel_sujet"};
+  var sk={proposition:"mail_proposition_sujet",confirmation:"mail_confirmation_sujet",sans_appel:"mail_sans_appel_sujet",relance:"mail_relance_sujet"};
   var sujet=canal==="mail"?(S.templates[sk[type]]||DEFAULT_TEMPLATES[sk[type]]||""):"";
   S.customTemplates=S.customTemplates.concat([{id:Date.now(),nom:LABELS[k]+" (copie)",canal:canal,type:type,sujet:sujet,body:body}]);
   persist();renderTemplates();showToast("Dupliqué vers Mes modèles");
