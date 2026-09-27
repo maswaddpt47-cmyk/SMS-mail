@@ -332,10 +332,7 @@ var LABELS={
 };
 var HISTORY_MAX=99999;
 
-var DEFAULT_PERMANENCES=[
-  {id:1,commune:'Marmande',jour:4,debut:'09:00',fin:'15:00',duree:30},
-  {id:2,commune:'Fumel',jour:5,debut:'09:00',fin:'15:00',duree:30}
-];
+var DEFAULT_PERMANENCES=[];
 var JOURS_FR=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
 
 var STRUCTURE="Conseil Départemental du Lot-et-Garonne";
@@ -350,7 +347,7 @@ var S={
   activeTab:"generate", subTab:"builtin", configTab:"cms", historyFilter:"all", historySearch:"", historyGrouped:false, historyDateFrom:"", historyDateTo:"",
   statsCMS:"", statsYear:"live", calendarType:"google",
   cmsList:[], demarches:[], secteurs:[], templates:{}, customTemplates:[], customVars:[], hiddenBuiltinKeys:[], history:[], yearlyStats:{}, mandats:[], favDemarches:[], permanences:[], collapsedThemes:[], orientations:[], orientSearch:"", orientFilter:"all", orientAddOpen:false, orientNew:null,
-  editPerm:null, np:{commune:'',jour:4,debut:'09:00',fin:'15:00',duree:30}, agendaRdv:null, _ghNewerBackup:null,
+  editPerm:null, np:{commune:'',date:''}, agFocusDate:null, agShowArchived:false, agendaRdv:null, _ghNewerBackup:null,
   saveStatus:"Données chargées",
   modal:null, histItem:null,
   editBuiltin:null, editBuiltinText:"",
@@ -700,11 +697,12 @@ function addHistory(item){
     var di=S.history.findIndex(function(h){
       return h.date===item.date&&h.heure===item.heure&&h.commune===item.commune&&(h.nom||'').toLowerCase()===(item.nom||'').toLowerCase()&&(h.prenom||'').toLowerCase()===(item.prenom||'').toLowerCase();
     });
-    if(di!==-1){var merged=Object.assign({},S.history[di],item);if(merged.body&&(!merged.statut||merged.statut==='libre'))merged.statut='en_attente';S.history.splice(di,1,merged);lsSet('ess-history',S.history);return;}
+    if(di!==-1){var merged=Object.assign({},S.history[di],item);if(merged.body&&(!merged.statut||merged.statut==='libre'))merged.statut='en_attente';S.history.splice(di,1,merged);lsSet('ess-history',S.history);ensureDayOpen(item.commune,item.date,item.heure);return;}
   }
   if(item.body&&!item.statut)item.statut='en_attente';
   var h=[item].concat(S.history);if(h.length>HISTORY_MAX)h.pop();
   S.history=h;lsSet('ess-history',h);
+  ensureDayOpen(item.commune,item.date,item.heure);
   /* auto-backup GitHub immédiat après chaque nouveau RDV (throttlé 2 min) */
   if(ghToken()){var nowMs=Date.now();if(nowMs-_ghLastAutoPush>120000){_ghLastAutoPush=nowMs;githubPush(true);}}
   /* Rappel export tous les 5 messages */
@@ -821,28 +819,44 @@ function saveDem(id){var nom=(S.editDem&&S.editDem.nom)||"";var docs=(S.editDem&
 
 /* permanences */
 function toLocalDateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+var PERM_MODEL_VERSION='v2-jours-a-la-volee';
+/* migration : les permanences hebdomadaires (jour fixe, sans exceptDate) sont remplacées par des
+   journées ouvertes à la volée (même mécanisme que les anciens "jours exceptionnels") — reconstruire
+   une journée par (commune,date) réellement présente dans l'historique, pour qu'aucun RDV existant
+   ne disparaisse de l'agenda ; les anciennes permanences hebdomadaires sont abandonnées (un jour de
+   semaine fixe n'a plus de sens dans ce modèle). Non destructif : n'écrit jamais dans l'historique.
+   Appelée au démarrage (init) et à l'import d'une sauvegarde qui contiendrait encore l'ancien format. */
+function migratePermanences(perms,history){
+  var kept=(perms||[]).filter(function(p){return p.exceptDate;});
+  var byKey={};kept.forEach(function(p){byKey[p.commune+'|'+p.exceptDate]=true;});
+  (history||[]).forEach(function(h){
+    if(!h.date||!h.commune)return;
+    var key=h.commune+'|'+h.date;
+    if(byKey[key])return;
+    byKey[key]=true;
+    kept.push({id:Date.now()+Math.random(),commune:h.commune,exceptDate:h.date,debut:h.heure||'09:00',fin:h.heure||'16:30'});
+  });
+  return kept;
+}
 function getPermanence(commune,dateStr){
-  /* cherche d'abord un jour exceptionnel pour cette date, sinon la permanence régulière */
-  if(dateStr){
-    var exc=S.permanences.find(function(p){return p.commune===commune&&p.exceptDate===dateStr;});
-    if(exc)return exc;
-  }
-  var reg=S.permanences.find(function(p){return p.commune===commune&&!p.exceptDate;});
-  if(!reg)return null;
-  /* vérifier que la date correspond bien au jour de la semaine de la permanence */
-  if(dateStr){var dow=new Date(dateStr+'T12:00:00').getDay();if(dow!==reg.jour)return null;}
-  return reg;
+  /* une journée = une entrée (commune,date) ouverte à la volée, exactement comme les
+     anciens "jours exceptionnels" — plus de permanence hebdomadaire récurrente */
+  if(!dateStr)return null;
+  return S.permanences.find(function(p){return p.commune===commune&&p.exceptDate===dateStr;})||null;
 }
 function isInMyAgenda(h){
-  /* vrai si le RDV tombe sur une permanence configurée (régulière ou exceptionnelle) */
+  /* vrai si le RDV tombe sur une journée ouverte (commune+date exacts) */
   if(!h.date||!h.commune)return false;
-  var d=new Date(h.date+'T12:00:00');if(isNaN(d.getTime()))return false;
-  var dow=d.getDay();
-  return S.permanences.some(function(p){
-    if(p.commune!==h.commune)return false;
-    if(p.exceptDate)return p.exceptDate===h.date;
-    return p.jour===dow;
-  });
+  return S.permanences.some(function(p){return p.commune===h.commune&&p.exceptDate===h.date;});
+}
+/* ouvre une journée à la volée si elle n'existe pas encore — appelé à chaque RDV/indispo
+   enregistré (addHistory, blockSlot) et par l'ouverture manuelle (addPerm). Non destructif :
+   si la journée existe déjà, ne touche pas ses horaires. */
+function ensureDayOpen(commune,dateStr,heure){
+  if(!commune||!dateStr)return;
+  if(S.permanences.some(function(p){return p.commune===commune&&p.exceptDate===dateStr;}))return;
+  S.permanences=S.permanences.concat([{id:Date.now()+Math.random(),commune:commune,exceptDate:dateStr,debut:heure||'09:00',fin:heure||'16:30'}]);
+  lsSet('ess-permanences',S.permanences);
 }
 /* RDV en attente depuis plus de S.relanceDelai jours sans relance envoyée —
    formule centralisée ici pour éviter que les points d'affichage divergent entre eux */
@@ -851,23 +865,18 @@ function isDepasse(h){
   var now=new Date();var today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   return Math.round((new Date(today+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>(S.relanceDelai||3);
 }
-function nextPermDate(perm){
-  var d=new Date();
-  var diff=(perm.jour-d.getDay()+7)%7||7;
-  d.setDate(d.getDate()+diff);
-  return toLocalDateStr(d);
-}
-function isPermDay(perm,dateStr){
-  if(!dateStr||!perm)return false;
-  /* parse avec T12:00 pour éviter le décalage UTC */
-  return new Date(dateStr+'T12:00:00').getDay()===perm.jour;
-}
+var DUREE_CRENEAU=60; /* durée fixe des créneaux, quelle que soit la commune */
+var FIN_AFFICHAGE_DEFAUT=16*60+30; /* on continue de proposer des créneaux libres jusqu'à 16h30 même après le dernier RDV du jour */
 function getSlots(commune,dateStr,permOverride){
-  var perm=permOverride||getPermanence(commune,dateStr);if(!perm)return[];
+  /* journée pas encore ouverte : grille par défaut (09:00-16:30) pour pouvoir quand même
+     proposer un premier créneau — la journée n'est réellement ouverte/persistée qu'à
+     l'enregistrement du RDV (ensureDayOpen), pas au simple affichage du picker */
+  var perm=permOverride||getPermanence(commune,dateStr)||{debut:'09:00',fin:String(Math.floor(FIN_AFFICHAGE_DEFAUT/60)).padStart(2,'0')+':30'};
   var sh=parseInt(perm.debut),sm=parseInt(perm.debut.split(':')[1]||0);
   var eh=parseInt(perm.fin),em=parseInt(perm.fin.split(':')[1]||0);
-  var start=sh*60+sm,end=eh*60+em;
-  /* inclure aussi les RDV hors plage horaire */
+  var start=sh*60+sm,end=Math.max(eh*60+em,FIN_AFFICHAGE_DEFAUT);
+  /* inclure aussi les RDV hors plage horaire — y compris une heure choisie « à la main »
+     hors grille standard (ex: 9h15) */
   var extraHeures=S.history.filter(function(x){return x.date===dateStr&&(x.commune===commune||!x.commune);}).map(function(x){return x.heure;});
   extraHeures.forEach(function(h){var p=h.split(':');var t=parseInt(p[0])*60+parseInt(p[1]||0);if(t<start)start=t;if(t>end)end=t;});
   var slots=[];
@@ -891,7 +900,7 @@ function getSlots(commune,dateStr,permOverride){
     var replaced=matches.filter(function(x){return x!==taken&&FREE_AGAIN_STATUTS.indexOf(x.statut)!==-1;});
     slots.push({heure:heure,taken:taken||null,freeAgain:!!freeAgain,multiPropo:multiPropo,allPropo:propositions,replaced:replaced});
   }
-  for(var t=start;t<=end;t+=perm.duree){
+  for(var t=start;t<=end;t+=DUREE_CRENEAU){
     var hh=String(Math.floor(t/60)).padStart(2,'0'),mm=String(t%60).padStart(2,'0');
     buildSlot(hh+':'+mm);
   }
@@ -907,6 +916,7 @@ function hasConflict(date,heure,commune){
 /* bloque un créneau libre pour indisponibilité (pas un usager) */
 function blockSlot(commune,dateStr,heure,motif){
   if(hasConflict(dateStr,heure,commune))return;
+  ensureDayOpen(commune,dateStr,heure);
   S.history.push({channel:'sms',msgType:'indispo',commune:commune,date:dateStr,heure:heure,nom:motif||'Indisponible',ts:new Date().toLocaleString('fr-FR')});
   lsSet('ess-history',S.history);
 }
@@ -921,18 +931,39 @@ function blockWholeDay(commune,dateStr,slots,motif){
   slots.forEach(function(s){if(!s.taken)blockSlot(commune,dateStr,s.heure,motif);});
 }
 function addPerm(){
+  /* ouvre une journée à l'avance, sans attendre le premier RDV — utile pour bloquer des
+     créneaux avant toute prise de rendez-vous */
   var np=S.np;
-  if(!np.commune.trim())return;
-  if(S.permanences.find(function(p){return p.commune===np.commune&&!p.exceptDate;})){showToast('⚠️ Permanence déjà définie pour '+np.commune,'warn');return;}
-  S.permanences=S.permanences.concat([{id:Date.now(),commune:np.commune.trim(),jour:parseInt(np.jour),debut:np.debut,fin:np.fin,duree:parseInt(np.duree)}]);
-  S.np={commune:'',jour:4,debut:'09:00',fin:'15:00',duree:30};
-  lsSet('ess-permanences',S.permanences);renderConfig();showToast('✓ Permanence ajoutée');
+  if(!np.commune.trim()||!np.date)return;
+  if(S.permanences.find(function(p){return p.commune===np.commune.trim()&&p.exceptDate===np.date})){showToast('⚠️ Cette journée est déjà ouverte','warn');return;}
+  S.permanences=S.permanences.concat([{id:Date.now(),commune:np.commune.trim(),exceptDate:np.date,debut:'09:00',fin:'16:30'}]);
+  S.np={commune:'',date:''};
+  lsSet('ess-permanences',S.permanences);renderConfig();showToast('✓ Journée ouverte');
 }
 function deletePerm(id){S.permanences=S.permanences.filter(function(p){return p.id!==id;});lsSet('ess-permanences',S.permanences);renderConfig();}
 function savePerm(id){
-  var e=S.editPerm;if(!e||!e.commune.trim())return;
-  S.permanences=S.permanences.map(function(p){return p.id===id?{id:p.id,commune:e.commune.trim(),jour:parseInt(e.jour),debut:e.debut,fin:e.fin,duree:parseInt(e.duree)}:p;});
+  var e=S.editPerm;if(!e||!e.commune.trim()||!e.exceptDate)return;
+  S.permanences=S.permanences.map(function(p){return p.id===id?Object.assign({},p,{commune:e.commune.trim(),exceptDate:e.exceptDate,debut:e.debut,fin:e.fin}):p;});
   S.editPerm=null;lsSet('ess-permanences',S.permanences);renderConfig();
+}
+/* masque (sans supprimer) les journées passées depuis longtemps, pour garder l'agenda lisible
+   sans perdre l'historique ni les stats — n'archive jamais un jour qui a encore un RDV en
+   attente (il doit rester visible tant qu'il n'est pas traité) */
+function archiveOldDays(){
+  var cutoff=toLocalDateStr(new Date(Date.now()-60*86400000));
+  var n=0;
+  S.permanences=S.permanences.map(function(p){
+    if(p.archived||!p.exceptDate||p.exceptDate>=cutoff)return p;
+    var pending=S.history.some(function(h){return h.commune===p.commune&&h.date===p.exceptDate&&h.statut==='en_attente';});
+    if(pending)return p;
+    n++;return Object.assign({},p,{archived:true});
+  });
+  lsSet('ess-permanences',S.permanences);renderConfig();renderAgenda();
+  showToast(n?('✓ '+n+' journée'+(n>1?'s':'')+' archivée'+(n>1?'s':'')):'Aucune journée à archiver');
+}
+function unarchiveDay(id){
+  S.permanences=S.permanences.map(function(p){return p.id===id?Object.assign({},p,{archived:false}):p;});
+  lsSet('ess-permanences',S.permanences);renderConfig();
 }
 
 /* modals */
@@ -951,7 +982,7 @@ function doImport(){
     if(data.mandats){S.mandats=data.mandats;lsSet('ess-mandats',S.mandats);}
     if(data.history){S.history=data.history;lsSet('ess-history',S.history);}
     if(data.yearlyStats){S.yearlyStats=data.yearlyStats;lsSet('ess-yearly-stats',S.yearlyStats);}
-    if(data.permanences){S.permanences=data.permanences;lsSet('ess-permanences',S.permanences);}
+    if(data.permanences){S.permanences=migratePermanences(data.permanences,S.history);lsSet('ess-permanences',S.permanences);lsSet('ess-perm-version',PERM_MODEL_VERSION);}
     if(data.orientations){S.orientations=data.orientations;lsSet('ess-orientations',S.orientations);}
     S.modal=null;S.importText="";S.importError="";
     persist();regen();renderAll();showToast("✅ Import réussi !");
@@ -1217,52 +1248,18 @@ function renderGenerate(){
   var dd=el('div');
   var dateLabel=el('div',{style:"display:flex;align-items:center;gap:6px;margin-bottom:4px;"});
   dateLabel.appendChild(el('label',{style:"font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--c-muted);"},"Date RDV *"));
-  if(perm){
-    var nextD=nextPermDate(perm);
-    dateLabel.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid oklch(0.72 0.12 266);background:oklch(0.94 0.06 266);color:oklch(0.4 0.14 266);",onClick:function(){setFieldSave({date:nextD});}},"⟶ "+JOURS_FR[perm.jour]+" "+new Date(nextD+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})));
-  }
   dd.appendChild(dateLabel);
   dd.appendChild(el('input',{class:'gx-in',style:INPUT,type:"date",value:S.date,onChange:function(e){setFieldSave({date:e.target.value});}}));
-  if(S.date&&S.commune){
-    if(perm){
-      var agLink=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);margin-top:4px;",onClick:function(){S._agScrollTarget=S.date;S.activeTab='agenda';showActivePane();renderTabs();renderAgenda();}},"📅 Voir dans l'agenda");
-      dd.appendChild(agLink);
-    } else {
-      /* date hors permanence — proposer ajout exceptionnel */
-      var excBtn=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid oklch(0.72 0.12 38);background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);margin-top:4px;"});
-      excBtn.textContent='➕ Ajouter ce jour à l\'agenda';
-      (function(dateStr,commune){
-        excBtn.addEventListener('click',function(){
-          var d=new Date(dateStr+'T12:00:00');
-          var jour=d.getDay();
-          var existing=S.permanences.find(function(p){return p.commune===commune&&!p.exceptDate;});
-          if(!existing){
-            /* garde-fou : une permanence régulière existe peut-être pour cette commune mais avec une
-               orthographe légèrement différente (espace/tiret…) — avertir plutôt que de silencieusement
-               retomber sur des valeurs par défaut (09:00-15:00, 30 min) qui ne correspondent à rien */
-            var similar=S.permanences.find(function(p){return !p.exceptDate&&p.commune.trim().toLowerCase()===commune.trim().toLowerCase();});
-            if(similar&&!confirm('⚠️ Une permanence régulière existe pour "'+similar.commune+'" mais son orthographe ne correspond pas exactement à "'+commune+'".\n\nSans correction, ce jour exceptionnel sera créé avec des valeurs par défaut (09:00-15:00, 30 min) au lieu d\'hériter de "'+similar.commune+'" ('+similar.debut+'-'+similar.fin+', '+similar.duree+' min).\n\nCréer quand même avec les valeurs par défaut ?'))return;
-          }
-          var debut=existing?existing.debut:'09:00';
-          var fin=existing?existing.fin:'15:00';
-          var duree=existing?existing.duree:30;
-          S.permanences=S.permanences.concat([{id:Date.now(),commune:commune,jour:jour,debut:debut,fin:fin,duree:duree,exceptDate:dateStr}]);
-          lsSet('ess-permanences',S.permanences);
-          renderGenerate();
-          showToast('✅ Jour exceptionnel ajouté à l\'agenda');
-        });
-      })(S.date,S.commune);
-      dd.appendChild(excBtn);
-    }
+  if(S.date&&S.commune&&perm){
+    var agLink=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid oklch(0.72 0.12 155);background:oklch(0.94 0.06 155);color:oklch(0.38 0.12 155);margin-top:4px;",onClick:function(){S._agScrollTarget=S.date;S.activeTab='agenda';showActivePane();renderTabs();renderAgenda();}},"📅 Voir dans l'agenda");
+    dd.appendChild(agLink);
   }
   row2.appendChild(dd);
   var hh=el('div');hh.appendChild(el('label',{style:LABEL},"Heure *"));
-  /* pour le slot picker : utiliser la permanence régulière même si la date est hors jour habituel */
-  var permForSlots=perm||S.permanences.find(function(p){return p.commune===S.commune&&!p.exceptDate;});
-  if(permForSlots&&S.date&&S.commune){
-    /* slot picker visuel — permForSlots en override pour couvrir aussi les dates hors
-       jour habituel (le calcul reste basé sur l'historique réel : RDV et indispos) */
-    var slots=getSlots(S.commune,S.date,permForSlots)||[];
+  if(S.date&&S.commune){
+    /* la journée n'est pas forcément déjà ouverte : getSlots propose alors une grille par
+       défaut (09:00-16:30) — elle ne sera réellement créée qu'au moment d'enregistrer le RDV */
+    var slots=getSlots(S.commune,S.date)||[];
     var slotGrid=el('div',{style:"display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;"});
     slots.forEach(function(slot){
       var isSel=S.heure===slot.heure;
@@ -1953,18 +1950,13 @@ function renderStats(){
     /* taux d'occupation sur 30 jours */
     var occStr='—';
     if(S.permanences&&S.permanences.length){
+      var occEnd=toDateStr(new Date(now.getTime()+30*86400000));
       var totalSlots=0,takenSlots=0;
-      for(var di=0;di<30;di++){
-        var dd2=new Date(now);dd2.setDate(now.getDate()+di);
-        var ds=toDateStr(dd2);
-        S.permanences.forEach(function(p){
-          if(isPermDay(p,ds)){
-            var sls=getSlots(p.commune,ds);
-            totalSlots+=sls.length;
-            takenSlots+=sls.filter(function(sl){return sl.taken&&!sl.freeAgain;}).length;
-          }
-        });
-      }
+      S.permanences.filter(function(p){return p.exceptDate&&!p.archived&&p.exceptDate>=todayStr&&p.exceptDate<=occEnd;}).forEach(function(p){
+        var sls=getSlots(p.commune,p.exceptDate);
+        totalSlots+=sls.length;
+        takenSlots+=sls.filter(function(sl){return sl.taken&&!sl.freeAgain;}).length;
+      });
       if(totalSlots>0)occStr=Math.round(takenSlots/totalSlots*100)+'%';
     }
     var kpiStyle="background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px 16px;box-shadow:0 1px 3px oklch(0.5 0.05 264 / .06);text-align:center;";
@@ -2453,22 +2445,16 @@ function renderStats(){
     var now3=new Date();now3.setHours(0,0,0,0);
     function toDS(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
     /* analyser les 90 derniers jours */
-    var items=[];
-    S.permanences.filter(function(p){return !p.exceptDate;}).forEach(function(perm){
-      if(!S.statsCMS||perm.commune===S.statsCMS){
-        var total=0,taken=0;
-        for(var di=0;di<90;di++){
-          var d=new Date(now3);d.setDate(now3.getDate()-di);
-          if(d.getDay()===perm.jour){
-            var ds=toDS(d);
-            var slots=getSlots(perm.commune,ds);
-            total+=slots.length;
-            taken+=slots.filter(function(s){return s.taken&&!s.freeAgain;}).length;
-          }
-        }
-        if(total>0)items.push({label:perm.commune,pct:Math.round(taken/total*100),taken:taken,total:total});
-      }
+    var cutoffDS=toDS(new Date(now3.getTime()-90*86400000));var todayDS=toDS(now3);
+    var byCommune={};
+    S.permanences.filter(function(p){return p.exceptDate&&p.exceptDate>=cutoffDS&&p.exceptDate<=todayDS;}).forEach(function(perm){
+      if(S.statsCMS&&perm.commune!==S.statsCMS)return;
+      var slots=getSlots(perm.commune,perm.exceptDate);
+      if(!byCommune[perm.commune])byCommune[perm.commune]={total:0,taken:0};
+      byCommune[perm.commune].total+=slots.length;
+      byCommune[perm.commune].taken+=slots.filter(function(s){return s.taken&&!s.freeAgain;}).length;
     });
+    var items=Object.keys(byCommune).map(function(c){var v=byCommune[c];return{label:c,pct:v.total>0?Math.round(v.taken/v.total*100):0,taken:v.taken,total:v.total};}).filter(function(i){return i.total>0;});
     if(!items.length)return;
     items.sort(function(a,b){return b.pct-a.pct;});
     var maxPct=Math.max.apply(null,items.map(function(i){return i.pct;}));
@@ -2725,50 +2711,40 @@ function renderAgenda(){
     wrap.appendChild(banner);
   })();
 
+  var today=new Date();today.setHours(0,0,0,0);
+  var todayStr=toLocalDateStr(today);
   if(S.permanences.length===0){
-    wrap.appendChild(el('div',{style:"text-align:center;padding:60px 20px;color:var(--c-muted);font-size:14px;"},"Aucune permanence configurée — ajoutez-en dans Configuration → Permanences."));
+    wrap.appendChild(el('div',{style:"text-align:center;padding:60px 20px;color:var(--c-muted);font-size:14px;"},"Aucune journée ouverte — elle s'ouvre automatiquement avec votre premier RDV depuis l'onglet Générer, ou à l'avance depuis Configuration → Journées."));
     pane.appendChild(wrap);return;
   }
 
-  /* 8 semaines passées + 12 semaines futures */
-  var today=new Date();today.setHours(0,0,0,0);
-  var todayStr=toLocalDateStr(today);
+  /* calendrier « à la volée » : chaque journée est une entrée explicite (commune+date), pas
+     une génération hebdomadaire — on liste donc simplement toutes les journées ouvertes,
+     sans fenêtre de semaines à choisir, l'archivage manuel s'occupe de garder ça lisible */
   var days=[];
-  /* permanences régulières (sans exceptDate) */
-  var regularPerms=S.permanences.filter(function(p){return !p.exceptDate;});
-  for(var w=-8;w<13;w++){
-    regularPerms.forEach(function(perm){
-      var base=new Date(today);base.setDate(base.getDate()+w*7);
-      var baseDay=base.getDay();
-      var fwd=(perm.jour-baseDay+7)%7;
-      var target=new Date(base);target.setDate(base.getDate()+fwd);
-      var dateStr=toLocalDateStr(target);
-      if(!days.find(function(x){return x.dateStr===dateStr&&x.perm.commune===perm.commune;})){
-        days.push({dateStr:dateStr,perm:perm,date:target});
-      }
-    });
-  }
-  /* jours exceptionnels : afficher uniquement leur date spécifique */
+  var archivedCount=0;
   S.permanences.filter(function(p){return p.exceptDate;}).forEach(function(perm){
+    if(perm.archived){archivedCount++;if(!S.agShowArchived)return;}
     var d=new Date(perm.exceptDate+'T12:00:00');
-    if(!days.find(function(x){return x.dateStr===perm.exceptDate&&x.perm.commune===perm.commune;})){
-      days.push({dateStr:perm.exceptDate,perm:perm,date:d,exceptional:true});
-    }
+    days.push({dateStr:perm.exceptDate,perm:perm,date:d,exceptional:true,archived:!!perm.archived});
   });
-  /* orphelins : entrées history sans permanence correspondante dans la fenêtre agenda */
-  var _agMin=toLocalDateStr(new Date(today.getTime()-8*7*86400000));
-  var _agMax=toLocalDateStr(new Date(today.getTime()+13*7*86400000));
+  /* orphelins : sécurité si un RDV existe sans journée ouverte correspondante (ne devrait
+     plus arriver après la migration initiale, ensureDayOpen couvrant tous les nouveaux RDV) */
   S.history.forEach(function(h){
     if(!h.date||!h.commune)return;
-    if(h.date<_agMin||h.date>_agMax)return;
     if(days.find(function(x){return x.dateStr===h.date&&x.perm.commune===h.commune;}))return;
-    var regP=S.permanences.find(function(p){return p.commune===h.commune&&!p.exceptDate;});
-    var synP=regP||{commune:h.commune,debut:'09:00',fin:'12:00',duree:30,jour:new Date(h.date+'T12:00:00').getDay()};
+    var synP={commune:h.commune,exceptDate:h.date,debut:h.heure||'09:00',fin:h.heure||'16:30'};
     days.push({dateStr:h.date,perm:synP,date:new Date(h.date+'T12:00:00'),exceptional:true,orphan:true});
   });
   days.sort(function(a,b){return a.dateStr<b.dateStr?-1:a.dateStr>b.dateStr?1:0;});
-  /* supprimer les doublons éventuels */
   var seen={};days=days.filter(function(d){var k=d.dateStr+d.perm.commune;if(seen[k])return false;seen[k]=1;return true;});
+  if(archivedCount){
+    var archLine=el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:14px;"});
+    var archToggle=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:8px;"},S.agShowArchived?'Masquer les journées archivées':'Afficher les '+archivedCount+' journée'+(archivedCount>1?'s':'')+' archivée'+(archivedCount>1?'s':''));
+    archToggle.addEventListener('click',function(){S.agShowArchived=!S.agShowArchived;renderAgenda();});
+    archLine.appendChild(archToggle);
+    wrap.appendChild(archLine);
+  }
 
   /* --- barre de navigation rapide — injectée dans le header sticky --- */
   /* --- barre de navigation — sticky dans main (main est maintenant le scroll container) --- */
@@ -2920,9 +2896,11 @@ function renderAgenda(){
     dayHead.appendChild(el('div',{style:"font-weight:800;font-size:15px;"},dateLabel));
     dayHead.appendChild(el('div',{style:"font-weight:700;font-size:13px;color:var(--c-muted);"},day.perm.commune));
     if(isToday)dayHead.appendChild(el('span',{style:"background:oklch(0.5 0.16 266);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;"},"Aujourd'hui"));
-    if(day.exceptional){
-      dayHead.appendChild(el('span',{style:"background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;"},day.orphan?"Orpheline":"Exceptionnel"));
-      if(!day.orphan)(function(perm){dayHead.appendChild(el('button',{class:'gx-press',title:'Supprimer cette journée exceptionnelle',style:"cursor:pointer;font-family:inherit;font-size:11px;padding:2px 7px;border-radius:7px;border:1px solid oklch(0.82 0.1 25);background:oklch(0.97 0.03 25);color:oklch(0.5 0.16 25);margin-left:4px;",onClick:function(e){e.stopPropagation();if(confirm('Supprimer la permanence exceptionnelle "'+perm.commune+' — '+perm.exceptDate+'" ?')){S.permanences=S.permanences.filter(function(p){return p!==perm;});lsSet('ess-permanences',S.permanences);renderAgenda();showToast('✓ Journée supprimée');}}},'🗑'));})(day.perm);
+    if(day.orphan){
+      dayHead.appendChild(el('span',{style:"background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;"},"Orpheline"));
+    } else {
+      if(day.archived)dayHead.appendChild(el('span',{style:"background:var(--c-hover);color:var(--c-muted);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;"},"Archivée"));
+      (function(perm){dayHead.appendChild(el('button',{class:'gx-press',title:'Fermer cette journée',style:"cursor:pointer;font-family:inherit;font-size:11px;padding:2px 7px;border-radius:7px;border:1px solid oklch(0.82 0.1 25);background:oklch(0.97 0.03 25);color:oklch(0.5 0.16 25);margin-left:4px;",onClick:function(e){e.stopPropagation();if(confirm('Fermer la journée "'+perm.commune+' — '+perm.exceptDate+'" ?\n\nSes RDV éventuels restent dans l\'historique.')){S.permanences=S.permanences.filter(function(p){return p!==perm;});lsSet('ess-permanences',S.permanences);renderAgenda();showToast('✓ Journée fermée');}}},'🗑'));})(day.perm);
     }
     if(isPast&&takenCount>0)dayHead.appendChild(el('span',{style:"background:oklch(0.96 0.04 25);color:oklch(0.5 0.16 25);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;"},takenCount+" RDV passé"+(takenCount>1?"s":"")));
     if(isPast&&takenCount===0)dayHead.appendChild(el('span',{style:"font-size:11px;color:var(--c-muted);font-weight:600;"},"Passé"));
@@ -3403,7 +3381,7 @@ function renderConfig(){
     wrap.appendChild(warnBox);
   }
   var tabs=el('div',{style:"display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;"});
-  [["cms","Adresses CMS ("+S.cmsList.length+")"],["secteurs","CMS ("+S.secteurs.length+")"],["demarches","Démarches ("+S.demarches.length+")"],["permanences","Permanences ("+S.permanences.length+")"],["general","Général"]].forEach(function(c){
+  [["cms","Adresses CMS ("+S.cmsList.length+")"],["secteurs","CMS ("+S.secteurs.length+")"],["demarches","Démarches ("+S.demarches.length+")"],["permanences","Journées ("+S.permanences.length+")"],["general","Général"]].forEach(function(c){
     tabs.appendChild(el('button',{class:'gx-press',style:pillStyle(S.configTab===c[0]),onClick:function(){S.configTab=c[0];renderConfig();}},c[1]));
   });
   wrap.appendChild(tabs);
@@ -3576,36 +3554,33 @@ function renderConfig(){
     });
   }
   else if(S.configTab==="permanences"){
-    var JFULL=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-    /* formulaire ajout */
+    /* formulaire ouverture d'une journée à l'avance — le cas courant (premier RDV sur une
+       date jamais utilisée) n'a pas besoin de ce formulaire : la journée s'ouvre toute seule */
     var pf=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:18px;margin-bottom:14px;"});
-    pf.appendChild(el('div',{style:"font-weight:700;font-size:14px;margin-bottom:13px;"},"Ajouter une permanence"));
+    pf.appendChild(el('div',{style:"font-weight:700;font-size:14px;margin-bottom:6px;"},"Ouvrir une journée à l'avance"));
+    pf.appendChild(el('div',{style:"font-size:12px;color:var(--c-muted);margin-bottom:13px;line-height:1.5;"},"Pas indispensable : le premier RDV enregistré sur une commune/date ouvre automatiquement la journée. Utile seulement pour bloquer des créneaux avant toute prise de RDV."));
     var pg=el('div',{style:"display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;"});
     var pComm=el('input',{class:'gx-in',placeholder:"Marmande",style:INPUT,onInput:function(e){S.np.commune=e.target.value;}});pComm.value=S.np.commune;pg.appendChild(pComm);
-    var pJour=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;padding:11px 8px;",onChange:function(e){S.np.jour=parseInt(e.target.value);}});
-    JFULL.forEach(function(j,i){pJour.appendChild(el('option',{value:i,selected:S.np.jour===i},j));});pg.appendChild(pJour);
-    var pDeb=el('input',{class:'gx-in',type:"time",style:INPUT,value:S.np.debut,onChange:function(e){S.np.debut=e.target.value;}});pg.appendChild(pDeb);
-    var pFin=el('input',{class:'gx-in',type:"time",style:INPUT,value:S.np.fin,onChange:function(e){S.np.fin=e.target.value;}});pg.appendChild(pFin);
-    var pDur=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;padding:11px 8px;",onChange:function(e){S.np.duree=parseInt(e.target.value);}});
-    [{v:15,l:"15 min"},{v:20,l:"20 min"},{v:30,l:"30 min"},{v:45,l:"45 min"},{v:60,l:"1 h"}].forEach(function(o){pDur.appendChild(el('option',{value:o.v,selected:S.np.duree===o.v},o.l));});
-    pg.appendChild(pDur);
+    var pDate=el('input',{class:'gx-in',type:"date",style:INPUT,value:S.np.date,onChange:function(e){S.np.date=e.target.value;}});pg.appendChild(pDate);
     pf.appendChild(pg);
-    pf.appendChild(el('button',{class:'gx-press',style:BTNP,onClick:addPerm},"+ Ajouter"));
+    pf.appendChild(el('button',{class:'gx-press',style:BTNP,onClick:addPerm},"+ Ouvrir"));
     wrap.appendChild(pf);
+    /* archivage manuel — masque (sans les supprimer) les journées passées depuis plus de 2 mois */
+    var archB=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"});
+    archB.appendChild(el('div',{style:"font-size:12.5px;color:var(--c-muted);max-width:420px;line-height:1.5;"},"RGPD — Rétention : masque les journées passées depuis plus de 2 mois (sans RDV en attente) pour garder l'agenda lisible. Rien n'est supprimé, elles restent dans les stats et les sauvegardes ; réversible depuis l'Agenda."));
+    archB.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:10px;white-space:nowrap;",onClick:archiveOldDays},"Archiver les journées passées"));
+    wrap.appendChild(archB);
     /* liste */
-    if(S.permanences.length===0)wrap.appendChild(el('div',{style:"text-align:center;color:var(--c-muted);padding:30px;font-size:13px;"},"Aucune permanence configurée."));
-    S.permanences.forEach(function(p){
+    if(S.permanences.length===0)wrap.appendChild(el('div',{style:"text-align:center;color:var(--c-muted);padding:30px;font-size:13px;"},"Aucune journée ouverte pour l'instant."));
+    S.permanences.slice().sort(function(a,b){return (b.exceptDate||'').localeCompare(a.exceptDate||'');}).forEach(function(p){
       var isEd=S.editPerm&&S.editPerm.id===p.id;
-      var card=el('div',{style:"background:var(--c-card);border:1px solid "+(isEd?'oklch(0.7 0.1 266)':'var(--c-border)')+";border-radius:14px;padding:14px 16px;margin-bottom:9px;"});
+      var card=el('div',{style:"background:var(--c-card);border:1px solid "+(isEd?'oklch(0.7 0.1 266)':'var(--c-border)')+";border-radius:14px;padding:14px 16px;margin-bottom:9px;opacity:"+(p.archived?'.55':'1')+";"});
       if(isEd){
         var eg=el('div',{style:"display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;"});
         var ei=el('input',{class:'gx-in',style:INPUT,value:S.editPerm.commune,onInput:function(e){S.editPerm.commune=e.target.value;}});eg.appendChild(ei);
-        var ej=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;padding:11px 8px;",onChange:function(e){S.editPerm.jour=parseInt(e.target.value);}});
-        JFULL.forEach(function(j,i){ej.appendChild(el('option',{value:i,selected:S.editPerm.jour===i},j));});eg.appendChild(ej);
+        var eDate=el('input',{class:'gx-in',type:"date",style:INPUT,value:S.editPerm.exceptDate,onChange:function(e){S.editPerm.exceptDate=e.target.value;}});eg.appendChild(eDate);
         var ed=el('input',{class:'gx-in',type:"time",style:INPUT,value:S.editPerm.debut,onChange:function(e){S.editPerm.debut=e.target.value;}});eg.appendChild(ed);
         var ef=el('input',{class:'gx-in',type:"time",style:INPUT,value:S.editPerm.fin,onChange:function(e){S.editPerm.fin=e.target.value;}});eg.appendChild(ef);
-        var edu=el('select',{class:'gx-in',style:INPUT+"cursor:pointer;padding:11px 8px;",onChange:function(e){S.editPerm.duree=parseInt(e.target.value);}});
-        [{v:15,l:"15 min"},{v:20,l:"20 min"},{v:30,l:"30 min"},{v:45,l:"45 min"},{v:60,l:"1 h"}].forEach(function(o){edu.appendChild(el('option',{value:o.v,selected:S.editPerm.duree===o.v},o.l));});eg.appendChild(edu);
         card.appendChild(eg);
         var eb=el('div',{style:"display:flex;gap:8px;"});
         eb.appendChild(el('button',{class:'gx-press',style:BTNP+"flex:1;",onClick:function(){savePerm(p.id);}},"✓ Enregistrer"));
@@ -3614,15 +3589,12 @@ function renderConfig(){
       } else {
         var row=el('div',{style:"display:flex;align-items:center;gap:10px;flex-wrap:wrap;"});
         row.appendChild(el('span',{style:"font-weight:800;font-size:14px;"},p.commune));
-        if(p.exceptDate){
-          row.appendChild(el('span',{style:"font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:oklch(0.94 0.06 38);color:oklch(0.42 0.12 38);"},'📌 Ponctuelle — '+p.exceptDate.split('-').reverse().join('/')));
-        } else {
-          row.appendChild(el('span',{style:"font-size:13px;color:var(--c-muted);"},JFULL[p.jour]));
-        }
-        row.appendChild(el('span',{style:"font-size:12px;color:var(--c-dim);"},p.debut+" → "+p.fin+" ("+p.duree+" min)"));
+        row.appendChild(el('span',{style:"font-size:12px;color:var(--c-dim);"},(p.exceptDate||'').split('-').reverse().join('/')+' · '+p.debut+" → "+p.fin));
+        if(p.archived)row.appendChild(el('span',{style:"font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--c-hover);color:var(--c-muted);"},"Archivée"));
         var acts=el('span',{style:"margin-left:auto;display:flex;gap:6px;"});
-        acts.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:oklch(0.4 0.1 264);font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;",onClick:function(){S.editPerm={id:p.id,commune:p.commune,jour:p.jour,debut:p.debut,fin:p.fin,duree:p.duree};renderConfig();}},"✏️"));
-        acts.appendChild(el('button',{class:'gx-press',style:BTNDEL+"font-size:12px;padding:5px 9px;border-radius:8px;",onClick:function(){if(confirm("Supprimer cette permanence ?"))deletePerm(p.id);}},"🗑"));
+        if(p.archived)acts.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:oklch(0.4 0.1 264);font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;",onClick:function(){unarchiveDay(p.id);}},"↩️"));
+        acts.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:oklch(0.4 0.1 264);font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;",onClick:function(){S.editPerm={id:p.id,commune:p.commune,exceptDate:p.exceptDate,debut:p.debut,fin:p.fin};renderConfig();}},"✏️"));
+        acts.appendChild(el('button',{class:'gx-press',style:BTNDEL+"font-size:12px;padding:5px 9px;border-radius:8px;",onClick:function(){if(confirm("Fermer cette journée ?"))deletePerm(p.id);}},"🗑"));
         row.appendChild(acts);card.appendChild(row);
       }
       wrap.appendChild(card);
@@ -4920,6 +4892,11 @@ function init(){
   S.mandats=ls('ess-mandats',[]);
   S.orientations=ls('ess-orientations',[]);
   S.permanences=ls('ess-permanences',DEFAULT_PERMANENCES);
+  if(ls('ess-perm-version','')!==PERM_MODEL_VERSION){
+    S.permanences=migratePermanences(S.permanences,S.history);
+    lsSet('ess-permanences',S.permanences);
+    lsSet('ess-perm-version',PERM_MODEL_VERSION);
+  }
   S.calendarType=ls('ess-caltype','google');
   S.relanceDelai=ls('ess-relance-delai',3);
   S.selectedCMS=last.selectedCMS||"";
