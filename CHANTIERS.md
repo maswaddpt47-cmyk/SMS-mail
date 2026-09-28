@@ -14,17 +14,20 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
 
 ## Chantiers restants (par priorité)
 
-1. **Calendrier « à la volée » — à valider en conditions réelles
-   (27/09/2026).** Implémenté sur SMS-mail (solo) uniquement. Un bug réel
-   (grille rétrécie par l'heure du premier RDV) a été trouvé par contradiction
-   AGORA (AG-001) puis corrigé (`8517269`) et revérifié par un script Node —
-   toujours **aucun test dans un navigateur réel, ni sur les vraies données
-   de l'utilisateur** (82 RDV, communes Marmande/Saint-Pardoux-d'Isaac/Fumel).
-   Étapes restantes, dans l'ordre : 1) l'utilisateur recharge SMS-mail et
-   confirme que l'agenda affiche toujours ses RDV existants (migration) et
-   qu'un nouveau RDV ouvre bien sa journée avec la grille complète 09:00-16:30 ;
-   2) une fois confirmé, ne porter vers sms-mail-multi qu'après cette
-   validation — pas avant, l'utilisateur l'a explicitement demandé ainsi.
+1. **Calendrier « à la volée » — en cours de validation en conditions
+   réelles (mis à jour le 28/09/2026).** Un bug réel (grille rétrécie par
+   l'heure du premier RDV) a été trouvé par contradiction AGORA (AG-001)
+   puis corrigé (`8517269`) avant même le premier test navigateur. Premier
+   signal réel positif le 28/09 : l'utilisateur a retrouvé et modifié un
+   RDV du 14/10 depuis l'Agenda (la migration a donc bien préservé
+   l'historique) — mais ça a révélé un **second bug, pré-existant, pas lié
+   à la refonte** : changer le statut d'un RDV en « Pas de retour » depuis
+   le popup Agenda ne libérait pas le créneau dans Générer, parce que
+   changer d'onglet ne re-rendait pas Générer (corrigé dans `19bc700`).
+   **Toujours pas de confirmation explicite « ça marche »** de
+   l'utilisateur — ne pas présumer que ce point est clos avant qu'il le
+   dise. Ne pas porter vers sms-mail-multi de nouveau chantier tant que ce
+   point n'est pas confirmé.
 2. **RGPD point 4 — à charge de l'utilisateur** : vérifier avec le Conseil
    Départemental si ce traitement figure au registre RGPD / si le DPO est
    informé. Seul point du plan de remédiation encore ouvert (`CLAUDE.md`).
@@ -73,6 +76,14 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   `backup-2026-09-18-0709.json` a survécu 9 jours/14 nettoyages sans que
   rien ne le signale, cause non identifiée). Si le toast d'échec réapparaît,
   c'est le prochain point à creuser (sha stale, permissions du token…).
+- **Changer d'onglet re-rend son contenu** : `stats`/`agenda`/`orientations`
+  et maintenant `generate` sont explicitement re-rendus au clic sur
+  l'onglet (28/09/2026, bug pré-existant trouvé en testant le calendrier —
+  un changement de statut fait depuis l'Agenda n'apparaissait pas dans la
+  grille de Générer tant qu'aucune action locale n'y forçait un recalcul).
+  `showActivePane()` seul ne fait qu'afficher/masquer le panneau déjà
+  rendu, jamais le recalculer — tout nouvel onglet a besoin du même
+  branchement explicite.
 - **Portage entre jumeaux** : les derniers portages (PR #44 à #50 de SMS-mail,
   #88 à #94 de sms-mail-multi, branche `sms-mail-to-multi-port`) vont de
   SMS-mail vers sms-mail-multi. Quand un sujet est contesté entre les deux,
