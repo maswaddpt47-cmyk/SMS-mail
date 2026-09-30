@@ -14,36 +14,22 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
 
 ## Chantiers restants (par priorité)
 
-1. **Calendrier « à la volée » — en cours de validation en conditions
-   réelles (mis à jour le 28/09/2026).** Un bug réel (grille rétrécie par
-   l'heure du premier RDV) a été trouvé par contradiction AGORA (AG-001)
-   puis corrigé (`8517269`) avant même le premier test navigateur. Premier
-   signal réel positif le 28/09 : l'utilisateur a retrouvé et modifié un
-   RDV du 14/10 depuis l'Agenda (la migration a donc bien préservé
-   l'historique) — mais ça a révélé un **second bug, pré-existant, pas lié
-   à la refonte** : changer le statut d'un RDV en « Pas de retour » depuis
-   le popup Agenda ne libérait pas le créneau dans Générer, parce que
-   changer d'onglet ne re-rendait pas Générer (corrigé dans `19bc700`).
-   **Toujours pas de confirmation explicite « ça marche »** de
-   l'utilisateur — ne pas présumer que ce point est clos avant qu'il le
-   dise. Ne pas porter vers sms-mail-multi de nouveau chantier tant que ce
-   point n'est pas confirmé.
-2. **RGPD point 4 — à charge de l'utilisateur** : vérifier avec le Conseil
+1. **RGPD point 4 — à charge de l'utilisateur** : vérifier avec le Conseil
    Départemental si ce traitement figure au registre RGPD / si le DPO est
    informé. Seul point du plan de remédiation encore ouvert (`CLAUDE.md`).
-3. **Dérive SMS-mail ↔ sms-mail-multi — audit du 26/09/2026, oublis de
+2. **Dérive SMS-mail ↔ sms-mail-multi — audit du 26/09/2026, oublis de
    portage corrigés le 27/09/2026.** `check-drift.js` donne 3 faux positifs
    (`normCommune`, `exportHistoryCSV`, `exportOrientationsCSV` en partie : son
    analyseur prend l'apostrophe de la regex `/[-\s']+/` pour une chaîne). Le
    reste des écarts est voulu (multi-profil) ou cosmétique. **Reste ouvert :**
-   - **Résolu par la refonte ci-dessus, côté SMS-mail** : la question de la
+   - **Résolu par le calendrier « à la volée », côté SMS-mail** : la question de la
      fenêtre Agenda (8 sem. passées/12 futures contre 4/8 sur multi) ne se
      pose plus pour SMS-mail — il n'y a plus de fenêtre, seulement les
      journées réellement ouvertes. Reste vrai pour sms-mail-multi tant que
      le portage n'est pas fait.
    - **Non jugé** : `handleGenerate` compare la commune strictement dans
      SMS-mail, avec tolérance « commune vide » dans multi.
-4. **Script de ménage de ce fichier** (`scripts/check-chantiers.sh`, hook
+3. **Script de ménage de ce fichier** (`scripts/check-chantiers.sh`, hook
    `SessionStart`) : à copier depuis `ATELIERS_NEWGEN` — reporté le
    26/09/2026 par l'utilisateur, utile quand ce fichier aura grossi.
 
@@ -76,6 +62,14 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   `backup-2026-09-18-0709.json` a survécu 9 jours/14 nettoyages sans que
   rien ne le signale, cause non identifiée). Si le toast d'échec réapparaît,
   c'est le prochain point à creuser (sha stale, permissions du token…).
+- **Un champ de saisie ne déclenche jamais un rebuild complet du
+  formulaire tant qu'on tape dedans** (30/09/2026, trouvé sur le champ
+  « Autre heure ») : `onInput` fait une mise à jour légère
+  (`regen()+updatePreviewOnly()`), la reconstruction complète
+  (`setFieldSave`/`renderGenerate`) attend `onBlur` — sinon un input
+  segmenté (`type="time"`) perd le focus en pleine frappe dès qu'un
+  segment devient valide. Pattern déjà utilisé sur `nomIn`, à reprendre
+  pour tout nouveau champ de ce genre.
 - **Changer d'onglet re-rend son contenu** : `stats`/`agenda`/`orientations`
   et maintenant `generate` sont explicitement re-rendus au clic sur
   l'onglet (28/09/2026, bug pré-existant trouvé en testant le calendrier —
@@ -88,6 +82,15 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   #88 à #94 de sms-mail-multi, branche `sms-mail-to-multi-port`) vont de
   SMS-mail vers sms-mail-multi. Quand un sujet est contesté entre les deux,
   écrire ici lequel fait référence plutôt que de converger au hasard.
+- **Calendrier « à la volée », validé en conditions réelles le
+  28/09/2026** sur les deux apps : migration testée (RDV existants
+  retrouvés dans l'Agenda), création de RDV, changement de statut. Deux
+  bugs trouvés au passage et corrigés, aucun lié à la refonte elle-même :
+  la libération d'un créneau n'apparaissait pas sans changer d'onglet
+  (`19bc700`) et un doublon de fiche isolé du 23/09 (avant la refonte,
+  cause non identifiée avec certitude — hypothèse : double envoi rapproché
+  ou restauration GitHub d'un état antérieur) empêchait un créneau de se
+  libérer — supprimé manuellement par l'utilisateur le 28/09.
 - **Une journée s'ouvre toujours sur 09:00-16:30, jamais sur l'heure du RDV
   qui la déclenche** (`ensureDayOpen`/`migratePermanences`, trouvé par
   contradiction AGORA AG-001 le 27/09/2026) : figer `debut`/`fin` sur cette
