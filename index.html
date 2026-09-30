@@ -1292,7 +1292,11 @@ function renderGenerate(){
     var customRow=el('div',{style:"display:flex;align-items:center;gap:6px;margin-top:6px;"});
     customRow.appendChild(el('span',{style:"font-size:11px;color:var(--c-muted);font-weight:600;"},"Autre heure :"));
     var customTimeIn=el('input',{type:'time',class:'gx-in',style:"font-family:inherit;font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;",value:S.heure||''});
-    customTimeIn.addEventListener('change',function(e){if(e.target.value)setFieldSave({heure:e.target.value});});
+    /* input (pas change) + mise à jour légère de l'aperçu pendant la frappe — un setFieldSave()
+       (qui reconstruit tout le formulaire) à chaque segment rempli (heure puis minutes) fait perdre
+       le focus au milieu de la saisie sur un <input type="time"> ; même pattern que nomIn plus haut */
+    customTimeIn.addEventListener('input',function(e){if(e.target.value){S.heure=e.target.value;regen();updatePreviewOnly();}});
+    customTimeIn.addEventListener('blur',function(e){if(e.target.value)setFieldSave({heure:e.target.value});});
     customRow.appendChild(customTimeIn);
     hh.appendChild(customRow);
   } else {
