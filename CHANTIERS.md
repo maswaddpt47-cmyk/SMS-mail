@@ -14,6 +14,17 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
 
 ## Chantiers restants (par priorité)
 
+- **Audit trimestriel du 01/10/2026 — important** : le jeton GitHub
+  (`ess-gh-token`) et l'historique des usagers sont en `localStorage` sur
+  l'origine `maswaddpt47-cmyk.github.io`, **partagée** avec NEWGEN, NextStep
+  et GDINV2 : une faille d'injection dans n'importe laquelle de ces applis
+  peut les lire (une est relevée dans NEWGEN, à corriger là-bas). Pistes :
+  jeton GitHub à grain fin, limité au seul dépôt de sauvegarde en écriture
+  de contenu, avec expiration ; à terme, une adresse propre à cette appli
+  (domaine ou sous-domaine dédié). Non vérifié : portée réelle du jeton
+  actuel. **Mineur RGPD** : polices chargées depuis `fonts.googleapis.com`
+  (adresse IP transmise à Google, hors UE) — les héberger dans le dépôt.
+
 1. **RGPD point 4 — à charge de l'utilisateur** : vérifier avec le Conseil
    Départemental si ce traitement figure au registre RGPD / si le DPO est
    informé. Seul point du plan de remédiation encore ouvert (`CLAUDE.md`).
