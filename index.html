@@ -1296,7 +1296,22 @@ function renderGenerate(){
        (qui reconstruit tout le formulaire) à chaque segment rempli (heure puis minutes) fait perdre
        le focus au milieu de la saisie sur un <input type="time"> ; même pattern que nomIn plus haut */
     customTimeIn.addEventListener('input',function(e){if(e.target.value){S.heure=e.target.value;regen();updatePreviewOnly();}});
-    customTimeIn.addEventListener('blur',function(e){if(e.target.value)setFieldSave({heure:e.target.value});});
+    customTimeIn.addEventListener('blur',function(e){
+      var v=e.target.value;if(!v)return;
+      /* « Autre heure » ne passe par aucune pastille de la grille, donc aucun contrôle de
+         conflit n'avait lieu — à la différence d'un clic sur une pastille, qui bloque un
+         créneau déjà pris. Trouvé le 02/10/2026 : deux usagers réservés sur le même créneau
+         sans aucun avertissement. Averti mais pas bloqué : parfois le chevauchement est
+         volontaire (double-réservation assumée, correction d'une erreur de saisie…). */
+      if(S.commune&&hasConflict(S.date,v,S.commune)){
+        var occ=S.history.find(function(h){return h.date===S.date&&h.heure===v&&(h.commune===S.commune||!h.commune)&&FREE_AGAIN_STATUTS.indexOf(h.statut)===-1;});
+        var occName=occ?([occ.civilite,occ.prenom,occ.nom].filter(Boolean).join(' ')||'quelqu\'un'):'quelqu\'un';
+        if(!confirm('⚠️ '+v+' est déjà pris par '+occName+'.\n\nRéserver quand même ce créneau ?')){
+          e.target.value=S.heure||'';renderGenerate();return;
+        }
+      }
+      setFieldSave({heure:v});
+    });
     customRow.appendChild(customTimeIn);
     hh.appendChild(customRow);
   } else {
