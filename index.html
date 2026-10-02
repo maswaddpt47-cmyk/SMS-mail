@@ -905,15 +905,24 @@ function getSlots(commune,dateStr,permOverride){
        nouvelle réservation active sur le même créneau, quel que soit son type de message — sinon
        une relance (priorité basse) reste masquée derrière l'ancienne excusée (ex: proposition) */
     var activeMatches=matches.filter(function(x){return FREE_AGAIN_STATUTS.indexOf(x.statut)===-1;});
-    var pool=activeMatches.length?activeMatches:matches;
-    var confirmations=pool.filter(function(x){return x.msgType==='confirmation';});
-    var propositions=pool.filter(function(x){return x.msgType==='proposition';});
-    var sansAppels=pool.filter(function(x){return x.msgType==='sans_appel';});
-    var relances=pool.filter(function(x){return x.msgType==='relance';});
-    var indispos=pool.filter(function(x){return x.msgType==='indispo';});
-    var taken=confirmations[0]||propositions[0]||sansAppels[0]||relances[0]||indispos[0]||null;
+    var taken,propositions=[],multiPropo=false;
+    if(activeMatches.length){
+      var confirmations=activeMatches.filter(function(x){return x.msgType==='confirmation';});
+      propositions=activeMatches.filter(function(x){return x.msgType==='proposition';});
+      var sansAppels=activeMatches.filter(function(x){return x.msgType==='sans_appel';});
+      var relances=activeMatches.filter(function(x){return x.msgType==='relance';});
+      var indispos=activeMatches.filter(function(x){return x.msgType==='indispo';});
+      taken=confirmations[0]||propositions[0]||sansAppels[0]||relances[0]||indispos[0]||null;
+      multiPropo=confirmations.length===0&&propositions.length>1;
+    } else {
+      /* tous libérés : pas de notion de « plus engagé » entre plusieurs usagers différents
+         sur le même créneau (trouvé 02/10/2026 — Boutin/Pergay, tous deux excusés, c'est
+         Pergay qui ressortait au clic malgré Boutin plus récente) — on retient le plus
+         récent, pas celui dont le type de message a le rang le plus haut. `matches`
+         préserve l'ordre de S.history, toujours du plus récent au plus ancien. */
+      taken=matches[0]||null;
+    }
     var freeAgain=taken&&FREE_AGAIN_STATUTS.indexOf(taken.statut)!==-1;
-    var multiPropo=confirmations.length===0&&propositions.length>1;
     var replaced=matches.filter(function(x){return x!==taken&&FREE_AGAIN_STATUTS.indexOf(x.statut)!==-1;});
     slots.push({heure:heure,taken:taken||null,freeAgain:!!freeAgain,multiPropo:multiPropo,allPropo:propositions,replaced:replaced});
   }
