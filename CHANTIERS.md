@@ -1,6 +1,6 @@
 # CHANTIERS — SMS-mail
 
-État au **27/09/2026**, commit de référence `c911586` (`main`).
+État au **02/10/2026**, commit de référence `3b3b68f` (`main`).
 
 Carnet de reprise : ce qu'une session sans historique doit savoir pour
 continuer. Mis à jour à chaque avancée, pas en fin de session. Une tâche
@@ -89,6 +89,21 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   `showActivePane()` seul ne fait qu'afficher/masquer le panneau déjà
   rendu, jamais le recalculer — tout nouvel onglet a besoin du même
   branchement explicite.
+- **Deux usagers différents sur le même créneau — chaîne de correctifs du
+  02/10/2026**, repérée sur un cas réel (Boutin/Pergay, 14h Fumel) :
+  1. « Autre heure » ne vérifiait aucun conflit (contrairement aux
+     pastilles de la grille, qui bloquent un créneau déjà pris) — averti
+     désormais par une confirmation nommant l'occupant, jamais bloquant.
+  2. Quand le titulaire choisi pour l'affichage était lui-même libéré
+     (Excusé/Lapin/Pas de retour), les **autres** usagers libérés sur ce
+     créneau disparaissaient complètement du pill — `slot.replaced` n'était
+     rendu que dans la branche « titulaire actif ».
+  3. Entre plusieurs usagers **tous libérés**, le titulaire était choisi
+     par type de message (confirmation > proposition > …) au lieu du plus
+     récent — n'a de sens que pour départager des réservations **actives**
+     (toujours vrai, non régressé : testé). `matches` préserve l'ordre de
+     `S.history`, du plus récent au plus ancien — s'appuyer dessus pour
+     tout nouveau tri de ce genre plutôt que retrier par date/heure.
 - **Portage entre jumeaux** : les derniers portages (PR #44 à #50 de SMS-mail,
   #88 à #94 de sms-mail-multi, branche `sms-mail-to-multi-port`) vont de
   SMS-mail vers sms-mail-multi. Quand un sujet est contesté entre les deux,
