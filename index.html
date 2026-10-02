@@ -3084,18 +3084,14 @@ function renderAgenda(){
       if(slot.taken&&slot.multiPropo){
         pill.appendChild(el('div',{style:"font-size:8px;font-weight:700;color:"+pillTxt+";letter-spacing:0.03em;"},"Réservé ("+slot.allPropo.length+")"));
       } else if(slot.taken&&who){
-        if(slot.freeAgain){
-          var _stIcon={'pas_de_retour':'📵','lapin':'🐇','excuse':'🙏'}[_st]||'';
-          var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.6 0.04 266);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;"});
-          nameEl.textContent=who;
-          pill.appendChild(nameEl);
-          if(_stIcon)pill.appendChild(el('div',{style:"font-size:9px;text-align:center;line-height:1;"},_stIcon));
-        } else {
-          var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.48 0.15 25);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"});
-          nameEl.textContent=who;
-          pill.appendChild(nameEl);
+        /* liste les autres réservations libérées sur ce créneau (ex: deux personnes
+           excusées/lapin/pas de retour sur le même horaire) — avant corrigé seulement
+           quand le titulaire affiché était actif ; si le titulaire lui-même est libéré,
+           les autres libérés disparaissaient complètement du pill (trouvé 02/10/2026,
+           deux usagers distincts sur le même créneau, tous deux excusés) */
+        var _RICON={'pas_de_retour':'📵','lapin':'🐇','excuse':'🙏'};
+        function appendReplacedList(){
           if(slot.replaced&&slot.replaced.length>0){
-            var _RICON={'pas_de_retour':'📵','lapin':'🐇','excuse':'🙏'};
             slot.replaced.forEach(function(r){
               var rName=([r.nom,r.prenom].filter(Boolean).join(' '))||'';
               var rIcon=_RICON[r.statut]||'';
@@ -3104,6 +3100,19 @@ function renderAgenda(){
               pill.appendChild(rEl);
             });
           }
+        }
+        if(slot.freeAgain){
+          var _stIcon=_RICON[_st]||'';
+          var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.6 0.04 266);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through;"});
+          nameEl.textContent=who;
+          pill.appendChild(nameEl);
+          if(_stIcon)pill.appendChild(el('div',{style:"font-size:9px;text-align:center;line-height:1;"},_stIcon));
+          appendReplacedList();
+        } else {
+          var nameEl=el('div',{style:"font-size:9px;font-weight:600;color:oklch(0.48 0.15 25);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"});
+          nameEl.textContent=who;
+          pill.appendChild(nameEl);
+          appendReplacedList();
         }
       }
       if(slot.taken){
