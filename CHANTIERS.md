@@ -137,3 +137,15 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   courbe Lapin/Excusé/Pas de retour rattachée au **mois du RDV**, pas au
   mois d'envoi du message. Les archives annuelles calculées avant cette date
   gardent l'ancienne définition (plus recalculables).
+
+## Pistes d'amélioration
+
+Règle 22 de MD-LIB `collaboration.md` : au plus 3 pistes, à la fin d'une
+fonctionnalité validée ou sur demande de revue. Une piste écartée ne se
+repropose pas sans fait nouveau.
+
+**Proposées, en attente**
+_(aucune)_
+
+**Écartées** (date — piste — raison)
+_(aucune)_
