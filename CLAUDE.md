@@ -80,6 +80,12 @@ c'est du texte, ça ne casse aucun déploiement) ; annoncer en une ligne
 **Ne jamais bloquer** : continuer le travail, aucune réponse n'est garantie.
 L'utilisateur tranche.
 
+**Sécurité, mots de passe, données personnelles : contradicteur Codex**
+(OpenAI) au lieu d'une session Claude (06/10/2026, mode d'emploi : `AGORA.md`).
+**Audit Codex** chaque trimestre et après tout changement structurant de
+sécurité, avec le modèle MD-LIB `consigne-audit-externe.md` ; chaque point
+vérifié dans le code avant d'être retenu, rapport hors dépôt public.
+
 ## Workflow obligatoire avant toute intervention
 
 ### 1. Git pull depuis main
