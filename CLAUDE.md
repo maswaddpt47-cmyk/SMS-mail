@@ -39,6 +39,11 @@ privé existe déjà, quels points sont faits) — ne pas présumer que la migra
 Ne jamais committer `backups/` (ou tout fichier contenant des données d'usagers) vers un
 repo public, même temporairement pour tester.
 
+**Captures et fichiers envoyés à Claude** (charte IA du CD47 §4, 06/10/2026) : jamais de
+capture montrant des contacts, numéros ou messages réels, ni de fichier de contacts réel ;
+données fictives ou capture recadrée. Une capture avec des données réelles se signale en
+une ligne : rappel d'habitude, pas alerte RGPD.
+
 ## Reprise de session — CHANTIERS.md
 
 Lire **`CHANTIERS.md`** (racine) au démarrage : état du travail, décisions à
