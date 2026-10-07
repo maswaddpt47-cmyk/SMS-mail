@@ -860,7 +860,7 @@ function migratePermanences(perms,history){
     var key=h.commune+'|'+h.date;
     if(byKey[key])return;
     byKey[key]=true;
-    kept.push({id:Date.now()+Math.random(),commune:h.commune,exceptDate:h.date,debut:'09:00',fin:'16:30'});
+    kept.push({id:Date.now()+Math.random(),commune:h.commune,exceptDate:h.date,debut:'09:30',fin:'16:30'});
   });
   return kept;
 }
@@ -879,13 +879,13 @@ function isInMyAgenda(h){
    enregistré (addHistory, blockSlot). Non destructif :
    si la journée existe déjà, ne touche pas ses horaires. */
 function ensureDayOpen(commune,dateStr){
-  /* la journée s'ouvre toujours sur la grille standard (09:00-16:30) — jamais sur l'heure
+  /* la journée s'ouvre toujours sur la grille standard (09:30-16:30) — jamais sur l'heure
      du RDV qui la déclenche : sinon un premier RDV à 14h retire les créneaux du matin du
      sélecteur (bug AG-001, constaté le 27/09/2026). L'heure du RDV déclencheur reste de
      toute façon couverte par extraHeures dans getSlots si elle tombe hors grille. */
   if(!commune||!dateStr)return;
   if(S.permanences.some(function(p){return p.commune===commune&&p.exceptDate===dateStr;}))return;
-  S.permanences=S.permanences.concat([{id:Date.now()+Math.random(),commune:commune,exceptDate:dateStr,debut:'09:00',fin:'16:30'}]);
+  S.permanences=S.permanences.concat([{id:Date.now()+Math.random(),commune:commune,exceptDate:dateStr,debut:'09:30',fin:'16:30'}]);
   lsSet('ess-permanences',S.permanences);
 }
 /* RDV en attente depuis plus de S.relanceDelai jours sans relance envoyée —
@@ -896,19 +896,25 @@ function isDepasse(h){
   return Math.round((new Date(today+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>(S.relanceDelai||3);
 }
 var DUREE_CRENEAU=60; /* durée fixe des créneaux, quelle que soit la commune */
+var DEBUT_GRILLE=9*60+30; /* premier créneau à 9h30 puis toutes les heures (07/10/2026, avant : 9h00) */
 var FIN_AFFICHAGE_DEFAUT=16*60+30; /* on continue de proposer des créneaux libres jusqu'à 16h30 même après le dernier RDV du jour */
 function getSlots(commune,dateStr,permOverride){
-  /* journée pas encore ouverte : grille par défaut (09:00-16:30) pour pouvoir quand même
+  /* journée pas encore ouverte : grille par défaut (09:30-16:30) pour pouvoir quand même
      proposer un premier créneau — la journée n'est réellement ouverte/persistée qu'à
      l'enregistrement du RDV (ensureDayOpen), pas au simple affichage du picker */
-  var perm=permOverride||getPermanence(commune,dateStr)||{debut:'09:00',fin:String(Math.floor(FIN_AFFICHAGE_DEFAUT/60)).padStart(2,'0')+':30'};
+  var perm=permOverride||getPermanence(commune,dateStr)||{debut:'09:30',fin:String(Math.floor(FIN_AFFICHAGE_DEFAUT/60)).padStart(2,'0')+':30'};
   var sh=parseInt(perm.debut),sm=parseInt(perm.debut.split(':')[1]||0);
   var eh=parseInt(perm.fin),em=parseInt(perm.fin.split(':')[1]||0);
-  var start=Math.min(sh*60+sm,9*60),end=Math.max(eh*60+em,FIN_AFFICHAGE_DEFAUT);
+  /* '09:00' = ancienne grille par défaut stockée sur les journées déjà ouvertes, pas un horaire
+     choisi : elle passe à 9h30 comme les nouvelles. Seul un début personnalisé plus tôt est gardé.
+     Les RDV déjà pris à l'heure pile restent affichés (extraHeures ci-dessous). */
+  var permStart=sh*60+sm;
+  var start=(perm.debut!=='09:00'&&permStart<DEBUT_GRILLE)?permStart:DEBUT_GRILLE,end=Math.max(eh*60+em,FIN_AFFICHAGE_DEFAUT);
   /* inclure aussi les RDV hors plage horaire — y compris une heure choisie « à la main »
      hors grille standard (ex: 9h15) */
   var extraHeures=S.history.filter(function(x){return x.date===dateStr&&(x.commune===commune||!x.commune);}).map(function(x){return x.heure;});
-  extraHeures.forEach(function(h){var p=h.split(':');var t=parseInt(p[0])*60+parseInt(p[1]||0);if(t<start)start=t;if(t>end)end=t;});
+  /* la grille ne s'étire plus jusqu'à ces RDV (07/10/2026) : un RDV pris à 9h00 sur l'ancienne
+     grille aurait fait repartir toute la journée de 9h00 ; il s'ajoute seul (boucle en fin de fonction) */
   var slots=[];
   var seenHeures={};
   function buildSlot(heure){
@@ -1296,7 +1302,7 @@ function renderGenerate(){
   var hh=el('div');hh.appendChild(el('label',{style:LABEL},"Heure *"));
   if(S.date&&S.commune){
     /* la journée n'est pas forcément déjà ouverte : getSlots propose alors une grille par
-       défaut (09:00-16:30) — elle ne sera réellement créée qu'au moment d'enregistrer le RDV */
+       défaut (09:30-16:30) — elle ne sera réellement créée qu'au moment d'enregistrer le RDV */
     var slots=getSlots(S.commune,S.date)||[];
     var slotGrid=el('div',{style:"display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;"});
     slots.forEach(function(slot){
