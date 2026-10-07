@@ -1,6 +1,6 @@
 # CHANTIERS — SMS-mail
 
-État au **02/10/2026**, commit de référence `3b3b68f` (`main`).
+État au **07/10/2026**, commit de référence `884ee5c` (`main`).
 
 Carnet de reprise : ce qu'une session sans historique doit savoir pour
 continuer. Mis à jour à chaque avancée, pas en fin de session. Une tâche
@@ -40,7 +40,14 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
      le portage n'est pas fait.
    - **Non jugé** : `handleGenerate` compare la commune strictement dans
      SMS-mail, avec tolérance « commune vide » dans multi.
-3. **Script de ménage de ce fichier** (`scripts/check-chantiers.sh`, hook
+3. **Origine du numéro tronqué du 07/10/2026 non identifiée** : un numéro
+   de la forme `00 76 15 74 22` (10 chiffres commençant par 00) est arrivé
+   dans Générer et a été envoyé sans alerte. L'alerte est en place (voir
+   « Points à ne pas défaire »), la cause non : hypothèse non vérifiée,
+   cellule mal formée dans le fichier importé (Orientations ne corrige que
+   le cas « 9 chiffres → 0 devant »). À creuser au prochain cas, avec le
+   fichier source sous les yeux (données fictives ou recadrées).
+4. **Script de ménage de ce fichier** (`scripts/check-chantiers.sh`, hook
    `SessionStart`) : à copier depuis `ATELIERS_NEWGEN` — reporté le
    26/09/2026 par l'utilisateur, utile quand ce fichier aura grossi.
 
@@ -117,13 +124,27 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   cause non identifiée avec certitude — hypothèse : double envoi rapproché
   ou restauration GitHub d'un état antérieur) empêchait un créneau de se
   libérer — supprimé manuellement par l'utilisateur le 28/09.
-- **Une journée s'ouvre toujours sur 09:00-16:30, jamais sur l'heure du RDV
-  qui la déclenche** (`ensureDayOpen`/`migratePermanences`, trouvé par
-  contradiction AGORA AG-001 le 27/09/2026) : figer `debut`/`fin` sur cette
-  heure rétrécit silencieusement la grille du sélecteur (un RDV à 14h faisait
-  disparaître les créneaux du matin). `getSlots()` a en plus un filet de
-  sécurité (`start=Math.min(start,09:00)`), mais ne pas en dépendre pour
-  réintroduire cette écriture ailleurs.
+- **Grille des créneaux : 9h30, 10h30… 16h30, toutes les heures, 12h30 et
+  13h30 compris** (tranché par l'utilisateur le 07/10/2026 ; avant : 9h00…
+  16h00). Constante `DEBUT_GRILLE` dans `getSlots()`. Les journées déjà
+  ouvertes stockent `debut:'09:00'` : traité comme l'ancien défaut, elles
+  passent aussi à 9h30 ; seul un début personnalisé plus tôt est gardé. Les
+  RDV pris hors grille (ex. 9h00, 10h00 de l'ancienne grille) restent
+  affichés à leur heure **sans faire repartir la grille** (avant, la grille
+  s'étirait jusqu'à eux) — pendant la transition, un 10h00 pris peut
+  côtoyer un 10h30 libre. Aucun jour de semaine n'est attaché à un lieu :
+  le passage de Marmande au mercredi (07/10/2026) n'a demandé aucun code.
+- **Une journée s'ouvre toujours sur la grille standard (09:30-16:30),
+  jamais sur l'heure du RDV qui la déclenche** (`ensureDayOpen`/
+  `migratePermanences`, AGORA AG-001 du 27/09/2026) : figer `debut`/`fin`
+  sur cette heure rétrécit silencieusement la grille du sélecteur.
+- **Téléphone : jamais de troncature silencieuse** (07/10/2026, cas réel :
+  un numéro invalide envoyé sans que rien ne le signale, `formatTel`
+  coupait à 10 chiffres). `telProblem()` (incomplet, trop long, ne commence
+  pas par 01 à 09) alimente un message rouge **permanent** sous le champ de
+  Générer — pas seulement un toast au blur, qu'un numéro importé ne
+  déclenche jamais — et une confirmation dans `handleGenerate`. `+33`/
+  `0033` ramenés à `0`.
 - **Taux d'occupation (30j et 90j), tranché par l'utilisateur le
   27/09/2026** : ne compte que les journées réellement ouvertes (au moins
   un RDV/blocage), pas toute la grille hebdomadaire y compris les jours
