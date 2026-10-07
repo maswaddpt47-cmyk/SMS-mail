@@ -687,6 +687,8 @@ function setFieldSave(patch){Object.assign(S,patch);regen();saveLast();renderGen
 
 function handleGenerate(){
   if(!canGenerate())return;
+  var telPb=telProblem(S.telephone);
+  if(telPb&&!confirm('⚠️ '+telPb+' : '+S.telephone+'\n\nGénérer quand même ?'))return;
   if(hasConflict(S.date,S.heure,S.commune)){
     var conf=S.history.find(function(h){return h.date===S.date&&h.heure===S.heure&&h.commune===S.commune&&FREE_AGAIN_STATUTS.indexOf(h.statut)===-1;});
     var who=conf?[conf.civilite,conf.prenom,conf.nom].filter(Boolean).join(' '):'';
@@ -771,7 +773,18 @@ function copyBody(){
   }
 }
 function copySubject(){doCopy(S.generatedSubject).then(function(ok){if(ok){flashCopied('subject');showToast("✓ Objet copié !");}});}
-function formatTel(val){var d=(val||"").replace(/\D/g,'').substring(0,10);return d.replace(/(\d{2})(?=\d)/g,'$1 ').trim();}
+/* plus de troncature à 10 chiffres : elle masquait un numéro trop long ou mal importé, qui
+   passait alors pour valide (00 76 15 74 22 généré sans alerte, 07/10/2026) ; +33/0033 → 0 */
+function formatTel(val){var d=(val||"").replace(/\D/g,'');if(/^0033/.test(d))d='0'+d.slice(4);else if(/^33\d{9}$/.test(d))d='0'+d.slice(2);return d.replace(/(\d{2})(?=\d)/g,'$1 ').trim();}
+/* '' si vide ou valide (10 chiffres, 01 à 09), sinon le motif affiché sous le champ */
+function telProblem(val){
+  var d=(val||'').replace(/\D/g,'');
+  if(!d)return '';
+  if(d.length<10)return 'Numéro incomplet ('+d.length+'/10 chiffres)';
+  if(d.length>10)return 'Numéro trop long ('+d.length+' chiffres)';
+  if(!/^0[1-9]/.test(d))return 'Numéro invalide : doit commencer par 01 à 09';
+  return '';
+}
 
 /* builtin tpl */
 function startEditBuiltin(k){S.editBuiltin=k;S.editBuiltinText=S.templates[k]||DEFAULT_TEMPLATES[k]||"";renderTemplates();}
@@ -1239,14 +1252,22 @@ function renderGenerate(){
   function applyTelFormat(val){
     var fmt=formatTel(val);
     S.telephone=fmt;telIn.value=fmt;
-    var digits=fmt.replace(/\s/g,'');
-    var valid=digits.length===0||digits.length===10;
-    telIn.style.borderColor=(!valid&&digits.length>0)?'oklch(0.6 0.18 25)':'';
-    if(!valid&&digits.length>0)showToast('⚠️ Numéro incomplet ('+digits.length+'/10 chiffres)','warn');
+    var pb=refreshTelAlert();
+    if(pb)showToast('⚠️ '+pb,'warn');
     updatePreviewOnly();
     updateLapinHint();
   }
-  telIn.addEventListener('input',function(e){S.telephone=formatTel(e.target.value);e.target.value=S.telephone;updatePreviewOnly();updateLapinHint();});
+  /* alerte permanente sous le champ (pas seulement un toast au blur) : un numéro importé
+     depuis Orientations ou l'historique ne passe jamais par le blur */
+  var telAlert=el('div',{style:"display:none;margin-top:5px;font-size:12px;font-weight:700;color:oklch(0.5 0.18 25);"});
+  function refreshTelAlert(){
+    var pb=telProblem(S.telephone);
+    telIn.style.borderColor=pb?'oklch(0.6 0.18 25)':'';
+    telAlert.textContent=pb?'⚠️ '+pb+' — vérifier avant de générer':'';
+    telAlert.style.display=pb?'block':'none';
+    return pb;
+  }
+  telIn.addEventListener('input',function(e){S.telephone=formatTel(e.target.value);e.target.value=S.telephone;refreshTelAlert();updatePreviewOnly();updateLapinHint();});
   telIn.addEventListener('blur',function(e){applyTelFormat(e.target.value);});
   telRow.appendChild(telIn);
   updateLapinHint();
@@ -1256,6 +1277,7 @@ function renderGenerate(){
   telRow.appendChild(el('button',{class:'gx-press',title:"Ouvrir WhatsApp",style:btnS,onClick:function(){if(!S.telephone)return;var num=S.telephone.replace(/\D/g,'').replace(/^0/,'33');window.open('https://wa.me/'+num,'_blank');}},"💬 WA"));
   telRow.appendChild(el('a',{class:'gx-press',title:"Appeler",href:"#",style:btnS+"text-decoration:none;",onClick:function(e){e.preventDefault();if(!S.telephone)return;window.location.href='tel:'+S.telephone.replace(/\s/g,'');}},"📞"));
   tel.appendChild(telRow);
+  tel.appendChild(telAlert);refreshTelAlert();
   col.appendChild(tel);
 
   /* ── date RDV + heure ── */
