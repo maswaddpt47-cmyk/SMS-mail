@@ -142,14 +142,18 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   de destination** (`ensureDayOpen` après l'écriture, 08/10/2026, validé par
   l'utilisateur) : sans ça, le RDV tombait dans une journée « Orpheline ».
   Tout nouveau chemin qui change la date ou la commune d'un RDV doit faire
-  de même. Une journée fermée (🗑) avec des RDV reste orpheline : voulu.
+  de même. Une journée fermée (🗑) avec des RDV reste orpheline : voulu —
+  un bouton « 📂 Ouvrir cette journée » la régularise. Le déplacement vérifie
+  aussi le créneau d'arrivée (confirmation nommant l'occupant, jamais
+  bloquante), comme Générer et « Autre heure ».
 - **Téléphone : jamais de troncature silencieuse** (07/10/2026, cas réel :
   un numéro invalide envoyé sans que rien ne le signale, `formatTel`
   coupait à 10 chiffres). `telProblem()` (incomplet, trop long, ne commence
   pas par 01 à 09) alimente un message rouge **permanent** sous le champ de
   Générer — pas seulement un toast au blur, qu'un numéro importé ne
   déclenche jamais — et une confirmation dans `handleGenerate`. `+33`/
-  `0033` ramenés à `0`.
+  `0033` ramenés à `0`. Même contrôle dès l'import Orientations (ligne
+  rouge sur la fiche, compte dans le toast d'import), 08/10/2026.
 - **Taux d'occupation (30j et 90j), tranché par l'utilisateur le
   27/09/2026** : ne compte que les journées réellement ouvertes (au moins
   un RDV/blocage), pas toute la grille hebdomadaire y compris les jours
@@ -170,14 +174,8 @@ Règle 22 de MD-LIB `collaboration.md` : au plus 3 pistes, à la fin d'une
 fonctionnalité validée ou sur demande de revue. Une piste écartée ne se
 repropose pas sans fait nouveau.
 
-**Proposées, en attente** (08/10/2026, après le correctif des journées orphelines)
-1. **Contrôle de conflit au déplacement d'un RDV** : Modifier → Enregistrer
-   ne vérifie pas si le nouveau créneau est déjà pris (`hasConflict` absent
-   de ce chemin, contrairement à Générer et « Autre heure »).
-2. **Contrôle du téléphone dès l'import Orientations** : le numéro invalide
-   du 07/10 est arrivé par là ; l'alerte n'apparaît qu'une fois dans Générer.
-3. **Bouton « Ouvrir cette journée » sur une journée orpheline**, pour
-   régulariser sans repasser par Modifier → Enregistrer.
+**Proposées, en attente**
+_(aucune — les trois du 08/10/2026 réalisées le même jour)_
 
 **Écartées** (date — piste — raison)
 _(aucune)_
