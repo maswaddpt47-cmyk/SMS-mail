@@ -138,6 +138,11 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   jamais sur l'heure du RDV qui la déclenche** (`ensureDayOpen`/
   `migratePermanences`, AGORA AG-001 du 27/09/2026) : figer `debut`/`fin`
   sur cette heure rétrécit silencieusement la grille du sélecteur.
+- **Un RDV déplacé depuis l'Agenda (Modifier → Enregistrer) ouvre sa journée
+  de destination** (`ensureDayOpen` après l'écriture, 08/10/2026, validé par
+  l'utilisateur) : sans ça, le RDV tombait dans une journée « Orpheline ».
+  Tout nouveau chemin qui change la date ou la commune d'un RDV doit faire
+  de même. Une journée fermée (🗑) avec des RDV reste orpheline : voulu.
 - **Téléphone : jamais de troncature silencieuse** (07/10/2026, cas réel :
   un numéro invalide envoyé sans que rien ne le signale, `formatTel`
   coupait à 10 chiffres). `telProblem()` (incomplet, trop long, ne commence
@@ -165,8 +170,14 @@ Règle 22 de MD-LIB `collaboration.md` : au plus 3 pistes, à la fin d'une
 fonctionnalité validée ou sur demande de revue. Une piste écartée ne se
 repropose pas sans fait nouveau.
 
-**Proposées, en attente**
-_(aucune)_
+**Proposées, en attente** (08/10/2026, après le correctif des journées orphelines)
+1. **Contrôle de conflit au déplacement d'un RDV** : Modifier → Enregistrer
+   ne vérifie pas si le nouveau créneau est déjà pris (`hasConflict` absent
+   de ce chemin, contrairement à Générer et « Autre heure »).
+2. **Contrôle du téléphone dès l'import Orientations** : le numéro invalide
+   du 07/10 est arrivé par là ; l'alerte n'apparaît qu'une fois dans Générer.
+3. **Bouton « Ouvrir cette journée » sur une journée orpheline**, pour
+   régulariser sans repasser par Modifier → Enregistrer.
 
 **Écartées** (date — piste — raison)
 _(aucune)_
