@@ -4811,7 +4811,10 @@ function renderModal(){
       btnRow2.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;flex:1;border:none;background:oklch(0.5 0.16 266);color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:12px;",onClick:function(){
         if(!e2.nom.trim()){showToast('⚠️ Nom requis','warn');return;}
         var idx=S.history.findIndex(function(h){return h===t;});
-        if(idx!==-1){Object.assign(S.history[idx],{civilite:e2.civilite,prenom:e2.prenom,nom:e2.nom,telephone:e2.telephone,demarche:e2.demarche,notes:e2.notes,date:e2.date,heure:e2.heure,dateDemande:e2.dateDemande});lsSet('ess-history',S.history);}
+        if(idx!==-1){Object.assign(S.history[idx],{civilite:e2.civilite,prenom:e2.prenom,nom:e2.nom,telephone:e2.telephone,demarche:e2.demarche,notes:e2.notes,date:e2.date,heure:e2.heure,dateDemande:e2.dateDemande});lsSet('ess-history',S.history);
+          /* un RDV déplacé doit ouvrir sa journée de destination, comme un RDV créé — sinon il
+             s'affiche en journée « Orpheline » (trouvé le 08/10/2026, RDV déplacé au 18/11) */
+          ensureDayOpen(S.history[idx].commune,S.history[idx].date);}
         ar.editing=false;ar.slot.taken=S.history[idx];renderModal();renderAgenda();showToast('✅ RDV modifié');
       }},'Enregistrer'));
       box.appendChild(btnRow2);
