@@ -1036,9 +1036,11 @@ function copyHistModal(){var h=S.histItem;if(!h)return;doCopy(h.body).then(funct
 function clearHistory(){S.history=[];lsSet('ess-history',[]);renderHistory();}
 function exportOrientationsCSV(){
   if(!S.orientations.length){showToast("Aucune orientation à exporter","warn");return;}
-  var cols=["Nom","Prénom","Commune","Démarche","Date","Conseiller","Statut"];
+  /* colonnes alignées sur les champs réellement importés (o.demarche/o.conseiller n'existent pas :
+     ces colonnes sortaient vides, et téléphone/motif/orienteur manquaient) — 10/10/2026 */
+  var cols=["Nom","Prénom","Téléphone","Structure","Commune bénéficiaire","Motif","Orienteur","Date","État","Traité"];
   var esc=function(v){return '"'+(String(v||"").replace(/"/g,'""'))+'"';};
-  var rows=S.orientations.map(function(o){return[o.nom,o.prenom,o.commune,o.demarche,o.date,o.conseiller,o.done?'Traité':'En attente'].map(esc).join(";");});
+  var rows=S.orientations.map(function(o){return[o.nom,o.prenom,o.telephone,o.cms,o.commune,o.motif,o.orienteur,o.date,o.etat,o.done?"Oui":"Non"].map(esc).join(";");});
   var csv="﻿"+cols.map(esc).join(";")+"\n"+rows.join("\n");
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
   a.download="orientations-"+new Date().toISOString().slice(0,10)+".csv";a.click();
