@@ -310,6 +310,7 @@ var DEFAULT_TEMPLATES={
   sms_relance:"Bonjour {civilite} {nom} {prenom},\n\nJe reviens vers vous suite à ma proposition de RDV du {dateDemande} concernant \"{demarche}\" prévu le {date} à {heure}.\n\nMerci de me confirmer rapidement votre venue par SMS.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
   mail_relance_sujet:"Rappel — Votre RDV du {date} — {demarche}",
   mail_relance:"Bonjour {civilite} {nom} {prenom},\n\nJe me permets de revenir vers vous suite à ma proposition de rendez-vous du {dateDemande} concernant votre démarche \"{demarche}\".\n\nVotre RDV est prévu le {date} à {heure} au :\n📍 {adresse}\n\nMerci de bien vouloir me confirmer par retour mail ou par SMS si ce créneau vous convient toujours.\n\nDans l'attente de votre retour, je reste à votre disposition.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
+  sms_rappel_veille:"Bonjour {civilite} {nom} {prenom},\n\nPetit rappel : vous avez rendez-vous le {date} à {heure} pour votre démarche « {demarche} », au :\n\n📍 {adresse}\n\nEn cas d'empêchement, merci de me prévenir par SMS afin que le créneau profite à une autre personne.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
   sms_lapin:"Bonjour {civilite} {nom} {prenom},\n\nVous ne vous êtes pas présenté(e) à votre rendez-vous du {date} au CMS {cms}. Nos créneaux étant très sollicités, nous aurions aimé être prévenus en cas d'empêchement afin de proposer le créneau à un autre usager.\n\nVotre collaboration nous aide à mieux servir chacun.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
   mail_lapin_sujet:"Absence à votre RDV du {date} — CMS {cms}",
   mail_lapin:"Bonjour {civilite} {nom} {prenom},\n\nNous avons constaté votre absence à votre rendez-vous du {date} au CMS {cms}.\n\nNos créneaux étant très sollicités, nous aurions aimé être prévenus en cas d'empêchement afin de proposer le créneau à un autre usager.\n\nVotre collaboration nous aide à mieux servir chacun.\n\nCordialement,\nMichel Aswad\nConseiller Numérique\nConseil Départemental du Lot-et-Garonne.",
@@ -328,6 +329,7 @@ var LABELS={
   mail_relance_sujet:"✉️ Mail — Objet Relance",
   mail_relance:"✉️ Mail — Corps Relance",
   sms_lapin:"💬 SMS — Absence (Lapin)",
+  sms_rappel_veille:"💬 SMS — Rappel la veille du RDV",
   mail_lapin_sujet:"✉️ Mail — Objet Absence (Lapin)",
   mail_lapin:"✉️ Mail — Corps Absence (Lapin)",
 };
@@ -2751,6 +2753,76 @@ function lancerLapin(h){
   var subj=canal==="mail"?fillTemplate(subjTpl,vars):"";
   S.modal='lapin';S._lapinCtx={h:h,body:body,subj:subj,canal:canal};renderModal();
 }
+/* ── rappel la veille + doublons de fiche (10/10/2026) ──
+   rappel : RDV encore actifs du prochain jour ouvré (lundi si on est vendredi), avec le SMS
+   prêt à copier ; « envoyé » se note sur la fiche (h.rappelVeille = date du RDV).
+   doublons : même personne, même jour, même commune, au moins deux fiches actives — deux cas
+   réels (23/09 et 05/10) découverts seulement quand un créneau refusait de se libérer. */
+var RAPPEL_EXCLUS=['pas_de_retour','lapin','excuse','realise'];
+function prochainJourOuvre(){
+  var d=new Date();d.setHours(12,0,0,0);
+  do{d.setDate(d.getDate()+1);}while(d.getDay()===0||d.getDay()===6);
+  return toLocalDateStr(d);
+}
+function texteRappelVeille(h){
+  var cms=S.cmsList.find(function(c){return String(c.id)===String(h.selectedCMS);});
+  var dem=h.selectedDemarche==="__autre__"?{nom:h.demarcheAutre||"Autre"}:S.demarches.find(function(d){return String(d.id)===String(h.selectedDemarche);})||{nom:h.demarche||""};
+  var vars={civilite:h.civilite||"",prenom:h.prenom||"",nom:h.nom||"",demarche:dem.nom||"",date:h.date||"",heure:h.heure||"",adresse:cms?cms.adresse:"[adresse]",documents:[],commune:h.commune||"",dateDemande:h.dateDemande||"",lienCalendrier:""};
+  return fillTemplate(S.templates.sms_rappel_veille||DEFAULT_TEMPLATES.sms_rappel_veille,vars);
+}
+function doublonsDeFiche(todayStr){
+  var depuis=toLocalDateStr(new Date(new Date(todayStr+'T12:00:00').getTime()-30*86400000));
+  var groups={};
+  S.history.forEach(function(h){
+    if(!h.date||h.date<depuis||!h.nom||h.msgType==='indispo'||FREE_STATUTS_DOUBLON.indexOf(h.statut)!==-1)return;
+    var k=h.date+'|'+(h.commune||'')+'|'+(h.nom||'').trim().toLowerCase()+'|'+(h.prenom||'').trim().toLowerCase();
+    (groups[k]=groups[k]||[]).push(h);
+  });
+  return Object.keys(groups).filter(function(k){return groups[k].length>1;}).map(function(k){return groups[k];}).sort(function(a,b){return a[0].date<b[0].date?-1:1;});
+}
+var FREE_STATUTS_DOUBLON=['pas_de_retour','lapin','excuse'];
+function renderRappelsEtDoublons(wrap,todayStr){
+  var fmtD=function(d){return d.split('-').reverse().slice(0,2).join('/');};
+  var BTN="cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:8px;border:1px solid var(--c-border);background:var(--c-card);color:var(--c-dim);white-space:nowrap;";
+  /* doublons */
+  var dbl=doublonsDeFiche(todayStr);
+  if(dbl.length){
+    var db=el('div',{style:"background:oklch(0.97 0.05 60);border:1.5px solid oklch(0.78 0.14 60);border-radius:14px;padding:12px 18px;margin-bottom:16px;"});
+    db.appendChild(el('div',{style:"font-size:12.5px;font-weight:800;color:oklch(0.45 0.13 60);margin-bottom:6px;"},'⚠️ '+dbl.length+' doublon'+(dbl.length>1?'s':'')+' de fiche possible'+(dbl.length>1?'s':'')+' — même personne plusieurs fois le même jour :'));
+    dbl.forEach(function(g){
+      var h=g[0];
+      var line=el('div',{style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;margin-top:4px;"});
+      line.appendChild(el('span',{style:"font-weight:700;"},[h.civilite,h.prenom,(h.nom||'').toUpperCase()].filter(Boolean).join(' ')+' — '+fmtD(h.date)+' '+(h.commune||'')));
+      line.appendChild(el('span',{style:"color:var(--c-dim);"},g.map(function(x){return (x.heure||'?')+' '+(x.demarche||'')+' ('+(x.statut||'—')+')';}).join(' · ')));
+      line.appendChild(el('button',{class:'gx-press',style:BTN,onClick:function(){S.agFocusDate=h.date+(h.commune||'');renderAgenda();}},'Voir le jour'));
+      db.appendChild(line);
+    });
+    db.appendChild(el('div',{style:"font-size:11.5px;color:var(--c-muted);margin-top:6px;"},"Supprimer la fiche en trop depuis le RDV (ou l'Historique) fait disparaître l'alerte."));
+    wrap.appendChild(db);
+  }
+  /* rappels de la veille */
+  var cible=prochainJourOuvre();
+  var liste=S.history.filter(function(h){return h.date===cible&&h.heure&&h.nom&&h.msgType!=='indispo'&&RAPPEL_EXCLUS.indexOf(h.statut)===-1;}).sort(function(a,b){return (a.heure||'').localeCompare(b.heure||'');});
+  if(!liste.length)return;
+  var aFaire=liste.filter(function(h){return h.rappelVeille!==h.date;}).length;
+  var jour=JOURS_FR[new Date(cible+'T12:00:00').getDay()].toLowerCase()+' '+fmtD(cible);
+  var box=el('div',{style:"background:oklch(0.97 0.03 250);border:1.5px solid oklch(0.8 0.08 250);border-radius:14px;padding:12px 18px;margin-bottom:16px;"});
+  box.appendChild(el('div',{style:"font-size:12.5px;font-weight:800;color:oklch(0.42 0.12 260);margin-bottom:6px;"},'🔔 Rappels pour '+jour+' — '+(aFaire?aFaire+' à envoyer':'tous envoyés ✓')));
+  liste.forEach(function(h){
+    var envoye=h.rappelVeille===h.date;
+    var line=el('div',{style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;margin-top:4px;"+(envoye?"opacity:.55;":"")});
+    line.appendChild(el('span',{style:"font-weight:800;min-width:42px;"},h.heure));
+    line.appendChild(el('span',{style:"font-weight:700;"},[h.civilite,h.prenom,(h.nom||'').toUpperCase()].filter(Boolean).join(' ')));
+    line.appendChild(el('span',{style:"color:var(--c-dim);"},(h.commune||'')+(h.telephone?' · 📞 '+h.telephone:'')+(h.statut==='en_attente'?' · non confirmé':'')));
+    if(envoye){line.appendChild(el('span',{style:"font-size:11.5px;font-weight:700;color:oklch(0.45 0.12 155);"},'✓ rappel envoyé'));}
+    else{
+      line.appendChild(el('button',{class:'gx-press',style:BTN,onClick:function(){doCopy(texteRappelVeille(h)).then(function(ok){if(ok)showToast('📋 SMS de rappel copié');});}},'📋 Copier le SMS'));
+      line.appendChild(el('button',{class:'gx-press',style:BTN,onClick:function(){h.rappelVeille=h.date;lsSet('ess-history',S.history);renderAgenda();showToast('✓ Rappel noté comme envoyé');}},'✓ Envoyé'));
+    }
+    box.appendChild(line);
+  });
+  wrap.appendChild(box);
+}
 function renderAgenda(){
   var pane=document.getElementById('pane-agenda');if(!pane)return;clear(pane);
   var wrap=el('div',{style:"max-width:860px;margin:0 auto;padding:clamp(14px,3vw,32px) clamp(12px,4vw,40px);"});
@@ -2785,6 +2857,7 @@ function renderAgenda(){
 
   var today=new Date();today.setHours(0,0,0,0);
   var todayStr=toLocalDateStr(today);
+  renderRappelsEtDoublons(wrap,todayStr);
   if(S.permanences.length===0){
     wrap.appendChild(el('div',{style:"text-align:center;padding:60px 20px;color:var(--c-muted);font-size:14px;"},"Aucune journée ouverte — elle s'ouvre automatiquement avec votre premier RDV depuis l'onglet Générer."));
     pane.appendChild(wrap);return;

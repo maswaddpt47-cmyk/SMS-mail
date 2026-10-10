@@ -23,7 +23,7 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   de contenu, avec expiration ; à terme, une adresse propre à cette appli
   (domaine ou sous-domaine dédié). Non vérifié : portée réelle du jeton
   actuel. **Mineur RGPD** : polices chargées depuis `fonts.googleapis.com`
-  (adresse IP transmise à Google, hors UE) — les héberger dans le dépôt.
+  (adresse IP transmise à Google, hors UE) — **fait le 10/10/2026** (`fonts/`).
 
 1. **RGPD point 4 — à charge de l'utilisateur** : vérifier avec le Conseil
    Départemental si ce traitement figure au registre RGPD / si le DPO est
@@ -146,6 +146,15 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   un bouton « 📂 Ouvrir cette journée » la régularise. Le déplacement vérifie
   aussi le créneau d'arrivée (confirmation nommant l'occupant, jamais
   bloquante), comme Générer et « Autre heure ».
+- **Rappels de la veille et doublons de fiche dans l'Agenda** (10/10/2026,
+  `renderRappelsEtDoublons`) : encadré des RDV actifs du **prochain jour
+  ouvré** (lundi si on est vendredi), lapins/excusés/réalisés exclus, SMS
+  prêt à copier (modèle `sms_rappel_veille`, modifiable dans Modèles),
+  « ✓ Envoyé » noté sur la fiche (`h.rappelVeille` = date du RDV, champ
+  ajouté, inclus d'office dans les sauvegardes). Encadré des doublons :
+  même personne, même jour, même commune, plusieurs fiches actives, sur les
+  30 derniers jours et à venir. Testé en navigateur sur données fictives.
+  Si un 3e doublon réel apparaît, sa cause reste à trouver (critère AGORA 3).
 - **Téléphone : jamais de troncature silencieuse** (07/10/2026, cas réel :
   un numéro invalide envoyé sans que rien ne le signale, `formatTel`
   coupait à 10 chiffres). `telProblem()` (incomplet, trop long, ne commence
@@ -174,16 +183,8 @@ Règle 22 de MD-LIB `collaboration.md` : au plus 3 pistes, à la fin d'une
 fonctionnalité validée ou sur demande de revue. Une piste écartée ne se
 repropose pas sans fait nouveau.
 
-**Proposées, en attente** (10/10/2026)
-1. **Rappel la veille des RDV confirmés** : liste des RDV du lendemain avec
-   le message prêt à copier. Aucun rappel de ce type n'existe (la
-   « relance » vise les propositions sans réponse) ; les lapins sont déjà
-   comptés dans Stats, donc l'effet se mesurera.
-2. **Signalement des doublons de fiche** : deux cas réels (23/09 et 05/10),
-   cause non trouvée. Repérer dans l'Agenda une même personne deux fois sur
-   le même créneau, plutôt que d'attendre qu'un créneau refuse de se libérer.
-3. **Polices hébergées dans le dépôt** au lieu de `fonts.googleapis.com`
-   (point « mineur RGPD » de l'audit du 01/10) : petit, sans risque.
+**Proposées, en attente**
+_(aucune — les trois du 10/10/2026 réalisées le même jour)_
 
 **Écartées** (date — piste — raison)
 _(aucune)_
