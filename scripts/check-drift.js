@@ -11,6 +11,30 @@ const THIS_FILE = path.join(__dirname, '..', 'index.html');
 const DEFAULT_OTHER = path.join(__dirname, '..', '..', 'sms-mail-multi', 'index.html');
 const otherPath = process.argv[2] || DEFAULT_OTHER;
 
+/* un « / » ouvre une regex (et non une division) s'il suit un opérateur, une ponctuation
+   ouvrante ou un mot-clé comme return */
+function regexAllowed(src, i) {
+  let j = i - 1;
+  while (j >= 0 && /\s/.test(src[j])) j--;
+  if (j < 0) return true;
+  if ('(,=:[!&|?{};+-*%<>~^'.includes(src[j])) return true;
+  const word = src.slice(Math.max(0, j - 9), j + 1).match(/([A-Za-z_$]+)$/);
+  return !!(word && ['return', 'typeof', 'case', 'in', 'of', 'void', 'delete', 'throw'].includes(word[1]));
+}
+/* renvoie l'index du « / » fermant de la regex qui commence en i */
+function skipRegex(src, i) {
+  let inClass = false;
+  for (let k = i + 1; k < src.length; k++) {
+    const c = src[k];
+    if (c === '\\') { k++; continue; }
+    if (c === '\n') return k;
+    if (inClass) { if (c === ']') inClass = false; continue; }
+    if (c === '[') { inClass = true; continue; }
+    if (c === '/') return k;
+  }
+  return src.length;
+}
+
 function extractFunctions(src) {
   const fns = {};
   const re = /^function\s+(\w+)\s*\(/gm;
@@ -31,6 +55,10 @@ function extractFunctions(src) {
       }
       if (c === '/' && c2 === '/') { inLineComment = true; i++; continue; }
       if (c === '/' && c2 === '*') { inBlockComment = true; i++; continue; }
+      /* littéral regex (ex. /[-\s']+/) : sans ce saut, l'apostrophe de la classe ouvrait une
+         « chaîne » fantôme et faussait le comptage des accolades — 3 faux positifs
+         (normCommune, exportHistoryCSV, exportOrientationsCSV) jusqu'au 10/10/2026 */
+      if (c === '/' && regexAllowed(src, i)) { i = skipRegex(src, i); continue; }
       if (c === '"' || c === "'" || c === '`') { inStr = c; continue; }
       if (c === '{') depth++;
       else if (c === '}') { depth--; if (depth === 0) { i++; break; } }

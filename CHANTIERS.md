@@ -30,9 +30,10 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
    Départemental si ce traitement figure au registre RGPD / si le DPO est
    informé. Seul point du plan de remédiation encore ouvert (`CLAUDE.md`).
 2. **Dérive SMS-mail ↔ sms-mail-multi — audit du 26/09/2026, oublis de
-   portage corrigés le 27/09/2026.** `check-drift.js` donne 3 faux positifs
-   (`normCommune`, `exportHistoryCSV`, `exportOrientationsCSV` en partie : son
-   analyseur prend l'apostrophe de la regex `/[-\s']+/` pour une chaîne). Le
+   portage corrigés le 27/09/2026.** `check-drift.js` ne donne plus de faux
+   positif (il sautait mal les regex contenant une apostrophe, corrigé le
+   10/10/2026 ; ce correctif a révélé un vrai bug, l'export CSV des
+   Orientations de SMS-mail, corrigé le même jour). Le
    reste des écarts est voulu (multi-profil) ou cosmétique. **Résolu par le
    calendrier « à la volée »** : la question de la fenêtre Agenda ne se pose
    plus, il n'y a plus de fenêtre. Dernier écart « non jugé » (nom affiché
