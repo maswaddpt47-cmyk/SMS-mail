@@ -174,8 +174,16 @@ Règle 22 de MD-LIB `collaboration.md` : au plus 3 pistes, à la fin d'une
 fonctionnalité validée ou sur demande de revue. Une piste écartée ne se
 repropose pas sans fait nouveau.
 
-**Proposées, en attente**
-_(aucune — les trois du 08/10/2026 réalisées le même jour)_
+**Proposées, en attente** (10/10/2026)
+1. **Rappel la veille des RDV confirmés** : liste des RDV du lendemain avec
+   le message prêt à copier. Aucun rappel de ce type n'existe (la
+   « relance » vise les propositions sans réponse) ; les lapins sont déjà
+   comptés dans Stats, donc l'effet se mesurera.
+2. **Signalement des doublons de fiche** : deux cas réels (23/09 et 05/10),
+   cause non trouvée. Repérer dans l'Agenda une même personne deux fois sur
+   le même créneau, plutôt que d'attendre qu'un créneau refuse de se libérer.
+3. **Polices hébergées dans le dépôt** au lieu de `fonts.googleapis.com`
+   (point « mineur RGPD » de l'audit du 01/10) : petit, sans risque.
 
 **Écartées** (date — piste — raison)
 _(aucune)_
