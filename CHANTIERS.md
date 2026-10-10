@@ -1,6 +1,6 @@
 # CHANTIERS — SMS-mail
 
-État au **07/10/2026**, commit de référence `884ee5c` (`main`).
+État au **10/10/2026**, commit de référence `c8383ca` (`main`).
 
 Carnet de reprise : ce qu'une session sans historique doit savoir pour
 continuer. Mis à jour à chaque avancée, pas en fin de session. Une tâche
