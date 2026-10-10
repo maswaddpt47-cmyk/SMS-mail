@@ -22,7 +22,8 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   jeton GitHub à grain fin, limité au seul dépôt de sauvegarde en écriture
   de contenu, avec expiration ; à terme, une adresse propre à cette appli
   (domaine ou sous-domaine dédié). Non vérifié : portée réelle du jeton
-  actuel. **Mineur RGPD** : polices chargées depuis `fonts.googleapis.com`
+  actuel. **Jeton : reporté par l'utilisateur le 10/10/2026** — ne pas le
+  reproposer sans fait nouveau. **Mineur RGPD** : polices chargées depuis `fonts.googleapis.com`
   (adresse IP transmise à Google, hors UE) — **fait le 10/10/2026** (`fonts/`).
 
 1. **RGPD point 4 — à charge de l'utilisateur** : vérifier avec le Conseil
