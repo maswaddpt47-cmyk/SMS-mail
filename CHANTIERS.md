@@ -181,18 +181,12 @@ Règle 22 de MD-LIB `collaboration.md` : au plus 3 pistes, à la fin d'une
 fonctionnalité validée ou sur demande de revue. Une piste écartée ne se
 repropose pas sans fait nouveau.
 
-**Proposées, en attente** (10/10/2026, d'après l'usage décrit par l'utilisateur :
-après chaque accompagnement, CR dans un logiciel métier interne + reporting
-national dans « la Coop » — double ressaisie à la main)
-1. **File « à reporter »** : chaque RDV passé à « réalisé » entre dans une
-   liste avec deux cases, « CR fait » et « Coop fait » ; rien ne s'oublie,
-   le reste à saisir se voit d'un coup d'œil.
-2. **Fiche prête à copier pour la Coop** : date, durée, lieu, commune du
-   bénéficiaire, démarche convertie en thématique Coop (table de
-   correspondance démarche → thématique, réglable). Champs exacts de la
-   Coop à fournir par l'utilisateur ; import ou API de la Coop : non vérifié.
-3. **Résumé prêt à copier pour le CR** du logiciel interne (nom, date,
-   démarche, notes), au format attendu par ce logiciel.
+**Proposées, en attente**
+_(aucune)_
 
 **Écartées** (date — piste — raison)
-_(aucune)_
+- 10/10/2026 — file « à reporter » (CR / Coop), fiche Coop et résumé CR
+  prêts à copier — l'utilisateur fait CR et Coop dans la foulée de chaque
+  accompagnement : ces outils ajouteraient des clics sans rien éviter.
+  À ne reproposer que si un import (CSV/API) côté Coop ou logiciel interne
+  permettait de supprimer une saisie, pas d'en préparer une.
