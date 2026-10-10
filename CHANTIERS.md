@@ -32,14 +32,10 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
    portage corrigés le 27/09/2026.** `check-drift.js` donne 3 faux positifs
    (`normCommune`, `exportHistoryCSV`, `exportOrientationsCSV` en partie : son
    analyseur prend l'apostrophe de la regex `/[-\s']+/` pour une chaîne). Le
-   reste des écarts est voulu (multi-profil) ou cosmétique. **Reste ouvert :**
-   - **Résolu par le calendrier « à la volée », côté SMS-mail** : la question de la
-     fenêtre Agenda (8 sem. passées/12 futures contre 4/8 sur multi) ne se
-     pose plus pour SMS-mail — il n'y a plus de fenêtre, seulement les
-     journées réellement ouvertes. Reste vrai pour sms-mail-multi tant que
-     le portage n'est pas fait.
-   - **Non jugé** : `handleGenerate` compare la commune strictement dans
-     SMS-mail, avec tolérance « commune vide » dans multi.
+   reste des écarts est voulu (multi-profil) ou cosmétique. **Résolu par le
+   calendrier « à la volée »** : la question de la fenêtre Agenda ne se pose
+   plus, il n'y a plus de fenêtre. Dernier écart « non jugé » (nom affiché
+   dans l'alerte de conflit de Générer) aligné sur multi le 10/10/2026.
 3. **Origine du numéro tronqué du 07/10/2026 non identifiée** : un numéro
    de la forme `00 76 15 74 22` (10 chiffres commençant par 00) est arrivé
    dans Générer et a été envoyé sans alerte. L'alerte est en place (voir

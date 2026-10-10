@@ -693,7 +693,10 @@ function handleGenerate(){
   var telPb=telProblem(S.telephone);
   if(telPb&&!confirm('⚠️ '+telPb+' : '+S.telephone+'\n\nGénérer quand même ?'))return;
   if(hasConflict(S.date,S.heure,S.commune)){
-    var conf=S.history.find(function(h){return h.date===S.date&&h.heure===S.heure&&h.commune===S.commune&&FREE_AGAIN_STATUTS.indexOf(h.statut)===-1;});
+    /* même recherche que hasConflict (un RDV sans commune occupe aussi le créneau), et on nomme
+       en priorité l'occupant confirmé — aligné sur sms-mail-multi le 10/10/2026 */
+    var matches=S.history.filter(function(h){return h.date===S.date&&h.heure===S.heure&&(h.commune===S.commune||!h.commune)&&FREE_AGAIN_STATUTS.indexOf(h.statut)===-1;});
+    var conf=matches.filter(function(x){return x.msgType==='confirmation';})[0]||matches.filter(function(x){return x.msgType==='proposition';})[0]||matches.filter(function(x){return x.msgType==='sans_appel';})[0]||matches[0];
     var who=conf?[conf.civilite,conf.prenom,conf.nom].filter(Boolean).join(' '):'';
     showToast('⚠️ Créneau déjà pris'+(who?' — '+who:''),'warn');
   }
