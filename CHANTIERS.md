@@ -51,6 +51,10 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
 
 ## Points à ne pas défaire
 
+- **Alerte « À pointer »** (`isAPointer`/`aPointerList`, 15/10/2026) : RDV
+  `confirme` dont la date est passée → pastille orange sur l'onglet Agenda,
+  bannière 📌 et filtre « À pointer ». `archiveOldDays` n'archive pas une
+  journée qui en contient encore (même logique que les RDV en attente).
 - **Aucune donnée d'usager dans un repo public**, même temporairement :
   pas de `backups/`, pas d'export JSON. Les sauvegardes partent vers le repo
   privé `GH_REPO='maswaddpt47-cmyk/sms-mail-backups'` (`index.html`).
