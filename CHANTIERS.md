@@ -55,6 +55,8 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
   `confirme` dont la date est passée → pastille orange sur l'onglet Agenda,
   bannière 📌 et filtre « À pointer ». `archiveOldDays` n'archive pas une
   journée qui en contient encore (même logique que les RDV en attente).
+  Pointage en un clic depuis la bannière (`pointerStatut`, différent entre
+  les jumeaux à dessein : multi écrit dans l'historique du bon profil).
 - **Aucune donnée d'usager dans un repo public**, même temporairement :
   pas de `backups/`, pas d'export JSON. Les sauvegardes partent vers le repo
   privé `GH_REPO='maswaddpt47-cmyk/sms-mail-backups'` (`index.html`).
@@ -186,11 +188,7 @@ fonctionnalité validée ou sur demande de revue. Une piste écartée ne se
 repropose pas sans fait nouveau.
 
 **Proposées, en attente**
-- 15/10/2026 — pointer en un clic depuis la bannière 📌 (✅ / 🐇 / 🙏 par
-  ligne) : aujourd'hui il faut retrouver et ouvrir chaque tuile.
-- 15/10/2026 — Stats, « Taux de concrétisation » : les RDV confirmés non
-  pointés comptent comme non réalisés et font baisser le taux ; afficher
-  « dont N non pointés » sous la tuile.
+_(aucune — les deux pistes du 15/10/2026 ont été faites le jour même)_
 
 **Écartées** (date — piste — raison)
 - 10/10/2026 — file « à reporter » (CR / Coop), fiche Coop et résumé CR
