@@ -186,7 +186,11 @@ fonctionnalité validée ou sur demande de revue. Une piste écartée ne se
 repropose pas sans fait nouveau.
 
 **Proposées, en attente**
-_(aucune)_
+- 15/10/2026 — pointer en un clic depuis la bannière 📌 (✅ / 🐇 / 🙏 par
+  ligne) : aujourd'hui il faut retrouver et ouvrir chaque tuile.
+- 15/10/2026 — Stats, « Taux de concrétisation » : les RDV confirmés non
+  pointés comptent comme non réalisés et font baisser le taux ; afficher
+  « dont N non pointés » sous la tuile.
 
 **Écartées** (date — piste — raison)
 - 10/10/2026 — file « à reporter » (CR / Coop), fiche Coop et résumé CR
