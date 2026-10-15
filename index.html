@@ -901,6 +901,15 @@ function isDepasse(h){
   var now=new Date();var today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   return Math.round((new Date(today+'T00:00:00')-new Date(h.dateDemande.slice(0,10)+'T00:00:00'))/86400000)>(S.relanceDelai||3);
 }
+/* RDV confirmé dont la date est passée sans être marqué Réalisé (ni Lapin/Excusé…) :
+   à pointer — même logique centralisée que isDepasse */
+function isAPointer(h){
+  return !!h&&h.statut==='confirme'&&h.msgType!=='indispo'&&!!h.date&&h.date<toLocalDateStr(new Date());
+}
+/* RDV à pointer visibles dans l'agenda : les journées archivées (masquées) sont exclues */
+function aPointerList(){
+  return S.history.filter(function(h){return isAPointer(h)&&S.permanences.some(function(p){return p.commune===h.commune&&p.exceptDate===h.date&&!p.archived;});});
+}
 var DUREE_CRENEAU=60; /* durée fixe des créneaux, quelle que soit la commune */
 var DEBUT_GRILLE=9*60+30; /* premier créneau à 9h30 puis toutes les heures (07/10/2026, avant : 9h00) */
 var FIN_AFFICHAGE_DEFAUT=16*60+30; /* on continue de proposer des créneaux libres jusqu'à 16h30 même après le dernier RDV du jour */
@@ -995,7 +1004,7 @@ function archiveOldDays(){
   var n=0;
   S.permanences=S.permanences.map(function(p){
     if(p.archived||!p.exceptDate||p.exceptDate>=cutoff)return p;
-    var pending=S.history.some(function(h){return h.commune===p.commune&&h.date===p.exceptDate&&h.statut==='en_attente';});
+    var pending=S.history.some(function(h){return h.commune===p.commune&&h.date===p.exceptDate&&(h.statut==='en_attente'||isAPointer(h));});
     if(pending)return p;
     n++;return Object.assign({},p,{archived:true});
   });
@@ -1143,6 +1152,7 @@ function renderTabs(){
   var _nowTab=new Date();var _todayTab=_nowTab.getFullYear()+'-'+String(_nowTab.getMonth()+1).padStart(2,'0')+'-'+String(_nowTab.getDate()).padStart(2,'0');
   var depasseN=S.history.filter(function(h){return isInMyAgenda(h)&&isDepasse(h);}).length;
   var agTodayN=S.history.filter(function(h){return h.date===_todayTab&&(h.statut==='confirme'||h.statut==='realise');}).length;
+  var aPointerN=aPointerList().length;
   var defs=[["generate","Générer"],["history","Historique"],["orientations","📋 Orientations"+(orientN>0?" ("+orientN+")":"")],["agenda","📅 Agenda"],["stats","📊 Stats"],["templates","Modèles"],["config","Configuration"],["mandat","Mandat"],["mandats","Mandats archivés"]];
   defs.forEach(function(d){
     var btn=el('button',{class:'gx-press',style:tabStyle(S.activeTab===d[0]),onClick:(function(key){return function(){S.activeTab=key;showActivePane();renderTabs();var m=document.querySelector('main');if(m)m.scrollTop=0;if(key==='stats')renderStats();if(key==='agenda')renderAgenda();if(key==='orientations')renderOrientations();if(key==='generate')renderGenerate();};})(d[0])},d[1]);
@@ -1157,6 +1167,10 @@ function renderTabs(){
     if(d[0]==='agenda'&&depasseN>0){
       var bdg=el('span',{title:depasseN+' RDV en attente dépassé'+(depasseN>1?'s':''),style:"display:inline-flex;align-items:center;justify-content:center;background:oklch(0.52 0.18 25);color:#fff;font-size:10px;font-weight:800;border-radius:20px;min-width:17px;height:17px;padding:0 4px;margin-left:5px;vertical-align:middle;line-height:1;"},String(depasseN));
       btn.appendChild(bdg);
+    }
+    if(d[0]==='agenda'&&aPointerN>0){
+      var bdgP=el('span',{title:aPointerN+' RDV confirmé'+(aPointerN>1?'s':'')+' passé'+(aPointerN>1?'s':'')+', à marquer Réalisé',style:"display:inline-flex;align-items:center;justify-content:center;background:oklch(0.62 0.15 70);color:#fff;font-size:10px;font-weight:800;border-radius:20px;min-width:17px;height:17px;padding:0 4px;margin-left:5px;vertical-align:middle;line-height:1;"},String(aPointerN));
+      btn.appendChild(bdgP);
     }
     nav.appendChild(btn);
   });
@@ -2860,6 +2874,29 @@ function renderAgenda(){
     wrap.appendChild(banner);
   })();
 
+  /* bannière RDV confirmés passés, pas encore marqués Réalisé */
+  (function(){
+    var aPointer=aPointerList().sort(function(a,b){return(a.date+(a.heure||'')).localeCompare(b.date+(b.heure||''));});
+    if(!aPointer.length)return;
+    var n=aPointer.length;
+    var banner=el('div',{style:"display:flex;align-items:center;gap:12px;background:oklch(0.97 0.05 80);border:1.5px solid oklch(0.78 0.14 75);border-radius:14px;padding:12px 18px;margin-bottom:18px;box-shadow:0 2px 8px oklch(0.5 0.1 75 / .12);"});
+    banner.appendChild(el('span',{style:"font-size:22px;"},"📌"));
+    var txt=el('div',{style:"flex:1;"});
+    txt.appendChild(el('div',{style:"font-size:13px;font-weight:800;color:oklch(0.42 0.13 65);"},n+' RDV confirmé'+(n>1?'s':'')+' passé'+(n>1?'s':'')+' à pointer : Réalisé, Lapin ou Excusé ?'));
+    var lignes=aPointer.slice(0,5).map(function(h){return[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ')+' ('+h.date.split('-').reverse().join('/')+')';});
+    txt.appendChild(el('div',{style:"font-size:11px;color:oklch(0.5 0.12 65);margin-top:3px;"},lignes.join(' · ')+(n>5?' · …':'')));
+    banner.appendChild(txt);
+    var btnF=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:9px;border:1.5px solid oklch(0.72 0.14 75);background:oklch(0.93 0.07 80);color:oklch(0.4 0.13 65);white-space:nowrap;"});
+    btnF.textContent="Filtrer";
+    btnF.addEventListener('click',function(){
+      var sel=document.querySelector('#ag-statut-sel');
+      if(sel){sel.value='a_pointer';sel.dispatchEvent(new Event('change'));}
+      agScrollTo(aPointer[0].date);
+    });
+    banner.appendChild(btnF);
+    wrap.appendChild(banner);
+  })();
+
   var today=new Date();today.setHours(0,0,0,0);
   var todayStr=toLocalDateStr(today);
   renderRappelsEtDoublons(wrap,todayStr);
@@ -2931,6 +2968,7 @@ function renderAgenda(){
         if(norm&&n&&n.indexOf(norm)!==-1){matchNom=true;p.style.outline='2px solid oklch(0.5 0.16 266)';p.style.outlineOffset='1px';}
         else{p.style.outline='';}
         if(statut==='depasse'){if(p.getAttribute('data-depasse')==='1')matchSt=true;}
+        else if(statut==='a_pointer'){if(p.getAttribute('data-apointer')==='1')matchSt=true;}
         else if(statut&&s===statut)matchSt=true;
       });
       card.style.display=(matchNom&&matchSt)?'':'none';
@@ -3025,7 +3063,7 @@ function renderAgenda(){
   var btnNext=el('button',{class:'gx-press',style:NBTN},'Semaine suiv. →');
   btnNext.addEventListener('click',function(){var d=new Date((jumpIn.value||todayStr)+'T12:00:00');d.setDate(d.getDate()+7);var s=toLocalDateStr(d);jumpIn.value=s;agScrollTo(s);});
   var statutSel=el('select',{id:'ag-statut-sel',style:"font-family:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1.5px solid var(--c-border-in);background:var(--c-card);color:var(--c-dim);cursor:pointer;"});
-  [['','Tous statuts'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['realise','✅ Réalisé'],['excuse','🙏 Excusé'],['lapin','🐇 Lapin'],['pas_de_retour','📵 Pas de retour'],['libre','🟢 Libre'],['depasse','🚨 Dépassement']].forEach(function(o){statutSel.appendChild(el('option',{value:o[0]},o[1]));});
+  [['','Tous statuts'],['en_attente','⏳ En attente'],['confirme','✓ Confirmé'],['realise','✅ Réalisé'],['excuse','🙏 Excusé'],['lapin','🐇 Lapin'],['pas_de_retour','📵 Pas de retour'],['libre','🟢 Libre'],['depasse','🚨 Dépassement'],['a_pointer','📌 À pointer']].forEach(function(o){statutSel.appendChild(el('option',{value:o[0]},o[1]));});
   statutSel.addEventListener('change',function(e){agFilterStatut(e.target.value);});
   navBar.appendChild(btnToday);navBar.appendChild(btnPrev);navBar.appendChild(btnNext);navBar.appendChild(searchIn);navBar.appendChild(statutSel);navBar.appendChild(jumpIn);
   pane.appendChild(navBar);
@@ -3199,7 +3237,7 @@ function renderAgenda(){
         _ttLines.push('🟢 Créneau libre — '+slot.heure);
       }
       var _isDepasse=slot.taken?isDepasse(slot.taken):false;
-      var pill=el('button',{class:_isDepasse?'ag-depasse':'',draggable:'true',style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:grab;font-family:inherit;min-height:52px;",'data-nom':who.toLowerCase(),'data-statut':_pillStatut,'data-depasse':_isDepasse?'1':'0',title:_ttLines.join('\n')});
+      var pill=el('button',{class:_isDepasse?'ag-depasse':'',draggable:'true',style:"display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:10px;border:1px solid "+pillBorder+";background:"+pillBg+";cursor:grab;font-family:inherit;min-height:52px;",'data-nom':who.toLowerCase(),'data-statut':_pillStatut,'data-depasse':_isDepasse?'1':'0','data-apointer':(slot.taken&&isAPointer(slot.taken))?'1':'0',title:_ttLines.join('\n')});
       (function(s){pill.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',JSON.stringify({date:s.taken.date,heure:s.taken.heure,commune:s.taken.commune||'',nom:s.taken.nom||''}));pill.style.opacity='0.5';});pill.addEventListener('dragend',function(){pill.style.opacity='1';});})(slot);
       var heureRow=el('div',{style:"display:flex;align-items:center;gap:3px;"});
       heureRow.appendChild(el('span',{style:"font-size:12px;font-weight:800;white-space:nowrap;color:"+pillTxt},slot.heure));
@@ -3717,7 +3755,7 @@ function renderConfig(){
   else if(S.configTab==="permanences"){
     /* archivage manuel — masque (sans les supprimer) les journées passées depuis plus de 2 mois */
     var archB=el('div',{style:"background:var(--c-card);border:1px solid var(--c-border);border-radius:16px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"});
-    archB.appendChild(el('div',{style:"font-size:12.5px;color:var(--c-muted);max-width:420px;line-height:1.5;"},"RGPD — Rétention : masque les journées passées depuis plus de 2 mois (sans RDV en attente) pour garder l'agenda lisible. Rien n'est supprimé, elles restent dans les stats et les sauvegardes ; réversible depuis l'Agenda."));
+    archB.appendChild(el('div',{style:"font-size:12.5px;color:var(--c-muted);max-width:420px;line-height:1.5;"},"RGPD — Rétention : masque les journées passées depuis plus de 2 mois (sans RDV en attente ni à pointer) pour garder l'agenda lisible. Rien n'est supprimé, elles restent dans les stats et les sauvegardes ; réversible depuis l'Agenda."));
     archB.appendChild(el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;border:1px solid var(--c-border);background:var(--c-hover);color:var(--c-dim);font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:10px;white-space:nowrap;",onClick:archiveOldDays},"Archiver les journées passées"));
     wrap.appendChild(archB);
     /* liste */
