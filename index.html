@@ -910,6 +910,20 @@ function isAPointer(h){
 function aPointerList(){
   return S.history.filter(function(h){return isAPointer(h)&&S.permanences.some(function(p){return p.commune===h.commune&&p.exceptDate===h.date&&!p.archived;});});
 }
+/* pointage depuis la bannière 📌 : même enregistrement que le sélecteur de statut
+   de la fenêtre RDV ; Excusé ouvre ensuite cette fenêtre pour saisir le motif */
+function pointerStatut(h,statut){
+  var idx=S.history.indexOf(h);
+  if(idx===-1)return;
+  S.history[idx].statut=statut;
+  lsSet('ess-history',S.history);
+  if(ghToken()){var _n=Date.now();if(_n-_ghLastAutoPush>120000){_ghLastAutoPush=_n;githubPush(true);}}
+  renderAgenda();renderTabs();
+  if(statut==='excuse'){
+    var perm=S.permanences.find(function(p){return p.commune===h.commune&&p.exceptDate===h.date;})||{commune:h.commune};
+    S.modal='agenda-rdv';S.agendaRdv={slot:{heure:h.heure,taken:h},day:{dateStr:h.date,perm:perm}};renderModal();
+  }
+}
 var DUREE_CRENEAU=60; /* durée fixe des créneaux, quelle que soit la commune */
 var DEBUT_GRILLE=9*60+30; /* premier créneau à 9h30 puis toutes les heures (07/10/2026, avant : 9h00) */
 var FIN_AFFICHAGE_DEFAUT=16*60+30; /* on continue de proposer des créneaux libres jusqu'à 16h30 même après le dernier RDV du jour */
@@ -2061,6 +2075,8 @@ function renderStats(){
     var lapinN=S.history.filter(function(h){return h.statut==='lapin';}).length;
     var concretN=S.history.filter(function(h){return h.date&&h.date<=todayStr&&h.msgType!=='indispo';}).length;
     var concretStr=concretN>0?Math.round(realiseN/concretN*100)+'%':'—';
+    var nonPointesN=S.history.filter(isAPointer).length;
+    var concretSub=nonPointesN?('dont '+nonPointesN+' RDV non pointé'+(nonPointesN>1?'s':'')):'';
     var lapinStr=concretN>0?Math.round(lapinN/concretN*100)+'%':'—';
     function groupByUsager(entries){
       var groups={};
@@ -2080,7 +2096,7 @@ function renderStats(){
       S._statListCtx={title:'🐇 Lapin — usagers ne s\'étant pas présentés',items:groupByUsager(S.history.filter(function(h){return h.statut==='lapin';}))};
       S.modal='stat-list';renderModal();
     }
-    [[countToday,"RDV aujourd'hui",null,null,null],[countWeek,"RDV cette semaine",null,null,null],[countMonth,"RDV ce mois",null,null,null],[occStr,"Taux d'occupation (30j)",null,"Créneaux pris / créneaux totaux sur les journées ouvertes des 30 prochains jours. Indique la charge à venir dans votre agenda.",null,occSub],[concretStr,"Taux de concrétisation",'oklch(0.38 0.14 155)',"% de RDV passés marqués Réalisé. Calculé uniquement sur les RDV dont la date est déjà passée.",null],[lapinStr,"Taux de lapin 🐇",'oklch(0.45 0.18 45)',"% de RDV passés où l'usager ne s'est pas présenté (statut Lapin). Calculé sur les RDV dont la date est déjà passée.",openLapinList]].forEach(function(kpi){
+    [[countToday,"RDV aujourd'hui",null,null,null],[countWeek,"RDV cette semaine",null,null,null],[countMonth,"RDV ce mois",null,null,null],[occStr,"Taux d'occupation (30j)",null,"Créneaux pris / créneaux totaux sur les journées ouvertes des 30 prochains jours. Indique la charge à venir dans votre agenda.",null,occSub],[concretStr,"Taux de concrétisation",'oklch(0.38 0.14 155)',"% de RDV passés marqués Réalisé. Calculé uniquement sur les RDV dont la date est déjà passée. Les RDV confirmés passés mais non pointés font baisser le taux.",null,null,concretSub],[lapinStr,"Taux de lapin 🐇",'oklch(0.45 0.18 45)',"% de RDV passés où l'usager ne s'est pas présenté (statut Lapin). Calculé sur les RDV dont la date est déjà passée.",openLapinList]].forEach(function(kpi){
       var tile=el('div',{style:kpiStyle+(kpi[4]?'cursor:pointer;':'')});
       if(kpi[4])tile.addEventListener('click',kpi[4]);
       tile.appendChild(el('div',{style:kpiNumStyle.replace('oklch(0.45 0.18 266)',kpi[2]||'oklch(0.45 0.18 266)')},String(kpi[0])));
@@ -2879,12 +2895,21 @@ function renderAgenda(){
     var aPointer=aPointerList().sort(function(a,b){return(a.date+(a.heure||'')).localeCompare(b.date+(b.heure||''));});
     if(!aPointer.length)return;
     var n=aPointer.length;
-    var banner=el('div',{style:"display:flex;align-items:center;gap:12px;background:oklch(0.97 0.05 80);border:1.5px solid oklch(0.78 0.14 75);border-radius:14px;padding:12px 18px;margin-bottom:18px;box-shadow:0 2px 8px oklch(0.5 0.1 75 / .12);"});
+    var banner=el('div',{style:"display:flex;align-items:flex-start;gap:12px;background:oklch(0.97 0.05 80);border:1.5px solid oklch(0.78 0.14 75);border-radius:14px;padding:12px 18px;margin-bottom:18px;box-shadow:0 2px 8px oklch(0.5 0.1 75 / .12);"});
     banner.appendChild(el('span',{style:"font-size:22px;"},"📌"));
     var txt=el('div',{style:"flex:1;"});
     txt.appendChild(el('div',{style:"font-size:13px;font-weight:800;color:oklch(0.42 0.13 65);"},n+' RDV confirmé'+(n>1?'s':'')+' passé'+(n>1?'s':'')+' à pointer : Réalisé, Lapin ou Excusé ?'));
-    var lignes=aPointer.slice(0,5).map(function(h){return[h.civilite,h.prenom,h.nom].filter(Boolean).join(' ')+' ('+h.date.split('-').reverse().join('/')+')';});
-    txt.appendChild(el('div',{style:"font-size:11px;color:oklch(0.5 0.12 65);margin-top:3px;"},lignes.join(' · ')+(n>5?' · …':'')));
+    var liste=el('div',{style:"margin-top:6px;max-height:220px;overflow-y:auto;"});
+    var PBTN="cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;padding:3px 8px;border-radius:7px;white-space:nowrap;";
+    aPointer.forEach(function(h){
+      var ligne=el('div',{style:"display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 0;border-top:1px solid oklch(0.88 0.06 80);"});
+      ligne.appendChild(el('span',{style:"flex:1;min-width:140px;font-size:12px;font-weight:600;color:oklch(0.42 0.12 65);"},([h.civilite,h.prenom,h.nom].filter(Boolean).join(' ')||'—')+' · '+h.date.split('-').reverse().join('/')+(h.heure?' '+h.heure:'')+(h.commune?' · '+h.commune:'')));
+      [['realise','✅ Réalisé','oklch(0.38 0.14 155)','oklch(0.93 0.06 155)'],['lapin','🐇 Lapin','oklch(0.45 0.18 45)','oklch(0.95 0.07 45)'],['excuse','🙏 Excusé','oklch(0.4 0.13 85)','oklch(0.95 0.07 85)']].forEach(function(b){
+        ligne.appendChild(el('button',{class:'gx-press',style:PBTN+"border:1.5px solid "+b[2]+";background:"+b[3]+";color:"+b[2]+";",onClick:function(){pointerStatut(h,b[0]);}},b[1]));
+      });
+      liste.appendChild(ligne);
+    });
+    txt.appendChild(liste);
     banner.appendChild(txt);
     var btnF=el('button',{class:'gx-press',style:"cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:9px;border:1.5px solid oklch(0.72 0.14 75);background:oklch(0.93 0.07 80);color:oklch(0.4 0.13 65);white-space:nowrap;"});
     btnF.textContent="Filtrer";
