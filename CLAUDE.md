@@ -108,6 +108,13 @@ git commit -m "feat: description claire du changement"
 > Les commits git servent de backup — pas besoin de copies horodatées locales.
 > Pour revenir en arrière : `git log` pour trouver le commit, `git checkout <sha> -- index.html` pour restaurer.
 
+**Commit découvert après coup mélangeant deux changements** (27-28/09/2026,
+`055d8c0` : dropdown commune + contexte du taux d'occupation dans un seul
+commit) : s'il n'est pas encore poussé, le splitter avant de pousser ; s'il
+est déjà poussé, ne jamais corriger silencieusement le message pour le faire
+paraître conforme — l'assumer en une phrase dans le commit suivant ou dans
+`CHANTIERS.md`.
+
 ### 3. Push vers main
 Après chaque commit, pousser dans le repo :
 ```bash
@@ -130,6 +137,7 @@ App = fichier HTML unique en JS vanilla, sans build ni framework. Les tests auto
   "
   ```
 - **Pas de test Playwright par défaut**, même sur les changements de calcul/données (`getSlots`, `hasConflict`, migrations, dédup…) — ça consomme trop de temps/tokens à répétition. La vérification de syntaxe suffit dans l'immense majorité des cas.
+- **Harnais Node pour un changement de logique pure** (`getSlots`, `hasConflict`, migrations) : extraire la fonction depuis `index.html`, l'`eval` avec des globals stubbés (`S`, `lsSet`…), rejouer quelques scénarios dont une non-régression de l'ancien comportement. Moins coûteux qu'un Playwright ciblé, plus fiable qu'une vérification de syntaxe seule — utilisé pour AG-001 (`8517269`, 7 scénarios) et la priorité titulaire actif/libéré (`f4c3930`).
 - **Test Playwright ciblé uniquement** : si l'utilisateur le demande explicitement pour ce changement, ou en début de session pour valider l'état général de l'app après une reprise/un déploiement. Ne pas en faire un réflexe systématique.
 
 > Contexte : une perte de données réelle (11 CMS réduits à 6) s'est produite sur sms-mail-multi suite à une migration localStorage non testée. La politique ci-dessus assume ce risque au profit de la rapidité — en cas de doute sur une migration/fusion de données un peu délicate, il reste toujours possible de demander explicitement un test Playwright ciblé avant de committer.
@@ -167,6 +175,8 @@ de nouvelles entrées.
 8quater. **Pistes d'amélioration à moments fixés** (MD-LIB `collaboration.md`, règle 22, 03/10/2026). À la fin d'une fonctionnalité livrée et validée, et sur toute demande de revue de l'interface : au plus 3 pistes, classées par utilité, non développées. Chercher **dans** l'outil (écran confus, saisie en double, clics inutiles) **et autour** : ce que les utilisateurs font encore à côté (tableur, mail, papier), ce que la hiérarchie redemande — l'angle qu'on rate en ne lisant que le code. S'appuyer sur des faits (compteurs d'usage, remontées, `CHANTIERS.md`), pas une impression. Consigner chaque piste dans la section « Pistes » de `CHANTIERS.md` : *proposées, en attente*, ou *écartées* avec date et raison ; une piste écartée ne se repropose pas sans fait nouveau.
 
 8quinquies. **Le rendu se vérifie à l'œil de l'utilisateur, le calcul garde son test** (MD-LIB `collaboration.md`, règle 17). Un changement de rendu pur ne justifie ni test ni capture : dire quoi regarder. **Deux précisions (17/10/2026)** : (1) avant de livrer, *mesurer* le rendu (débordement, contraste, chevauchement) aux tailles de référence du projet (à défaut 390 px et 1280x720) ; la mesure précède le contrôle de l'utilisateur, elle ne le remplace pas ; (2) la fonction nouvelle se montre là où il teste (démo et données d'exemple comprises) et la réponse dit **où cliquer** en premier.
+8sexies. **Bug de données signalé par capture : consulter le repo privé de sauvegarde réel (`*-backups`) avant de formuler une hypothèse** (MD-LIB `collaboration.md`, règle 25, 17/10/2026). La capture seule ne distingue pas un bug de rendu d'un bug de données — relire l'export JSON réel (`backups/<profil>/backup-*.json`) a permis de confirmer un doublon d'historique et une double-réservation sur un même créneau (01-02/10/2026) avant de corriger.
+8septies. **UI qui semble en retard sur ce qui vient d'être poussé : vérifier le déploiement réel avant de conclure** (MD-LIB `collaboration.md`, règle 26, 17/10/2026). Ni au bug de code, ni au cache navigateur par défaut — interroger l'état du déploiement (GitHub Actions, ou `MD-LIB/outils/attendre-deploiement.sh`) pour confirmer qu'il correspond au commit attendu. Fait le 30/09/2026 : une capture montrant une ancienne grille a été diagnostiquée comme cache navigateur seulement après cette vérification.
 
 **Bonnes pratiques à maintenir**
 9. Continuer à demander l'avis de Claude avant toute action à fort impact (déploiement, architecture, migration de données) et exécuter vite dès validation courte reçue.
