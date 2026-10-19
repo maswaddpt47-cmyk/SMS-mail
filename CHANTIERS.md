@@ -1,6 +1,6 @@
 # CHANTIERS — SMS-mail
 
-État au **10/10/2026**, commit de référence `c8383ca` (`main`).
+État au **19/10/2026**, commit de référence `fcec6fc` (`main`).
 
 Carnet de reprise : ce qu'une session sans historique doit savoir pour
 continuer. Mis à jour à chaque avancée, pas en fin de session. Une tâche
@@ -115,6 +115,18 @@ Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
      (toujours vrai, non régressé : testé). `matches` préserve l'ordre de
      `S.history`, du plus récent au plus ancien — s'appuyer dessus pour
      tout nouveau tri de ce genre plutôt que retrier par date/heure.
+- **Sauts de ligne en trop dans le message généré, quand une démarche n'a pas
+  de documents** (19/10/2026, constaté par l'utilisateur, « surtout quand on
+  choisit Autre »). Dans `fillTemplate`, quand `documents` est vide (démarche
+  « Autre », ou « Utilisation des outils numériques »), la phrase « Pensez à
+  apporter : » et son contenu étaient remplacés par une chaîne vide, mais les
+  deux `\n\n` qui l'entourent dans le modèle restaient — 2 à 3 lignes vides
+  d'affilée au lieu d'une. Corrigé en aval plutôt que dans chaque regex :
+  `fillTemplate` réduit désormais tout saut de ligne triple ou plus à un seul
+  blanc avant de renvoyer le texte (`\n{3,}` → `\n\n`) — couvre aussi les
+  modèles personnalisés utilisant la même formulation. Testé en isolation
+  (cas « Autre » : plus de blanc en trop ; cas avec documents : liste et
+  espacement inchangés).
 - **Portage entre jumeaux** : les derniers portages (PR #44 à #50 de SMS-mail,
   #88 à #94 de sms-mail-multi, branche `sms-mail-to-multi-port`) vont de
   SMS-mail vers sms-mail-multi. Quand un sujet est contesté entre les deux,
