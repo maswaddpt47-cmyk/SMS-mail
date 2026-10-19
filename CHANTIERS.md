@@ -1,6 +1,11 @@
 # CHANTIERS — SMS-mail
 
-État au **19/10/2026**, commit de référence `fcec6fc` (`main`).
+État au **20/10/2026**, commit de référence `fcec6fc` (`main`).
+
+**🧊 Repo gelé le 20/10/2026** — décision de l'utilisateur : plus de
+développement ici, `sms-mail-multi` est désormais seul actif. Ce fichier
+n'est plus mis à jour à chaque avancée (il n'y en a plus) ; il reste comme
+état de référence au moment du gel.
 
 Carnet de reprise : ce qu'une session sans historique doit savoir pour
 continuer. Mis à jour à chaque avancée, pas en fin de session. Une tâche
@@ -9,8 +14,7 @@ ne doit pas être défait remonte dans la dernière section.
 
 ## Décisions à trancher
 
-Aucune pour l'instant. Toute entrée ajoutée ici dit si elle ouvre un bloc
-`AGORA.md` ou non, et pourquoi.
+Aucune — repo gelé, plus de décision à prendre ici.
 
 ## Chantiers restants (par priorité)
 
