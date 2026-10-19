@@ -603,7 +603,7 @@ function fillTemplate(tpl,v){
     .replace(/\n📅 Ajouter à votre calendrier : \{lienCalendrier\}/g, v.lienCalendrier ? '\n📅 Ajouter à votre calendrier : '+v.lienCalendrier : '')
     .replace(/{lienCalendrier}/g,v.lienCalendrier||"");
   for(var i=0;i<S.customVars.length;i++){var cv=S.customVars[i];if(cv.nom)r=r.replace(new RegExp("\\{"+cv.nom+"\\}","g"),cv.valeur);}
-  return r.replace(/Bonjour  /g,"Bonjour ");
+  return r.replace(/Bonjour  /g,"Bonjour ").replace(/\n{3,}/g,"\n\n");
 }
 
 function buildCalLink(){
