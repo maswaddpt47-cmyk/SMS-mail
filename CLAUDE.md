@@ -1,5 +1,16 @@
 # Règles de travail — SMS-mail
 
+## 🧊 Repo gelé (20/10/2026)
+
+**Décision de l'utilisateur : plus de développement sur SMS-mail (solo)
+à partir de cette date.** `sms-mail-multi` est désormais le seul repo actif ;
+la refonte UI du 19/10/2026 (`b6d7b03`) n'y a pas été portée et ne le sera
+pas. Pour une session qui arrive ici : ne pas proposer de portage, ne pas
+lancer `scripts/check-drift.js` (comparaison devenue sans objet), et vérifier
+auprès de l'utilisateur avant toute modification — ce dépôt n'est plus
+censé bouger. Les sections ci-dessous décrivent l'état au moment du gel,
+gardées pour l'historique et la RGPD (sauvegardes, rétention).
+
 ## ⚠️ Point critique RGPD — exposition de données personnelles (remédiation en grande partie faite)
 
 Constat vérifié le 20/08/2026 : le repo `maswaddpt47-cmyk/sms-mail` était **public**, et le
